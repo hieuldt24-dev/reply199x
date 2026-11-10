@@ -1,0 +1,1127 @@
+﻿[
+    {
+        "checks":  [
+                       {
+                           "detail":  "",
+                           "name":  "G3-one-main",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-one-h1",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-Vietnamese-language",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  8,
+                           "name":  "G3-eight-top-level-sections",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G2-hero-title-groups",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G2-hero-artwork-after-primary-action",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G2-full-hero-description-retained-in-about",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-eight-disclosure-destinations",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-four-direct-desktop-links",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "[\"gioi-thieu\",\"kenh-truyen-thong\",\"timeline\",\"su-kien\",\"merch\",\"quy-trinh\",\"lien-he\"]",
+                           "name":  "G3-section-order",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-nested-ticket-section",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-DÒNG CHẢY HOÀI NIỆM",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-Xuôi dòng ký ức, đánh thức thanh xuân",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-Cơm Bưng Nước Rót",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-On The Radio",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-76 Thái Phiên",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-99.000",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-169.000",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-CHƯA BÁN VÉ",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-SẮP CÔNG BỐ",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-Tuổi Xì Tin",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-copy-Tuổi Xì Lây",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-popup-date",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-concert-date",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-concert-time",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-promotion-start",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-promotion-end",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G3-planned-process",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "[]",
+                           "name":  "G4-fragment-targets",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-external-https://forms.gle/tW1VU8vpASc53CJa8",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-external-https://www.tiktok.com/@loihoidap199x",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "[]",
+                           "name":  "G4-external-rel",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-no-invented-facebook",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G4-ticket-contact",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-contact-form",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-label-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-input-size-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G7-required-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-label-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-input-size-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G7-required-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-label-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-input-size-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G7-required-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G6-skip-target",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "compared":  128,
+                                          "missing":  [
+
+                                                      ]
+                                      },
+                           "name":  "G3-all-source-text-nodes-outside-form",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "passed":  46,
+        "phase":  "content"
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "client":  352,
+                                          "scroll":  352,
+                                          "viewport":  360
+                                      },
+                           "name":  "G5-no-horizontal-overflow-360",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-Mở mục lục điều hướng",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-✉Xem trước thư ký ức",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "art":  {
+                                                      "bottom":  933.710205078125,
+                                                      "height":  194.04541015625,
+                                                      "left":  34.37043380737305,
+                                                      "right":  317.62958908081055,
+                                                      "top":  739.664794921875,
+                                                      "width":  283.2591552734375,
+                                                      "x":  34.37043380737305,
+                                                      "y":  739.664794921875
+                                                  },
+                                          "cta":  {
+                                                      "bottom":  586.90625,
+                                                      "height":  44,
+                                                      "left":  20,
+                                                      "right":  186.375,
+                                                      "top":  542.90625,
+                                                      "width":  166.375,
+                                                      "x":  20,
+                                                      "y":  542.90625
+                                                  }
+                                      },
+                           "name":  "G3-primary-cta-before-artwork-360",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "bottom":  586.90625,
+                                          "height":  44,
+                                          "left":  20,
+                                          "right":  186.375,
+                                          "top":  542.90625,
+                                          "width":  166.375,
+                                          "x":  20,
+                                          "y":  542.90625
+                                      },
+                           "name":  "G3-primary-cta-first-viewport-360",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  [
+
+                                      ],
+                           "name":  "G5-no-important-content-clipping-360",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "overflowDiagnostics":  [
+
+                                ],
+        "passed":  18,
+        "phase":  "layout",
+        "width":  360
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "client":  382,
+                                          "scroll":  382,
+                                          "viewport":  390
+                                      },
+                           "name":  "G5-no-horizontal-overflow-390",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-Mở mục lục điều hướng",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-✉Xem trước thư ký ức",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "art":  {
+                                                      "bottom":  848.913330078125,
+                                                      "height":  194.04541015625,
+                                                      "left":  49.37043380737305,
+                                                      "right":  332.62958908081055,
+                                                      "top":  654.867919921875,
+                                                      "width":  283.2591552734375,
+                                                      "x":  49.37043380737305,
+                                                      "y":  654.867919921875
+                                                  },
+                                          "cta":  {
+                                                      "bottom":  558.109375,
+                                                      "height":  44,
+                                                      "left":  20,
+                                                      "right":  186.375,
+                                                      "top":  514.109375,
+                                                      "width":  166.375,
+                                                      "x":  20,
+                                                      "y":  514.109375
+                                                  }
+                                      },
+                           "name":  "G3-primary-cta-before-artwork-390",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "bottom":  558.109375,
+                                          "height":  44,
+                                          "left":  20,
+                                          "right":  186.375,
+                                          "top":  514.109375,
+                                          "width":  166.375,
+                                          "x":  20,
+                                          "y":  514.109375
+                                      },
+                           "name":  "G3-primary-cta-first-viewport-390",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  [
+
+                                      ],
+                           "name":  "G5-no-important-content-clipping-390",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "overflowDiagnostics":  [
+
+                                ],
+        "passed":  18,
+        "phase":  "layout",
+        "width":  390
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "client":  760,
+                                          "scroll":  760,
+                                          "viewport":  768
+                                      },
+                           "name":  "G5-no-horizontal-overflow-768",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-Mở mục lục điều hướng",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-✉Xem trước thư ký ức",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  [
+
+                                      ],
+                           "name":  "G5-no-important-content-clipping-768",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "overflowDiagnostics":  [
+
+                                ],
+        "passed":  16,
+        "phase":  "layout",
+        "width":  768
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "client":  1272,
+                                          "scroll":  1272,
+                                          "viewport":  1280
+                                      },
+                           "name":  "G5-no-horizontal-overflow-1280",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-Mở mục lục điều hướng",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-✉Xem trước thư ký ức",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  [
+
+                                      ],
+                           "name":  "G5-no-important-content-clipping-1280",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "overflowDiagnostics":  [
+
+                                ],
+        "passed":  20,
+        "phase":  "layout",
+        "width":  1280
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "client":  1432,
+                                          "scroll":  1432,
+                                          "viewport":  1440
+                                      },
+                           "name":  "G5-no-horizontal-overflow-1440",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-nav-destination-lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#lien-he",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-Mở mục lục điều hướng",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-#su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  44,
+                           "name":  "G5-minimum-control-height-✉Xem trước thư ký ức",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-name",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-email",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "",
+                           "name":  "G5-input-size-letter-message",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  [
+
+                                      ],
+                           "name":  "G5-no-important-content-clipping-1440",
+                           "pass":  true
+                       }
+                   ],
+        "failed":  0,
+        "overflowDiagnostics":  [
+
+                                ],
+        "passed":  20,
+        "phase":  "layout",
+        "width":  1440
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G4-menu-expanded",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G4-all-mobile-links",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G4-all-menu-links-visible",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "mobile-menu-open"
+    },
+    true,
+    {
+        "checks":  [
+                       {
+                           "name":  "G5-menu-closes-on-selection",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G5-anchor-clears-header",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "mobile-anchor"
+    },
+    {
+        "checks":  [
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  112.484375
+                                      },
+                           "name":  "G4-anchor-offset-gioi-thieu",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  111.5
+                                      },
+                           "name":  "G4-anchor-offset-kenh-truyen-thong",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  112.21875
+                                      },
+                           "name":  "G4-anchor-offset-timeline",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  111.921875
+                                      },
+                           "name":  "G4-anchor-offset-su-kien",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  110.359375
+                                      },
+                           "name":  "G4-anchor-offset-ve",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  111.71875
+                                      },
+                           "name":  "G4-anchor-offset-merch",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  112.3125
+                                      },
+                           "name":  "G4-anchor-offset-quy-trinh",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  {
+                                          "headerBottom":  88,
+                                          "top":  111.796875
+                                      },
+                           "name":  "G4-anchor-offset-lien-he",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "all-anchor-offsets"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G5-menu-closes-on-escape",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G6-escape-returns-focus",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "escape"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G4-four-direct-links",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G4-eight-desktop-menu-links",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G4-desktop-menu-expanded",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "desktop-disclosure"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G7-required-fields-block-empty-submit",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-empty-form-does-not-prepare-preview",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "empty-form"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G7-malformed-email-blocked",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-invalid-form-does-not-prepare-preview",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "invalid-email"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G7-valid-form-prepared",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  "Thư đã sẵn sàng để xem trước. Nội dung chưa được gửi hoặc lưu.",
+                           "name":  "G7-form-status-is-truthful",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-values-retained",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-encoded-email-action",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "valid-form"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G7-edit-keeps-values",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-edit-clears-preview",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G6-edit-returns-focus",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "edit-form"
+    },
+    true,
+    {
+        "checks":  [
+                       {
+                           "name":  "G8-both-image-fallbacks",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-logo-fallback-readable",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-poster-details-remain",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  1,
+                           "name":  "G8-logo-fallback-ratio",
+                           "pass":  true
+                       },
+                       {
+                           "detail":  0.7077895315290562,
+                           "name":  "G8-poster-fallback-ratio",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "synthetic-image-errors"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G8-reduced-motion-emulated",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-smooth-scroll-disabled",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-pulses-disabled",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-art-motion-disabled",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-no-autoplay-media",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G8-page-content-retained",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "reduced-motion"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G6-first-tab-reaches-skip-link",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G6-skip-link-has-main-target",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "skip-link"
+    },
+    {
+        "checks":  [
+                       {
+                           "name":  "G7-not-found-page-rendered",
+                           "pass":  true
+                       },
+                       {
+                           "name":  "G7-state-page-style-isolated",
+                           "pass":  true
+                       }
+                   ],
+        "phase":  "not-found-smoke"
+    }
+]

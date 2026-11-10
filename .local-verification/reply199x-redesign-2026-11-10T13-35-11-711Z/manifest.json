@@ -1,0 +1,21 @@
+{
+  "created": "2026-11-10T13:35:11.724Z",
+  "files": [
+    "src/styles/globals.css",
+    "src/components/Navbar.tsx",
+    "src/components/Footer.tsx",
+    "src/app/(routes)/page.tsx",
+    "src/app/(routes)/_components/AboutSection.tsx",
+    "src/app/(routes)/_components/CassetteArtwork.tsx",
+    "src/app/(routes)/_components/ChannelsSection.tsx",
+    "src/app/(routes)/_components/ContactForm.tsx",
+    "src/app/(routes)/_components/ContactSection.tsx",
+    "src/app/(routes)/_components/EventsSection.tsx",
+    "src/app/(routes)/_components/HeroSection.tsx",
+    "src/app/(routes)/_components/MerchSection.tsx",
+    "src/app/(routes)/_components/ProcessSection.tsx",
+    "src/app/(routes)/_components/RemoteImage.tsx",
+    "src/app/(routes)/_components/TicketsSection.tsx",
+    "src/app/(routes)/_components/TimelineSection.tsx"
+  ]
+}

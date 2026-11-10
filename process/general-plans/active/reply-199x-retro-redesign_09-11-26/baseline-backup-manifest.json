@@ -1,0 +1,20 @@
+﻿{
+    "created":  "2026-11-10T09:59:22.5692622+07:00",
+    "backupPath":  "C:\\Users\\Hieu\\AppData\\Local\\Temp\\reply-199x-retro-backup-20261110-095922",
+    "paths":  [
+                  "src/styles/globals.css",
+                  "src/app/(routes)/page.tsx",
+                  "src/components/Navbar.tsx",
+                  "src/components/Footer.tsx",
+                  "src/app/(routes)/_components/HeroSection.tsx",
+                  "src/app/(routes)/_components/AboutSection.tsx",
+                  "src/app/(routes)/_components/ChannelsSection.tsx",
+                  "src/app/(routes)/_components/TimelineSection.tsx",
+                  "src/app/(routes)/_components/EventsSection.tsx",
+                  "src/app/(routes)/_components/TicketsSection.tsx",
+                  "src/app/(routes)/_components/MerchSection.tsx",
+                  "src/app/(routes)/_components/ProcessSection.tsx",
+                  "src/app/(routes)/_components/ContactSection.tsx",
+                  "src/app/(routes)/_components/ContactForm.tsx"
+              ]
+}

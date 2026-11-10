@@ -1,0 +1,30 @@
+﻿{
+    "checks":  [
+                   {
+                       "detail":  "pt-[90px]",
+                       "name":  "baseline-new-retro-root",
+                       "pass":  false
+                   },
+                   {
+                       "name":  "baseline-cassette-artwork",
+                       "pass":  false
+                   },
+                   {
+                       "detail":  "#gioi-thieu",
+                       "name":  "baseline-primary-event-cta",
+                       "pass":  false
+                   },
+                   {
+                       "detail":  8,
+                       "name":  "baseline-four-direct-desktop-links",
+                       "pass":  false
+                   },
+                   {
+                       "name":  "baseline-full-intro-in-about",
+                       "pass":  false
+                   }
+               ],
+    "failed":  5,
+    "passed":  0,
+    "phase":  "pre-change-red-probe"
+}

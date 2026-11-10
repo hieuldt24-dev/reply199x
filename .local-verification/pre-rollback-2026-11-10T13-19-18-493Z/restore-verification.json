@@ -1,0 +1,79 @@
+{
+  "originalBackup": "C:\\Users\\Hieu\\AppData\\Local\\Temp\\reply-199x-retro-backup-20261110-095922",
+  "restored": [
+    {
+      "path": "src/styles/globals.css",
+      "sha256": "1c14f704bc84eb235eddc70ae2280b738772f1669b53e5cdcb60670c38fdf349",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/page.tsx",
+      "sha256": "ab97e551dde26e9fc60e44251d2e048470cfaaec1ee97ac9a31984ea84aa8ef5",
+      "match": true
+    },
+    {
+      "path": "src/components/Navbar.tsx",
+      "sha256": "3151608bdfece8af543fafd67f79c1f1278ba156bd107d2bc3752a3164132b40",
+      "match": true
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "sha256": "e1cbd38b3660e21121545e542c6fc0359e48c9bebe09cc4a195436120054ee99",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/HeroSection.tsx",
+      "sha256": "83af0ebee7e4c24ae7680b1ddda3d2b5e3afdd188f8fe935f015b651e1fcb03e",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/AboutSection.tsx",
+      "sha256": "c616713d2de4dfc952542299e69da35d9d77aaa721f17e4c37f0e10c3f3061b2",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/ChannelsSection.tsx",
+      "sha256": "24299d0d73b4ebb29746ccad5e6f1f0d7873c40aa471a077c322e3d1e11dc178",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/TimelineSection.tsx",
+      "sha256": "20c2d645fac7bd178757035a8135c07eb8f6b34c36046faee74310da51dc0cd4",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/EventsSection.tsx",
+      "sha256": "aee27c24d128a1d7195ee3e915b43adee2e663b962979c60cc78f737e3b39033",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/TicketsSection.tsx",
+      "sha256": "51bfc7eb9ff17329e7e8d7943b898ca6a0b419844f87fab23e84472e9baafc84",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/MerchSection.tsx",
+      "sha256": "0d966bdcb01f2e44487b1a716a17c20146d7ed6f9a961c85f15f57c5cb9fb42b",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/ProcessSection.tsx",
+      "sha256": "4c1960c4e914fa28985881fd016473b67a7979e7f667a7feace4937ee2becf88",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/ContactSection.tsx",
+      "sha256": "6c79914aacf3cdeea61c1cbb19a22f4f01bd589a76c83973ff3f56330032bc05",
+      "match": true
+    },
+    {
+      "path": "src/app/(routes)/_components/ContactForm.tsx",
+      "sha256": "b7b28bdf79ac3e68428d96233ce642244345fdfb24759d028f1e2666cef3b2b9",
+      "match": true
+    }
+  ],
+  "assets": {
+    "logo": "https://lh3.googleusercontent.com/aida-public/AB6AXuDpZ3K9GxPH1zRkTi5QfcufhtcZDg0TAL5jxnJwHf1V6v9YpUxPerLiDzUAO01BGkg7eI_1_BZFZ5Zvt3I5Vby5jEy5DipUHMX3519cZ5yTBFaqHbcz_hF6nyQ8OAC2YVlTTboiIkyVlyVMXxLf7V7DebMVO5x0IzQlhIqD6KRNbbBT5B9q_VoARI-wJatmiZSIMUc2sMd_IJaah7tQBLurqK7S8d14pkaS9g5Ts4y3ucjMqJOv2mjZbA",
+    "poster": "https://lh3.googleusercontent.com/aida-public/AB6AXuCvHxUTTq5m5QJdjHkWvqquCfGufqvvKOKnhlQP9bsX-8XKHUTQVHLQSd4uD_GHWqx4CWYAEmp_Hwe1GYKe4UdV7JcNkQoHYZ5-0rlTCJsTlC_7OFJQme3A-GCICfOoZHalOnZZ-SxHlPAW0xYwa0JFquKJAZhTxS47dYmO8Kj98h23WVFFrMrQOMLdYHj9VSi1SPGx2_h-NFpJwDChLoWJdgkVZmUp2030HK7VP5JAXWPsquEqf2W1Xw"
+  }
+}
