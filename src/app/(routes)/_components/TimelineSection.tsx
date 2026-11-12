@@ -1,3 +1,7 @@
+import { brief } from "../_data/brief";
+import Image from "next/image";
+import { assets } from "../_data/home";
+import { TicketRequestDialog } from "./TicketRequestDialog";
 
 export function TimelineSection() {
  return (
@@ -5,12 +9,14 @@ export function TimelineSection() {
 <div className="reply-shell max-w-7xl mx-auto px-4 lg:px-8">
 <div className="reply-section-heading text-center max-w-2xl mx-auto mb-16">
 <div className="inline-flex items-center gap-2 bg-retro-gold text-retro-dark font-space text-xs uppercase font-extrabold tracking-widest px-3 py-1 rounded shadow-retro-solid mb-3">
- LỊCH TRÌNH HOẠT ĐỘNG 
+ Cùng dò sóng để phát lại những ký ức hồi đó nhé! 
 </div>
-<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-paper retro-title-shadow"> DÒNG CHẢY SỰ KIỆN 2026 </h2><p className="font-vietnam text-retro-paper/80 text-sm sm:text-base mt-3"> Hai chặng dừng chân tái hiện trọn vẹn văn hóa hoài niệm thập niên 90s tại thành phố Đà Nẵng. </p>
+<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-paper retro-title-shadow"> Dòng chảy tiếp nối, trải nghiệm đong đầy </h2><p className="font-vietnam text-retro-paper/80 text-sm sm:text-base mt-3"> {brief.timeline} </p>
 </div>
+<div className="reply-timeline__layout">
+<div className="reply-timeline__poster reply-timeline__poster--left" aria-hidden="true"><Image src={assets.poster} alt="" width={2000} height={2500} sizes="(min-width: 1400px) 160px, 0px" /></div>
 <div className="reply-stops grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-<div className="reply-stop bg-retro-forest p-7 sm:p-9 rounded-2xl border-4 border-retro-teal/60 shadow-retro-solid-lg flex flex-col justify-between relative group hover:border-retro-gold transition-colors">
+<div id="pop-up-details" className="reply-stop bg-retro-forest p-7 sm:p-9 rounded-2xl border-4 border-retro-teal/60 shadow-retro-solid-lg flex flex-col justify-between relative group hover:border-retro-gold transition-colors">
 <div>
 <div className="flex items-start justify-between gap-4 pb-6 border-b border-retro-teal/30">
 <div>
@@ -34,7 +40,7 @@ export function TimelineSection() {
 <div className="inline-flex items-center gap-1.5 text-xs font-space text-retro-gold bg-retro-dark/80 px-2.5 py-1 rounded mb-2">
 <span className="retro-icon text-sm text-retro-red" aria-hidden="true">✦</span> Địa điểm: Quán &quot;Cơm Bưng Nước Rót&quot; 
 </div>
-<h3 className="font-epilogue font-bold text-2xl text-retro-paper leading-snug"> POP-UP REPLY 199X: Không Gian Ký Ức &amp; Triển Lãm Kỷ Vật </h3><p className="font-vietnam text-sm sm:text-base text-retro-paper/80 mt-3 leading-relaxed"> Mở cửa tự do đón công chúng ghé thăm, chụp ảnh và hòa mình vào bối cảnh góc phố cổ thập niên 90s sống động: </p>
+<h3 className="font-epilogue font-bold text-2xl text-retro-paper leading-snug"> POP-UP REPLY 199X: Không Gian Ký Ức &amp; Triển Lãm Kỷ Vật </h3><p className="font-vietnam text-sm sm:text-base text-retro-paper/80 mt-3 leading-relaxed"> {brief.popup} </p>
 </div>
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-sm text-retro-paper/90">
 <div className="bg-retro-dark/80 p-3 rounded-lg border border-retro-teal/20 flex items-center gap-2">
@@ -54,11 +60,11 @@ export function TimelineSection() {
 
 </div>
 <div className="mt-8 pt-4 border-t border-retro-teal/20 flex items-center justify-between text-xs font-space text-retro-teal-light">
-<span className="">HÌNH THỨC: VÀO CỔNG TỰ DO</span><span className="">KHÔNG GIAN TRIỂN LÃM</span>
+<span className="">HÌNH THỨC: VÀO CỔNG TỰ DO</span><a className="reply-text-link" href="#pop-up-details">Khám phá pop-up ↗</a>
 </div>
 
 </div>
-<div className="reply-stop reply-stop--live bg-retro-forest p-7 sm:p-9 rounded-2xl border-4 border-retro-gold shadow-retro-solid-lg flex flex-col justify-between relative group">
+<div id="pop-up-details" className="reply-stop reply-stop--live bg-retro-forest p-7 sm:p-9 rounded-2xl border-4 border-retro-gold shadow-retro-solid-lg flex flex-col justify-between relative group">
 <div className="absolute -top-3.5 right-6 bg-retro-red text-retro-paper font-space text-xs font-bold px-3 py-1 rounded shadow-md uppercase tracking-wider">
  SỰ KIỆN TRỌNG TÂM 
 </div>
@@ -85,8 +91,9 @@ export function TimelineSection() {
 <div className="inline-flex items-center gap-1.5 text-xs font-space text-retro-paper bg-retro-dark/80 px-2.5 py-1 rounded mb-2">
 <span className="retro-icon text-sm text-retro-gold" aria-hidden="true">⌖</span> Địa điểm: On The Radio • 76 Thái Phiên, Đà Nẵng 
 </div>
-<h3 className="font-epilogue font-bold text-2xl text-retro-paper leading-snug"> Đêm Nhạc: &quot;Không Gian Âm Nhạc Hoài Niệm – REPLY 199X&quot; </h3><p className="font-vietnam text-sm sm:text-base text-retro-paper/80 mt-3 leading-relaxed"> Đêm nhạc giao hưởng mộc acoustic tái hiện những giai điệu V-Pop bất hủ từng vang bóng qua làn sóng Radio FM, đan xen hoạt cảnh kịch thanh xuân và khách mời đặc biệt. </p>
+<h3 className="font-epilogue font-bold text-2xl text-retro-paper leading-snug"> Đêm Nhạc: &quot;Không Gian Âm Nhạc Hoài Niệm – REPLY 199X&quot; </h3><p className="font-vietnam text-sm sm:text-base text-retro-paper/80 mt-3 leading-relaxed"> {brief.concert[0]} </p>
 </div>
+<p className="reply-body-copy">{brief.concert[1]}</p>
 <div className="bg-retro-dark/90 p-4 rounded-xl border border-retro-gold/40 mt-6 flex flex-col gap-2">
 <div className="flex items-center gap-2 text-sm text-retro-gold font-semibold">
 <span className="retro-icon text-base" aria-hidden="true">♪</span><span className="">Trình diễn trực tiếp các bản hit thập niên 90 - 2000s</span>
@@ -102,11 +109,13 @@ export function TimelineSection() {
 
 </div>
 <div className="mt-8 pt-4 border-t border-retro-teal/20 flex flex-wrap items-center justify-between gap-3">
-<span className="font-space text-xs text-retro-gold font-bold">KHUNG GIỜ: 15:00 - 19:00</span><a className="inline-flex items-center gap-1.5 bg-retro-gold hover:bg-retro-gold-light text-retro-dark font-space text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-colors" href="#ve"><span className="">Xem cuống vé &amp; Chi tiết</span><span className="retro-icon text-sm" aria-hidden="true">✦</span></a>
+<a className="reply-text-link" href="#su-kien">Tìm hiểu sự kiện ↗</a><span className="font-space text-xs text-retro-gold font-bold">KHUNG GIỜ: 15:00 - 19:00</span><TicketRequestDialog className="inline-flex items-center gap-1.5 bg-retro-gold hover:bg-retro-gold-light text-retro-dark font-space text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-colors"><span className="">Đặt vé ngay</span><span className="retro-icon text-sm" aria-hidden="true">✦</span></TicketRequestDialog>
 </div>
 
 </div>
 
+ </div>
+<div className="reply-timeline__poster reply-timeline__poster--right" aria-hidden="true"><Image src={assets.poster} alt="" width={2000} height={2500} sizes="(min-width: 1400px) 160px, 0px" /></div>
 </div>
 
 </div>

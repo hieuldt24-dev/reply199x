@@ -4,10 +4,7 @@ export const SITE_DESCRIPTION = "Dòng Chảy Hoài Niệm — Xuôi dòng ký �
 export const NAV_LINKS = [
   { id: "gioi-thieu", label: "Giới thiệu" },
   { id: "timeline", label: "Lịch trình" },
-  { id: "su-kien", label: "Sự kiện 22/11" },
-  { id: "ve", label: "Vé tham gia" },
-  { id: "merch", label: "Kỷ vật (Merch)" },
-  { id: "quy-trinh", label: "Quy trình" },
-  { id: "kenh-truyen-thong", label: "Kênh sóng" },
+  { id: "su-kien", label: "Sự kiện" },
+  { id: "merch", label: "Kỷ vật" },
   { id: "lien-he", label: "Liên hệ" },
 ] as const;

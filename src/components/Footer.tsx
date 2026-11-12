@@ -1,3 +1,5 @@
+import { projectLinks } from "@/app/(routes)/_data/brief";
+
 export function Footer() {
  return (
 <footer className="reply-footer w-full bg-retro-forest text-retro-paper border-t-8 border-retro-dark pt-12 pb-8">
@@ -19,7 +21,7 @@ export function Footer() {
 
 </div>
 <div className="flex items-center gap-3">
-<a className="bg-retro-forest hover:bg-retro-paper hover:text-retro-dark text-retro-gold px-4 py-2 rounded-lg border border-retro-gold font-space text-xs font-bold uppercase transition-colors flex items-center gap-1.5" href="https://www.tiktok.com/@loihoidap199x" rel="noopener noreferrer" target="_blank"><span className="retro-icon text-sm" aria-hidden="true">▶</span> TikTok @loihoidap199x </a><a className="bg-retro-red hover:bg-[#b81700] text-retro-paper px-4 py-2 rounded-lg border border-retro-gold font-space text-xs font-bold uppercase transition-colors flex items-center gap-1.5" href="https://forms.gle/tW1VU8vpASc53CJa8" rel="noopener noreferrer" target="_blank"><span className="retro-icon text-sm" aria-hidden="true">♧</span> Đặt Merch </a>
+<a className="bg-retro-forest hover:bg-retro-paper hover:text-retro-dark text-retro-gold px-4 py-2 rounded-lg border border-retro-gold font-space text-xs font-bold uppercase transition-colors flex items-center gap-1.5" href={projectLinks.tiktok} rel="noopener noreferrer" target="_blank"><span className="retro-icon text-sm" aria-hidden="true">▶</span> TikTok @loihoidap199x </a><a className="bg-retro-red hover:bg-[#b81700] text-retro-paper px-4 py-2 rounded-lg border border-retro-gold font-space text-xs font-bold uppercase transition-colors flex items-center gap-1.5" href={projectLinks.merch} rel="noopener noreferrer" target="_blank"><span className="retro-icon text-sm" aria-hidden="true">♧</span> Đặt Merch </a>
 </div>
 
 </div>
@@ -28,11 +30,11 @@ export function Footer() {
 <span className="font-space text-xs font-bold uppercase text-retro-gold block mb-2">Đơn vị khởi xướng &amp; thực hiện</span><p className="text-retro-paper/90 leading-relaxed"> REPLY 199X Team — Dự án văn hóa nghệ thuật hoài niệm tái hiện thanh xuân và âm nhạc Việt Nam giai đoạn 199X – 2026. </p>
 </div>
 <div>
-<span className="font-space text-xs font-bold uppercase text-retro-teal-light block mb-2">Đơn vị bảo trợ</span><p className="text-retro-paper/90 leading-relaxed"> • FPT University Đà Nẵng<br /> • EVo – FUDA Event Club </p>
+<span className="font-space text-xs font-bold uppercase text-retro-teal-light block mb-2">Đơn vị bảo trợ</span><p className="text-retro-paper/90 leading-relaxed"> • FPT University Đà Nẵng<br /> Đơn vị đồng hành: EVo – FUDA Event Club </p>
 </div>
 <div>
 <span className="font-space text-xs font-bold uppercase text-retro-gold block mb-2">Liên kết nhanh</span><div className="flex flex-wrap gap-x-4 gap-y-2 font-space text-xs">
-<a className="text-retro-paper/80 hover:text-retro-gold" href="#gioi-thieu">Giới thiệu</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#timeline">Lịch trình</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#su-kien">Sự kiện 22/11</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#ve">Khu vực vé</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#merch">Merch</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#lien-he">Bưu điện 199X</a>
+{projectLinks.facebook && <a className="text-retro-paper/80 hover:text-retro-gold" href={projectLinks.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>}<a className="text-retro-paper/80 hover:text-retro-gold" href="#gioi-thieu">Giới thiệu</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#timeline">Lịch trình</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#su-kien">Sự kiện 22/11</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#ve">Khu vực vé</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#merch">Merch</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#lien-he">Bưu điện 199X</a>
 </div>
 
 </div>

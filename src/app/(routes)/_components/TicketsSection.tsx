@@ -1,4 +1,7 @@
 
+import { projectLinks, ticketDetails } from "../_data/brief";
+import { TicketRequestDialog } from "./TicketRequestDialog";
+
 export function TicketsSection() {
  return (
 <div className="reply-tickets max-w-4xl mx-auto pt-6" id="ve">
@@ -27,7 +30,7 @@ export function TicketsSection() {
 </div>
 <div className="mt-6 pt-4 border-t-2 border-dashed border-retro-dark/20 flex flex-wrap items-center justify-between gap-3">
 <div>
-<span className="font-space text-xs text-retro-ink-muted font-bold block">GIÁ VÉ NIÊM YẾT</span><span className="bg-amber-100 text-amber-900 border border-amber-300 font-space text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider inline-block mt-0.5"> SẮP CÔNG BỐ </span>
+<span className="font-space text-xs text-retro-ink-muted font-bold block">GIÁ VÉ NIÊM YẾT</span><span className="bg-amber-100 text-amber-900 border border-amber-300 font-space text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider inline-block mt-0.5">{ticketDetails.price}</span>
 </div>
 <span className="font-vietnam text-xs text-retro-ink-muted italic"> * Chưa mở bán chính thức. Ban tổ chức sẽ thông báo thời gian mở cổng vé. </span>
 </div>
@@ -50,10 +53,11 @@ export function TicketsSection() {
 <span className="retro-icon text-4xl text-retro-dark" aria-hidden="true">▣</span><span className="font-space text-xs font-bold uppercase tracking-wider text-retro-forest">CUỐNG VÉ KIỂM SOÁT</span><p className="font-vietnam text-xs text-retro-ink-muted mt-1">Đăng ký để nhận tin ngay khi mở cổng bán vé:</p>
 </div>
 <div className="w-full my-6 flex flex-col gap-2.5">
+{projectLinks.tickets ? <a className="reply-action" href={projectLinks.tickets} target="_blank" rel="noopener noreferrer">Đặt vé ngay</a> : <TicketRequestDialog className="reply-action">Đặt vé ngay</TicketRequestDialog>}
 <a className="w-full inline-flex items-center justify-center gap-1.5 bg-retro-red hover:bg-[#b81700] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-all hover:-translate-y-0.5" href="#lien-he"><span className="retro-icon text-sm" aria-hidden="true">♧</span><span className="">Đăng ký nhận thông báo vé</span></a><span className="font-space text-[11px] text-retro-ink-muted font-bold uppercase"> TRẠNG THÁI: CHƯA BÁN VÉ </span>
 </div>
 <div className="font-space text-[10px] text-retro-ink-muted">
- KÊNH PHÁT HÀNH DUY NHẤT CỦA BTC 
+<a className="reply-text-link" href="#su-kien">Tìm hiểu thêm ↗</a>
 </div>
 
 </div>

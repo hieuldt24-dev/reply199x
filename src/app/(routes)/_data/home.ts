@@ -95,13 +95,17 @@ export const attendanceSteps = [
 
 export const assets = {
   "logo": "/images/reply-199x-logo.png",
-  "poster": "/images/reply-199x-event-poster.png"
+  cassette: "/images/reply-199x-cassette.png",
+  "poster": "/images/reply-199x-event-poster.png",
+  merchCollection: "/images/reply-199x-merch-collection.png",
+  merchXiTin: "/images/reply-199x-merch-xi-tin.png",
+  merchXiLay: "/images/reply-199x-merch-xi-lay.png"
 } as const;
 export const events = [
  { id:"pop-up", date:"20–21.11.2026", venue:"Cơm Bưng Nước Rót", time:"Vào cửa tự do" },
  { id:"concert", date:"22.11.2026", venue:"On The Radio, 76 Thái Phiên, Hải Châu, Đà Nẵng", time:"15:00 – 19:00, Chủ Nhật ngày 22/11/2026" }
 ] as const satisfies readonly EventContent[];
 export const merchCombos = [
- { id:"tuoi-xi-tin", title:'Combo "Tuổi Xì Tin"', price:"99.000", originalPrice:"Giá gốc 130k" },
- { id:"tuoi-xi-lay", title:'Combo "Tuổi Xì Lây"', price:"169.000", originalPrice:"Giá gốc 220k" }
+ { id:"tuoi-xi-tin", title:'Combo "Tuổi Xì Tin"', price:"99.000", originalPrice:"Giá gốc 119.000đ" },
+ { id:"tuoi-xi-lay", title:'Combo "Tuổi Xì Lây"', price:"169.000", originalPrice:"" }
 ] as const satisfies readonly MerchCombo[];

@@ -1,3 +1,4 @@
+import { brief } from "../_data/brief";
 import { assets, events } from "../_data/home";
 import { TicketsSection } from "./TicketsSection";
 import { RemoteImage } from "./RemoteImage";
@@ -8,9 +9,9 @@ export function EventsSection() {
 <div className="reply-shell max-w-7xl mx-auto px-4 lg:px-8">
 <div className="reply-section-heading text-center max-w-3xl mx-auto mb-16">
 <div className="inline-flex items-center gap-2 bg-retro-red text-retro-paper font-space text-xs uppercase font-extrabold tracking-widest px-3 py-1 rounded shadow-retro-solid mb-3">
- TÂM ĐIỂM CHƯƠNG TRÌNH • LIVE CONCERT 
+ GIỮ CHỖ CHO CUỘC HẸN THANH XUÂN 
 </div>
-<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-dark retro-gold-shadow"> ĐÊM NHẠC TRỌNG TÂM 22/11 </h2><p className="font-vietnam text-retro-ink-muted text-base sm:text-lg mt-3"> &quot;Không gian âm nhạc hoài niệm – REPLY 199X&quot; </p>
+<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-dark retro-gold-shadow"> Làn sóng xưa đang chờ bạn! </h2><p className="font-vietnam text-retro-ink-muted text-base sm:text-lg mt-3"> {brief.tickets[0]} </p><p className="reply-body-copy">{brief.tickets[1]}</p>
 </div>
 <div className="reply-events__grid grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16">
 <div className="lg:col-span-6 flex justify-center">

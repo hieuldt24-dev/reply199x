@@ -1,0 +1,249 @@
+﻿{
+    "desktop":  {
+                    "success":  true,
+                    "data":  {
+                                 "path":  "C:\\Users\\Hieu\\AppData\\Local\\Temp\\agent-browser\\screenshots\\screenshot-1794321292905.png"
+                             },
+                    "error":  null
+                },
+    "full":  {
+                 "success":  true,
+                 "data":  {
+                              "path":  "C:\\Users\\Hieu\\AppData\\Local\\Temp\\agent-browser\\screenshots\\screenshot-1794321294096.png"
+                          },
+                 "error":  null
+             },
+    "checks":  [
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  320
+                   },
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  390
+                   },
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  768
+                   },
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  1280
+                   },
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  1440
+                   },
+                   {
+                       "brokenAnchors":  [
+
+                                         ],
+                       "fonts":  [
+                                     {
+                                         "family":  "Reply Lobster",
+                                         "status":  "loaded"
+                                     },
+                                     {
+                                         "family":  "Reply Nunito",
+                                         "status":  "loaded"
+                                     }
+                                 ],
+                       "headerOverlap":  false,
+                       "ids":  true,
+                       "images":  [
+                                      {
+                                          "alt":  "REPLY 199X Logo",
+                                          "loaded":  true
+                                      },
+                                      {
+                                          "alt":  "Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X",
+                                          "loaded":  true
+                                      }
+                                  ],
+                       "navCount":  8,
+                       "oneH1":  true,
+                       "overflow":  false,
+                       "overflowing":  [
+
+                                       ],
+                       "width":  1920
+                   },
+                   {
+                       "pass":  true,
+                       "test":  "menu-open"
+                   },
+                   {
+                       "pass":  true,
+                       "test":  "escape-focus"
+                   },
+                   {
+                       "pass":  true,
+                       "test":  "form-preview"
+                   },
+                   {
+                       "pass":  true,
+                       "test":  "form-edit"
+                   },
+                   {
+                       "pass":  true,
+                       "test":  "404"
+                   }
+               ],
+    "mobile":  {
+                   "success":  true,
+                   "data":  {
+                                "path":  "C:\\Users\\Hieu\\AppData\\Local\\Temp\\agent-browser\\screenshots\\screenshot-1794321292135.png"
+                            },
+                   "error":  null
+               }
+}

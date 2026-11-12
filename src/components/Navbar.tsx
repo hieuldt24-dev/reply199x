@@ -17,7 +17,7 @@ export function Navbar() {
       frame = 0;
       // Existing anchors reserve both root scroll padding and section scroll margin.
       const scrollPadding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-      const marker = Math.max((header.current?.getBoundingClientRect().bottom ?? 96) + 28, scrollPadding + 112);
+      const marker = Math.max((header.current?.getBoundingClientRect().bottom ?? 96) + 28, scrollPadding + 116);
       const sections = NAV_LINKS.flatMap(({ id }) => {
         const element = document.getElementById(id);
         return element ? [{ id, top: element.getBoundingClientRect().top }] : [];
@@ -51,7 +51,7 @@ export function Navbar() {
     function closeOutside(event: PointerEvent) {
       if (event.target instanceof Node && !header.current?.contains(event.target)) setOpen(false);
     }
-    const desktop = window.matchMedia("(min-width: 1440px)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
     function closeOnDesktop() {
       if (desktop.matches) setOpen(false);
     }
