@@ -1,7 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
-import { getPayOsConfig, parsePayOsWebhook, verifyPayOsWebhook } from "@/lib/payments/payos/checkout";
+import { getPayOsConfig, parsePayOsWebhook, payOsWebhookValidationIssue } from "@/lib/payments/payos/checkout";
 import { drainPaidTicketSheetOutbox, type OutboxAdmin } from "@/lib/ticket-registration/outbox-worker";
 
 export const runtime = "nodejs";
@@ -38,10 +38,12 @@ export async function POST(request: NextRequest) {
   try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
   const parsed = parsePayOsWebhook(payload, config.checksumKey);
   if (!parsed) {
+    const reason = payOsWebhookValidationIssue(payload, config.checksumKey);
     // Fixed diagnostics only: never include provider payloads, signatures or keys.
     console.warn("payos_webhook_rejected", {
       stage: "validation",
-      code: verifyPayOsWebhook(payload, config.checksumKey) ? "invalid_payload" : "invalid_signature",
+      code: reason === "invalid_signature" ? "invalid_signature" : "invalid_payload",
+      reason,
     });
     return json({ error: "invalid_webhook" }, 400);
   }

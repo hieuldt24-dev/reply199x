@@ -158,18 +158,29 @@ export async function createPayOsPaymentLink(input: { orderId: string; orderCode
   return { ...result, expiresAt: expiredAt };
 }
 
-export function parsePayOsWebhook(value: unknown, checksumKey: string): { orderCode: number; amount: number; currency: string; paymentLinkId: string; reference: string; eventId: string; success: boolean } | null {
+export function payOsWebhookValidationIssue(value: unknown, checksumKey: string): string | null {
   const root = verifyPayOsWebhook(value, checksumKey);
   const data = record(root?.data);
-  if (!root || !data || typeof root.success !== "boolean") return null;
-  if (root.success && (root.code !== "00" || data.code !== "00")) return null;
+  if (!root || !data) return "invalid_signature";
+  if (typeof root.success !== "boolean") return "success_type";
+  if (root.success && root.code !== "00") return "root_code";
+  if (root.success && data.code !== "00") return "data_code";
+  if (!Number.isSafeInteger(data.orderCode) || (data.orderCode as number) < 1) return "order_code";
+  if (!Number.isSafeInteger(data.amount) || (data.amount as number) < 1) return "amount";
+  if (typeof data.paymentLinkId !== "string" || !data.paymentLinkId || data.paymentLinkId.length > 120) return "payment_link_id";
+  if (typeof data.currency !== "string" || data.currency.length > 8) return "currency";
+  if (root.success && (typeof data.reference !== "string" || !data.reference)) return "reference";
+  return null;
+}
+
+export function parsePayOsWebhook(value: unknown, checksumKey: string): { orderCode: number; amount: number; currency: string; paymentLinkId: string; reference: string; eventId: string; success: boolean } | null {
+  if (payOsWebhookValidationIssue(value, checksumKey)) return null;
+  const root = record(value)!;
+  const data = record(root.data)!;
   const { orderCode, amount, paymentLinkId } = data;
-  if (!Number.isSafeInteger(orderCode) || (orderCode as number) < 1 || !Number.isSafeInteger(amount) || (amount as number) < 1) return null;
-  if (typeof paymentLinkId !== "string" || !paymentLinkId || paymentLinkId.length > 120 || typeof data.currency !== "string" || data.currency.length > 8) return null;
   const rawReference = data.reference;
-  if (root.success && (typeof rawReference !== "string" || !rawReference)) return null;
   const reference = typeof rawReference === "string" && rawReference.length <= 120
     ? rawReference
     : `payos-${createHash("sha256").update(canonical(data), "utf8").digest("hex")}`;
-  return { orderCode: orderCode as number, amount: amount as number, currency: data.currency, paymentLinkId, reference, eventId: reference, success: root.success };
+  return { orderCode: orderCode as number, amount: amount as number, currency: data.currency as string, paymentLinkId: paymentLinkId as string, reference, eventId: reference, success: root.success as boolean };
 }

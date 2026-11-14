@@ -95,12 +95,37 @@ describe("POST /api/payments/payos/webhook", () => {
     const tampered = await request.json();
     tampered.data.reference = "sensitive-bank-reference";
     expect((await POST(new NextRequest(request.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tampered) }))).status).toBe(400);
-    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_signature" }]]);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_signature", reason: "invalid_signature" }]]);
     warn.mockClear();
     const invalidPayload = await POST(signedRequest({ data: { orderCode: 123, amount: 3000, paymentLinkId: "sensitive-link", reference: "sensitive-reference", code: "00" } }));
     expect(invalidPayload.status).toBe(400);
-    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_payload" }]]);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_payload", reason: "currency" }]]);
     expect(rpc).not.toHaveBeenCalled();
     expect(drain).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["orderCode", "123", "order_code"],
+    ["amount", 0, "amount"],
+    ["paymentLinkId", "", "payment_link_id"],
+    ["currency", null, "currency"],
+    ["reference", "", "reference"],
+    ["code", "01", "data_code"],
+  ])("identifies the rejected signed %s field without logging its value", async (field, value, reason) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const data = { orderCode: 123, amount: 3000, paymentLinkId: "private-link", currency: "VND", reference: "private-reference", code: "00", [field]: value };
+    expect((await POST(signedRequest({ data }))).status).toBe(400);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_payload", reason }]]);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([["success", undefined, "success_type"], ["code", "01", "root_code"]])("identifies rejected envelope %s", async (field, value, reason) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const request = signedRequest();
+    const body = await request.json();
+    body[field] = value;
+    expect((await POST(new NextRequest(request.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }))).status).toBe(400);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_payload", reason }]]);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
