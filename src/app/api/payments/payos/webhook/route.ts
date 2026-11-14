@@ -1,7 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
-import { getPayOsConfig, parsePayOsWebhook } from "@/lib/payments/payos/checkout";
+import { getPayOsConfig, parsePayOsWebhook, verifyPayOsWebhook } from "@/lib/payments/payos/checkout";
 import { drainPaidTicketSheetOutbox, type OutboxAdmin } from "@/lib/ticket-registration/outbox-worker";
 
 export const runtime = "nodejs";
@@ -37,7 +37,14 @@ export async function POST(request: NextRequest) {
   let payload: unknown;
   try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
   const parsed = parsePayOsWebhook(payload, config.checksumKey);
-  if (!parsed) return json({ error: "invalid_webhook" }, 400);
+  if (!parsed) {
+    // Fixed diagnostics only: never include provider payloads, signatures or keys.
+    console.warn("payos_webhook_rejected", {
+      stage: "validation",
+      code: verifyPayOsWebhook(payload, config.checksumKey) ? "invalid_payload" : "invalid_signature",
+    });
+    return json({ error: "invalid_webhook" }, 400);
+  }
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!secretKey?.startsWith("sb_secret_")) return json({ error: "temporarily_unavailable" }, 503);
   try {

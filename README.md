@@ -85,3 +85,13 @@ Google is currently disabled in the project's remote Auth settings (read-only ch
 Do not run the existing `supabase/migrations/202611130001_ticket_sales.sql` against a public project yet: it is an incomplete draft without RLS. The approved order/item/payment/outbox schema and ownership policies still require implementation and database integration tests. This auth foundation does not enable ticket payments.
 
 Implementation references: [Supabase Next.js SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client?queryGroups=framework&framework=nextjs) and [Google OAuth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google).
+
+## Production domain: reply199x.vercel.app
+
+- Set Vercel Production `SITE_URL=https://reply199x.vercel.app`, and configure the server credentials used by Supabase, PayOS and Google Sheets in Vercel environment variables. Local `.env` is not uploaded automatically.
+- Deploy the current payment routes and fixes before configuring the webhook. Redeploy after changing production environment variables.
+- Set the PayOS channel webhook URL to `https://reply199x.vercel.app/api/payments/payos/webhook`. Verify registration succeeds; a 404 means the deployed payment route is unavailable.
+- Add `https://reply199x.vercel.app/api/auth/callback` to Supabase Auth redirect URLs and use `https://reply199x.vercel.app` as the production Site URL.
+- Schedule authenticated POST requests to `https://reply199x.vercel.app/api/internal/sheets-sync` with the configured worker bearer secret for outbox retries.
+- Keep local `SITE_URL=http://localhost:3000` when accessing the app through localhost. Browser return URLs do not confirm payment; the verified webhook must persist the paid state.
+- For a payment already made, reconcile or redeliver the provider event after the webhook becomes reachable; do not create another payment merely to retry delivery.

@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
@@ -19,6 +19,7 @@ function signedRequest(overrides: { success?: boolean; code?: string; data?: Rec
 }
 
 describe("POST /api/payments/payos/webhook", () => {
+  afterEach(() => vi.restoreAllMocks());
   beforeEach(() => {
     vi.unstubAllEnvs();
     vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
@@ -52,6 +53,27 @@ describe("POST /api/payments/payos/webhook", () => {
     expect(rpc).toHaveBeenCalledWith("process_payos_webhook", expect.objectContaining({ p_order_code: 999999, p_reference: "unknown-ref" }));
   });
 
+  it("accepts the documented signed registration sample without syncing an unknown order", async () => {
+    // https://payos.vn/docs/api/ — confirm-webhook sends a signed sample.
+    const data = {
+      orderCode: 123, amount: 3000, description: "VQRIO123", accountNumber: "12345678",
+      reference: "TF230204212323", transactionDateTime: "2023-02-04 18:25:00",
+      currency: "VND", paymentLinkId: "124c33293c43417ab7879e14c8d9eb18", code: "00",
+      desc: "Thành công", counterAccountBankId: "", counterAccountBankName: "",
+      counterAccountName: "", counterAccountNumber: "", virtualAccountName: "", virtualAccountNumber: "",
+    };
+    rpc.mockResolvedValue({ data: [{ result: "reconciliation", order_id: null }], error: null });
+    expect((await POST(signedRequest({ data }))).status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("process_payos_webhook", expect.objectContaining({ p_order_code: 123, p_amount_vnd: 3000 }));
+    expect(drain).not.toHaveBeenCalled();
+    const request = signedRequest({ data });
+    const body = await request.json();
+    body.signature = "0".repeat(64);
+    rpc.mockClear();
+    expect((await POST(new NextRequest(request.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }))).status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("rejects tampered webhook data and oversized or wrong-content requests", async () => {
     const tampered = signedRequest();
     const body = await tampered.json();
@@ -65,5 +87,20 @@ describe("POST /api/payments/payos/webhook", () => {
   it("returns 503 when durable processing fails so PayOS can retry", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "database unavailable" } });
     expect((await POST(signedRequest())).status).toBe(503);
+  });
+
+  it("logs only fixed validation diagnostics for invalid signatures and signed invalid payloads", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const request = signedRequest();
+    const tampered = await request.json();
+    tampered.data.reference = "sensitive-bank-reference";
+    expect((await POST(new NextRequest(request.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(tampered) }))).status).toBe(400);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_signature" }]]);
+    warn.mockClear();
+    const invalidPayload = await POST(signedRequest({ data: { orderCode: 123, amount: 3000, paymentLinkId: "sensitive-link", reference: "sensitive-reference", code: "00" } }));
+    expect(invalidPayload.status).toBe(400);
+    expect(warn.mock.calls).toEqual([["payos_webhook_rejected", { stage: "validation", code: "invalid_payload" }]]);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(drain).not.toHaveBeenCalled();
   });
 });
