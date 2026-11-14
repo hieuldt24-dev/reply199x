@@ -1,5 +1,6 @@
 import "server-only";
 import { google } from "googleapis";
+import { createSheetsAuth } from "./google-auth";
 
 export type PaidTicketOrder = {
   outbox_id: string;
@@ -20,7 +21,6 @@ export type PaidTicketOrder = {
   payment_link_id: string | null;
 };
 
-const spreadsheetScope = "https://www.googleapis.com/auth/spreadsheets";
 const defaultPaidOrdersRange = "Registrations!A:N";
 
 function getPaidOrdersRange(): string {
@@ -65,7 +65,7 @@ export async function upsertPaidTicketOrder(order: PaidTicketOrder): Promise<str
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
   if (!spreadsheetId) throw new Error("sheets_not_configured");
   const range = getPaidOrdersRange();
-  const auth = new google.auth.GoogleAuth({ scopes: [spreadsheetScope] });
+  const auth = createSheetsAuth();
   const sheets = google.sheets({ version: "v4", auth });
   const row = makeRow(order);
 

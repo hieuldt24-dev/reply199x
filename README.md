@@ -95,3 +95,18 @@ Implementation references: [Supabase Next.js SSR](https://supabase.com/docs/guid
 - Schedule authenticated POST requests to `https://reply199x.vercel.app/api/internal/sheets-sync` with the configured worker bearer secret for outbox retries.
 - Keep local `SITE_URL=http://localhost:3000` when accessing the app through localhost. Browser return URLs do not confirm payment; the verified webhook must persist the paid state.
 - For a payment already made, reconcile or redeliver the provider event after the webhook becomes reachable; do not create another payment merely to retry delivery.
+
+### Google Sheets credentials on Vercel
+
+Set the server-only Production secret `GOOGLE_SERVICE_ACCOUNT_JSON` to the complete service-account JSON object, then redeploy. Use raw JSON in the Vercel value, preserving JSON `\n` escapes inside the private key. Do not put a file path or add surrounding shell quotes. Explicit malformed JSON fails closed; it does not fall back to another identity. Share the target spreadsheet with that service account as Editor and enable Google Sheets API for its project.
+
+For local ADC, leave `GOOGLE_SERVICE_ACCOUNT_JSON` unset and set `GOOGLE_APPLICATION_CREDENTIALS` to the full credential-file path, for example `./secrets/google-service-account.json`. A folder alone is insufficient. Local files are not automatically available on Vercel. Keep credentials out of Git and chat.
+
+Paid rows require a verified paid webhook and outbox record. Retry eligible existing outbox jobs using an authenticated worker request; use the actual worker secret privately:
+
+```sh
+curl -X POST https://reply199x.vercel.app/api/internal/sheets-sync \
+  -H "Authorization: Bearer <SHEETS_SYNC_WORKER_SECRET>"
+```
+
+Inspect `claimed`, `synced`, and `failed` in the response. Keep scheduled POST retries configured. This request retries synchronization; it does not create a payment. `GOOGLE_SHEETS_SPREADSHEET_ID` and an existing tab matching `GOOGLE_SHEETS_PAID_ORDERS_RANGE` (default `Registrations!A:N`) are also required.

@@ -1,9 +1,9 @@
 import "server-only";
 import { google } from "googleapis";
+import { createSheetsAuth } from "./google-auth";
 import type { TicketRegistrationRow } from "./validation";
 
 const spreadsheetRange = "Registrations!A:H";
-const sheetsScope = "https://www.googleapis.com/auth/spreadsheets";
 
 export async function appendTicketRequestRow(row: TicketRegistrationRow): Promise<number> {
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
@@ -11,7 +11,7 @@ export async function appendTicketRequestRow(row: TicketRegistrationRow): Promis
     throw new Error("Ticket registration is not configured");
   }
 
-  const auth = new google.auth.GoogleAuth({ scopes: [sheetsScope] });
+  const auth = createSheetsAuth();
   const sheets = google.sheets({ version: "v4", auth });
   const response = await sheets.spreadsheets.values.append({
     spreadsheetId,
