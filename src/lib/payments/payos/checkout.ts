@@ -162,14 +162,15 @@ export function payOsWebhookValidationIssue(value: unknown, checksumKey: string)
   const root = verifyPayOsWebhook(value, checksumKey);
   const data = record(root?.data);
   if (!root || !data) return "invalid_signature";
-  if (typeof root.success !== "boolean") return "success_type";
-  if (root.success && root.code !== "00") return "root_code";
-  if (root.success && data.code !== "00") return "data_code";
+  if (typeof data.code !== "string" || !/^[0-9]{2}$/.test(data.code)) return "data_code";
+  const success = data.code === "00" && root.success !== false;
+  if (success && root.code !== undefined && root.code !== "00") return "root_code";
+  if (root.success === true && data.code !== "00") return "data_code";
   if (!Number.isSafeInteger(data.orderCode) || (data.orderCode as number) < 1) return "order_code";
   if (!Number.isSafeInteger(data.amount) || (data.amount as number) < 1) return "amount";
   if (typeof data.paymentLinkId !== "string" || !data.paymentLinkId || data.paymentLinkId.length > 120) return "payment_link_id";
   if (typeof data.currency !== "string" || data.currency.length > 8) return "currency";
-  if (root.success && (typeof data.reference !== "string" || !data.reference)) return "reference";
+  if (success && (typeof data.reference !== "string" || !data.reference)) return "reference";
   return null;
 }
 
@@ -182,5 +183,7 @@ export function parsePayOsWebhook(value: unknown, checksumKey: string): { orderC
   const reference = typeof rawReference === "string" && rawReference.length <= 120
     ? rawReference
     : `payos-${createHash("sha256").update(canonical(data), "utf8").digest("hex")}`;
-  return { orderCode: orderCode as number, amount: amount as number, currency: data.currency as string, paymentLinkId: paymentLinkId as string, reference, eventId: reference, success: root.success as boolean };
+  // Only data is HMAC-signed. Some registration probes omit the outer boolean;
+  // derive success from signed code, retaining an explicit false as a veto.
+  return { orderCode: orderCode as number, amount: amount as number, currency: data.currency as string, paymentLinkId: paymentLinkId as string, reference, eventId: reference, success: data.code === "00" && root.success !== false };
 }

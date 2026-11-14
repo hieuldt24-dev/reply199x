@@ -19,3 +19,11 @@ User provided actual registration log with code invalid_payload. This proves HMA
 Extracted unchanged validation guards into shared payOsWebhookValidationIssue, used by the parser and rejection diagnostics. Logs now include only a fixed reason: success_type, root_code, data_code, order_code, amount, payment_link_id, currency, reference, or invalid_signature. This avoids diagnostic/parser rule drift and logs no field values. Acceptance and payment mutation gates are unchanged.
 
 Final checks: checkout and webhook suites 26/26 pass; scoped ESLint of all three touched source/test files exits 0. Added field/envelope rejection coverage with real HMAC and no DB access. Next deployment and one registration Save will expose the exact incompatible field safely. Live registration success remains unverified.
+
+## Confirmed compatibility correction: success_type
+
+Actual production registration now reports reason success_type: signature is valid, but outer success is missing/nonboolean. This confirms the overly strict envelope guard is the failing boundary. Official SDK implementation https://raw.githubusercontent.com/payOSHQ/payos-lib-node/main/src/resources/webhooks/webhook.ts verifies and returns signed data without validating outer success; only data participates in HMAC.
+
+Parser now derives payment success from signed data.code equal to 00; explicit boolean false remains a veto, explicit true with non-success signed code is rejected, and a present contradictory outer code rejects successful payloads. Missing/nonboolean outer success no longer rejects a valid signed payload. Missing/invalid signed data.code is rejected. Numeric/order/link/currency/reference validation, HMAC verification, database exact payment matching and reconciliation remain in force. No unsigned probe bypass or query-based payment confirmation was added.
+
+Final focused suites: 28/28 passed; scoped ESLint passes. Coverage includes missing/string outer success, signed failure never becoming success, contradictory outer code, explicit false veto, missing signed code and tampered signed data. No deployment performed; deploy then retry registration. Production success remains unverified.

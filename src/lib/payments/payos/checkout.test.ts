@@ -92,4 +92,19 @@ describe("PayOS payment-link contract", () => {
     expect(parsePayOsWebhook({ success: false, code: "01", data: failedData, signature: failedSignature }, "checksum")).toMatchObject({ success: false });
     expect(parsePayOsWebhook({ success: true, code: "00", data: { ...data, amount: 1 }, signature }, "checksum")).toBeNull();
   });
+
+  it.each([undefined, "true", "false"])("handles nonboolean outer success %s using only signed status", (success) => {
+    const data = { orderCode: 123, amount: 3000, currency: "VND", paymentLinkId: "probe-link", reference: "probe-ref", code: "00" };
+    const sign = (value: Record<string, unknown>) => createHmac("sha256", "checksum").update(Object.keys(value).sort().map((key) => `${key}=${value[key]}`).join("&")).digest("hex");
+    const payload = { success, code: "00", data, signature: sign(data) };
+    expect(parsePayOsWebhook(payload, "checksum")).toMatchObject({ success: true });
+    expect(parsePayOsWebhook({ ...payload, data: { ...data, amount: 1 } }, "checksum")).toBeNull();
+    const failure = { ...data, code: "01" };
+    expect(parsePayOsWebhook({ ...payload, data: failure, signature: sign(failure) }, "checksum")).toMatchObject({ success: false });
+    expect(parsePayOsWebhook({ ...payload, code: "01" }, "checksum")).toBeNull();
+    expect(parsePayOsWebhook({ ...payload, success: false }, "checksum")).toMatchObject({ success: false });
+    const missingCode = { ...data, code: undefined };
+    const noCodeSignature = sign(Object.fromEntries(Object.entries(missingCode).filter(([, value]) => value !== undefined)));
+    expect(parsePayOsWebhook({ ...payload, data: missingCode, signature: noCodeSignature }, "checksum")).toBeNull();
+  });
 });

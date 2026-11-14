@@ -119,7 +119,7 @@ describe("POST /api/payments/payos/webhook", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it.each([["success", undefined, "success_type"], ["code", "01", "root_code"]])("identifies rejected envelope %s", async (field, value, reason) => {
+  it.each([["code", "01", "root_code"]])("identifies rejected envelope %s", async (field, value, reason) => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const request = signedRequest();
     const body = await request.json();
