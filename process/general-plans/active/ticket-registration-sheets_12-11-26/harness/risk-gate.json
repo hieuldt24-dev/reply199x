@@ -1,0 +1,13 @@
+{
+  "task": "Submit ticket-popup requests to the organizer's Google Sheets Registrations tab.",
+  "planPath": "process/general-plans/active/ticket-registration-sheets_12-11-26/ticket-registration-sheets_PLAN_12-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "public API / external contract",
+    "secret / trust-boundary"
+  ],
+  "approver": "user",
+  "humanApprovalRequired": true,
+  "mustStopBeforeFinalize": true,
+  "why": "The user approved EXECUTE and accepted the plan's risk controls. Explicit reviewer approval and authorized live-sheet verification remain separate gates."
+}

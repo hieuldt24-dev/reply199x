@@ -12,7 +12,7 @@ export function AboutSection() {
 <span className="retro-icon text-sm text-retro-red" aria-hidden="true">▣</span><span className="">Nơi ký ức bắt đầu</span>
 </div>
 <div className="flex flex-col">
-<h2 className="font-epilogue font-black text-3xl sm:text-4xl text-retro-dark tracking-tight retro-title-shadow leading-tight">Reply 199X <span className="text-retro-red">— the flow of nostalgia</span></h2><div className="h-1 w-20 bg-retro-gold mt-3 rounded-full">
+<h2 className="font-epilogue font-black text-3xl sm:text-4xl text-retro-dark tracking-tight retro-title-shadow leading-tight">Reply 199X <span className="text-retro-red">— LỜI HỒI ĐÁP THANH XUÂN</span></h2><div className="h-1 w-20 bg-retro-gold mt-3 rounded-full">
 
 </div>
 

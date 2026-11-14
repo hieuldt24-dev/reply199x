@@ -1,0 +1,8 @@
+{
+  "snippets": [
+    { "file": "src/lib/payments/payos/checkout.ts", "lines": "1-158", "description": "Server-only PayOS credentials, canonical signatures, response URL allowlist, and signed webhook validation", "content": "getPayOsConfig; signPayOsCreateLink; validatePayOsLinkResponse; parsePayOsSuccessWebhook" },
+    { "file": "src/app/api/payments/payos/webhook/route.ts", "lines": "1-68", "description": "Bounded JSON request and verified callback passed to service-role transactional RPC", "content": "parsePayOsSuccessWebhook then admin.rpc('process_payos_webhook', ...)" },
+    { "file": "supabase/migrations/202611140006_payos_payment_links.sql", "lines": "1-159", "description": "PayOS isolated persistence, dedupe, paid/outbox transition, and provider-aware expiry", "content": "payos_payment_links; payos_payment_events; process_payos_webhook; expire_ticket_checkout" },
+    { "file": "src/app/api/ticket-orders/route.ts", "lines": "61-165", "description": "Order endpoint default-disabled checkout gate and PayOS payment-link response", "content": "PAYOS_CHECKOUT_ENABLED must equal true before payment/order service work" }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+    "steps":  [
+                  {
+                      "step":  "PayOS adapter, signed webhook route, fail-closed ticket route, and dialog focused tests",
+                      "command":  "npm.cmd test -- src/lib/payments/payos/checkout.test.ts src/app/api/payments/payos/webhook/route.test.ts src/app/api/ticket-orders/route.test.ts \u0027src/app/(routes)/_components/TicketRequestDialog.test.tsx\u0027",
+                      "result":  "PASS",
+                      "notes":  "4 test files passed; 24 tests passed. Covered signatures, URL allowlisting, lookup-before-create, ambiguous timeout without second POST, no create by a lease loser, saved link reuse, signed success/non-success/unknown webhooks, database failures, checkout-disabled behavior, and UI navigation. Test runner printed summary but remained alive; the exact Node test process was stopped after summary output."
+                  },
+                  {
+                      "step":  "Full repository automated suite",
+                      "command":  "npm.cmd test",
+                      "result":  "FAIL",
+                      "notes":  "13 files: 102 passed, 5 failed. The failures are auth callback URL expectation mismatches (4) and a production secure-cookie expectation mismatch (1) in src/app/auth/auth.test.ts and src/lib/supabase/route-client.test.ts, outside the PayOS-touched files. Baseline was not independently established. Full run includes passing PayOS tests. The test process remained alive after its summary and was stopped."
+                  },
+                  {
+                      "step":  "Full application ESLint gate",
+                      "command":  "npx.cmd eslint src --max-warnings=0",
+                      "result":  "FAIL",
+                      "notes":  "Failure in src/components/auth/HeaderAuth.tsx: react-hooks/set-state-in-effect; two unused-variable warnings also reported in that file. This file is outside the PayOS-touched files; baseline was not independently established."
+                  },
+                  {
+                      "step":  "Changed application files ESLint",
+                      "command":  "npx.cmd eslint \u003cchanged src files\u003e --max-warnings=0",
+                      "result":  "PASS",
+                      "notes":  "All touched application and test TypeScript files passed with zero warnings."
+                  },
+                  {
+                      "step":  "Repository typecheck gate",
+                      "command":  "npm.cmd run typecheck",
+                      "result":  "SKIP",
+                      "notes":  "Two runs completed Next route type generation successfully but then stayed silent in tsc --noEmit with a responding low-CPU Node process. Each exact Node process was stopped after more than one minute without compiler output. No typecheck pass is claimed. Next build independently reported its TypeScript stage finished."
+                  },
+                  {
+                      "step":  "Production build gate",
+                      "command":  "npm.cmd run build",
+                      "result":  "SKIP",
+                      "notes":  "A final build after the last source changes reported successful compilation, finished TypeScript, generated all 17 static pages, and printed the full route table including /api/payments/payos/webhook. The Node process remained alive without further output and was stopped; no clean command exit code is claimed."
+                  },
+                  {
+                      "step":  "Migration/Postgres/RLS/transaction integration",
+                      "command":  "Not available in the validated environment",
+                      "result":  "SKIP",
+                      "notes":  "No local Postgres runner; migration was not applied locally, remotely, or to staging. Atomicity, RLS, and SePay row/callback compatibility remain unverified."
+                  },
+                  {
+                      "step":  "PayOS API, payment, expiry, and Sheet retry worker",
+                      "command":  "Not authorized / not available",
+                      "result":  "SKIP",
+                      "notes":  "No PayOS network calls or live payment were made. No durable Sheet retry scheduler or approved Sheet mapping was confirmed. Checkout remains disabled."
+                  },
+                  {
+                      "step":  "Independent tester focused PayOS/order/UI confirmation",
+                      "command":  "npm.cmd test -- src/lib/payments/payos/checkout.test.ts src/app/api/payments/payos/webhook/route.test.ts src/app/api/ticket-orders/route.test.ts \u0027src/app/api/ticket-orders/[orderId]/route.test.ts\u0027 \u0027src/app/(routes)/_components/TicketRequestDialog.test.tsx\u0027",
+                      "result":  "PASS",
+                      "notes":  "Independent run: 5 files passed, 28 tests passed. Vitest printed the passing summary then remained alive with no output; only the exact process for this test command was stopped, so no clean terminal exit code is claimed. The executor reported the full suite at 102 passed / 5 failures in unrelated auth/cookie tests; this tester did not repeat the full suite per orchestrator instruction."
+                  }
+              ]
+}

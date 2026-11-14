@@ -1,0 +1,33 @@
+{
+  "task": "Submit ticket-popup requests to the organizer's Google Sheets Registrations tab.",
+  "artifacts": [
+    {
+      "file": "src/app/api/ticket-requests/route.ts",
+      "lines": "43-65, 99-175",
+      "description": "Normalize the request and configured origins; reject untrusted origins, invalid payloads, and oversized requests before calling the append dependency. Return success only for exactly one appended row and log only a fixed category and correlation ID on failure.",
+      "content": "The handler compares normalized HTTP(S) Origin with configured SITE_URL and never reads forwarded-origin headers. It checks JSON content type and body limits, validates parsed input, maps it to a fixed row, and returns 201 only when appendRow reports exactly one row. Append failures return a generic response and log fixed-safe diagnostic fields only."
+    },
+    {
+      "file": "src/lib/ticket-registration/validation.ts",
+      "lines": "1-95",
+      "description": "Allowlist request fields and merch values, enforce bounded field types and quantities, normalize an omitted phone to an empty cell, and map validated values into a fixed six-cell row.",
+      "content": "allowedKeys is limited to name, email, phone, quantity, and merch. phone === undefined normalizes to an empty string; other non-string values fail validation. mapTicketRequestToRow returns timestamp, name, email, phone, quantity, and merch in that fixed order."
+    },
+    {
+      "file": "src/lib/ticket-registration/sheets.ts",
+      "lines": "1-31",
+      "description": "Keep the Sheets adapter server-only and lazy, scope authorization to Sheets, append only to the fixed Registrations range using RAW values, disable automatic retries, and return the confirmed updated-row count.",
+      "content": "The adapter uses the Sheets-only scope, fixed range Registrations!A:F, valueInputOption RAW, INSERT_ROWS, and retry: false. It reads only the spreadsheet identifier needed for configuration and does not contain credential values."
+    },
+    {
+      "file": "src/app/(routes)/_components/TicketRequestDialog.tsx",
+      "lines": "23-61, 116-141",
+      "description": "Prevent concurrent submissions, confirm only the exact recorded response, preserve entered form values on failures, and disclose that requests do not reserve or purchase tickets.",
+      "content": "The submit handler ignores activation while a request is pending, posts to the same-origin route, and displays success only for HTTP 201 with status recorded. Failure text warns that a request may already have been recorded and advises contacting organizers before resubmitting. The status message is exposed through a polite live region."
+    }
+  ],
+  "logs": [],
+  "queries": [],
+  "diffSummary": "Implemented the approved ticket-request flow, mock-based route/adapter/dialog tests, and related documentation. No credential values, real attendee data, or live Google responses were accessed.",
+  "rootCause": "The original ticket dialog handed off via mailto and did not provide a server-side registration request. This change adds the planned same-origin route and Sheets adapter while preserving the explicit boundary that a request is not a reservation or purchase."
+}

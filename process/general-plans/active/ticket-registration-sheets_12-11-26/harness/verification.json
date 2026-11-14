@@ -1,0 +1,75 @@
+{
+  "task": "Submit ticket-popup requests to the organizer's Google Sheets Registrations tab.",
+  "commands": [
+    {
+      "step": "Clean-install gate",
+      "command": "npm.cmd ci",
+      "result": "FAIL",
+      "notes": "Retried after the earlier attempts. npm failed with EPERM unlinking node_modules/@next/.swc-win32-x64-msvc-*/next-swc.win32-x64-msvc.node, consistent with a locked native binary. No existing process was terminated."
+    },
+    {
+      "step": "Restore dependencies for local checks",
+      "command": "npm.cmd install --package-lock=false",
+      "result": "PASS",
+      "notes": "Restored dependencies after npm ci failed. This is not a substitute for the failed clean-install gate."
+    },
+    {
+      "step": "Automated tests",
+      "command": "npm.cmd test",
+      "result": "PASS",
+      "notes": "3 test files passed; 25 tests passed. Google API interactions were mocked."
+    },
+    {
+      "step": "Application lint",
+      "command": "npx.cmd eslint src --max-warnings=0",
+      "result": "PASS",
+      "notes": "Completed with zero errors and warnings."
+    },
+    {
+      "step": "TypeScript check",
+      "command": "npm.cmd run typecheck",
+      "result": "PASS",
+      "notes": "Next route types generated and tsc --noEmit completed successfully."
+    },
+    {
+      "step": "Production build",
+      "command": "npm.cmd run build",
+      "result": "PASS",
+      "notes": "Next.js production build succeeded and included the dynamic /api/ticket-requests route. Build output listed .env as an environment file; its contents were not inspected, the ticket-request handler was not invoked, and no Google request was made."
+    },
+    {
+      "step": "Risk-artifact shape validation",
+      "command": "node .agents/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/ticket-registration-sheets_12-11-26/harness",
+      "result": "FAIL",
+      "notes": "Expected until an explicit reviewer records review-decision.json. That file is intentionally absent; no reviewer decision is inferred."
+    }
+  ],
+  "manualChecks": [
+    {
+      "step": "Local browser submission and responsive layout",
+      "result": "PASS",
+      "notes": "Used synthetic form values and mocked fetch responses only. Verified success/failure feedback, preserved values, and no horizontal overflow at 360, 390, 768, 1280, and 1440 pixels. The automated UI test covers duplicate-submit protection. This does not prove external persistence."
+    },
+    {
+      "step": "Live Google Sheets append",
+      "result": "SKIP",
+      "notes": "Not authorized. No Google API call, credential inspection, real attendee data, or real-sheet write was performed."
+    },
+    {
+      "step": "Deployment identity and edge rate limiting",
+      "result": "SKIP",
+      "notes": "Production exposure remains prohibited until secure runtime identity and deployment edge rate limiting are confirmed."
+    },
+    {
+      "step": "Production reverse-proxy Origin behavior",
+      "result": "SKIP",
+      "notes": "The local route compares the normalized Origin to SITE_URL and ignores forwarded headers. The unselected production proxy was not verified."
+    },
+    {
+      "step": "Explicit human reviewer decision",
+      "result": "SKIP",
+      "notes": "Pending a reviewer. review-decision.json was intentionally not created."
+    }
+  ],
+  "result": "DONE_WITH_CONCERNS: mock-based implementation and local gates pass except npm ci, which fails on a locked Next SWC binary. The evidence pack is not complete or ready for finalization because reviewer approval and authorized live-sheet verification are pending."
+}

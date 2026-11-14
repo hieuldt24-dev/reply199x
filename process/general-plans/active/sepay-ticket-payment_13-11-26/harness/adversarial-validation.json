@@ -1,0 +1,11 @@
+{
+  "scenarios": [
+    { "scenario": "Caller tries to create an order or checkout while rollout is not cleared", "ruled_out": true, "rationale": "The API returns 503 unless PAYOS_CHECKOUT_ENABLED is exactly true; tracked and ignored env templates set false." },
+    { "scenario": "Attacker supplies arbitrary checkout URL or unsigned PayOS response", "ruled_out": true, "rationale": "Response signature is checked before accepting URL, then HTTPS and exact pay.payos.vn host are required." },
+    { "scenario": "Attacker replays or tampers with webhook data", "ruled_out": true, "rationale": "Canonical HMAC-SHA256 signature is constant-time compared and event/reference uniqueness is enforced in persistence." },
+    { "scenario": "Browser return/cancel attempts to mark an order paid", "ruled_out": true, "rationale": "Return page only polls persisted state; the paid transition exists only in the server-side PayOS webhook RPC." },
+    { "scenario": "SePay callback mutates PayOS payment evidence", "ruled_out": true, "rationale": "PayOS uses isolated tables and RPC; original SePay callback route/RPC remain unchanged." },
+    { "scenario": "A worker that outlived its lease marks an order synced after reclaim", "ruled_out": true, "rationale": "Each claim gets a fresh UUID lease token; completion and failure RPCs require the current token, clear it on transition, and return false for stale tokens." },
+    { "scenario": "A worker secret is accidentally committed to the tracked environment template", "ruled_out": true, "rationale": "The tracked SHEETS_SYNC_WORKER_SECRET value is the short REPLACE_ME placeholder, below the endpoint's 32-character minimum; a test confirms it is rejected. The previously exposed token must be treated as compromised and rotated in the app and scheduler by the owner." }
+  ]
+}

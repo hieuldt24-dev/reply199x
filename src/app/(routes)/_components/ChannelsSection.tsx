@@ -16,7 +16,11 @@ export function ChannelsSection() {
 <div className="flex items-start justify-between gap-4">
 <div className="flex items-center gap-3.5">
 <div className="w-12 h-12 rounded-xl bg-retro-dark text-retro-gold flex items-center justify-center border-2 border-retro-gold shadow-sm shrink-0">
-<span className="retro-icon text-2xl" aria-hidden="true">▶</span>
+<svg className="h-7 w-7" viewBox="0 0 24 24" aria-hidden="true">
+<path fill="#25F4EE" d="M14.5 3h3c.25 2.05 1.4 3.3 3.5 3.8v3.1c-1.65-.05-3.2-.55-4.5-1.5v7a5.5 5.5 0 1 1-5.5-5.5c.35 0 .7.05 1 .1v3.3a2.2 2.2 0 1 0 1.5 2.1V3h1Z" transform="translate(-.6 -.2)" />
+<path fill="#FE2C55" d="M14.5 3h3c.25 2.05 1.4 3.3 3.5 3.8v3.1c-1.65-.05-3.2-.55-4.5-1.5v7a5.5 5.5 0 1 1-5.5-5.5c.35 0 .7.05 1 .1v3.3a2.2 2.2 0 1 0 1.5 2.1V3h1Z" transform="translate(.45 .15)" />
+<path fill="#fff" d="M14.5 3h3c.25 2.05 1.4 3.3 3.5 3.8v3.1c-1.65-.05-3.2-.55-4.5-1.5v7a5.5 5.5 0 1 1-5.5-5.5c.35 0 .7.05 1 .1v3.3a2.2 2.2 0 1 0 1.5 2.1V3h1Z" />
+</svg>
 </div>
 <div>
 <h3 className="font-epilogue font-bold text-lg sm:text-xl text-retro-dark">Kênh TikTok Chính Thức</h3><p className="font-space text-sm font-semibold text-retro-forest">@loihoidap199x</p>
@@ -37,7 +41,9 @@ export function ChannelsSection() {
 <div className="flex items-start justify-between gap-4">
 <div className="flex items-center gap-3.5">
 <div className="w-12 h-12 rounded-xl bg-retro-paper border-2 border-retro-dark/40 text-retro-ink-muted flex items-center justify-center shrink-0">
-<span className="retro-icon text-2xl" aria-hidden="true">◎</span>
+<svg className="h-7 w-7" viewBox="0 0 24 24" aria-hidden="true">
+<path fill="#1877F2" d="M13.5 21v-8h2.8l.4-3.1h-3.2v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8h3.4Z" />
+</svg>
 </div>
 <div>
 <h3 className="font-epilogue font-bold text-lg sm:text-xl text-retro-dark">Facebook Fanpage</h3><p className="font-space text-sm font-semibold text-retro-ink-muted">REPLY 199X Official</p>

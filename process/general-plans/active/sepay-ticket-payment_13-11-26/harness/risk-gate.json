@@ -1,0 +1,6 @@
+{
+  "riskClass": "billing, schema/data migration, public API, secret/trust-boundary logic",
+  "workDescription": "Cut over ticket checkout and payment verification from SePay to PayOS while preserving historical SePay processing.",
+  "approver": "User accepted the plan's CONDITIONAL validate contract on 2026-11-14",
+  "mustStopBeforeFinalize": true
+}

@@ -12,7 +12,7 @@ Last updated: 2026-11-09
 
 User intent: read the supplied REPLY 199X HTML, define maintainable components that AI agents can follow, and standardize the project harness. The approved direction preserves the Vietnamese retro event identity and documents events, tickets, merchandise and contact areas.
 
-The REPLY 199X homepage conversion is implemented in the Next.js source and was checked locally against the preserved HTML at five viewport widths. The active task folder contains the requirements, plan and browser evidence. The component contract describes current ownership. Merch links to the source's Google Form; ticket sales remain unavailable; the contact form prepares a local preview and email link only. These do not prove order fulfillment, ticket reservations or message delivery. The reference remains at `process/general-plans/completed/harness-bootstrap_09-11-26/reply-199x.reference.html`.
+The REPLY 199X homepage conversion is implemented in the Next.js source and was checked locally against the preserved HTML at five viewport widths. The ticket request popup now submits through a server-side route to the organizer's fixed Google Sheets registration tab; this records a request only, not a reservation or purchase. The contact form still prepares a local preview and email link only. A mocked test or successful build does not prove a real sheet write. The component contract describes current ownership. Merch links to the source's Google Form; ticket sales remain unavailable. The reference remains at `process/general-plans/completed/harness-bootstrap_09-11-26/reply-199x.reference.html`.
 
 ## Quick Start
 
@@ -84,7 +84,7 @@ Compatibility note: this workspace currently has an ordinary `.agents/skills/` d
 - Manifest: Next.js ^16.4.3 App Router, React/React DOM ^19.2.0, TypeScript ^5.0.0, Tailwind CSS ^4.0.0, ESLint ^10.0.0. Exact resolutions live in package-lock.json; use npm ci.
 - Node.js >=22, .nvmrc selects 22; detected runtime Node 22.22.0 and npm 11.21.0.
 - Tailwind uses @tailwindcss/postcss and CSS configuration, not the reference's CDN config script.
-- No database, authentication, payment service, mail transport, analytics or automated application test runner is installed.
+- No database, authentication, payment service, mail transport, or analytics is installed. Vitest provides automated request-route and dialog tests using a mocked Sheets boundary.
 
 ## Key Patterns and Conventions
 
@@ -99,7 +99,7 @@ Compatibility note: this workspace currently has an ordinary `.agents/skills/` d
 
 ## Environment and Configuration
 
-- SITE_URL is the sole documented environment variable; used by robots.ts and sitemap.ts. Copy .env.example to .env.local; set the deployed origin before production.
+- `SITE_URL` is used by `robots.ts`, `sitemap.ts`, and ticket-request origin validation; the API compares normalized origins and does not trust forwarded headers. The server-only Sheets adapter uses `GOOGLE_SHEETS_SPREADSHEET_ID` and lazily obtains Google Application Default Credentials. Do not put credential values or credential-file contents in tracked files. Production remains blocked until a least-privilege runtime identity, public-origin proxy behavior, data access/retention, and edge rate limiting/monitoring are verified.
 - Secrets belong in ignored local environment files and server-only code. No credentials were scanned or recorded.
 - next.config.ts enables reactStrictMode and disables poweredByHeader.
 - tsconfig.json uses bundler resolution, strict mode and noEmit.
@@ -108,7 +108,7 @@ Compatibility note: this workspace currently has an ordinary `.agents/skills/` d
 
 ## Testing and Quality
 
-Use `process/context/tests/all-tests.md`. npm scripts provide lint, typecheck, check and build. No project test runner is installed. `agent-browser` is available in the workspace for manual assertions and screenshots. A successful build alone does not prove interaction or visual fidelity.
+Use `process/context/tests/all-tests.md`. npm scripts provide test, lint, typecheck, check and build. `agent-browser` is available in the workspace for manual assertions and screenshots. A successful build alone does not prove interaction, visual fidelity or external Sheets persistence.
 
 ## Context Group Lifecycle
 
@@ -121,6 +121,7 @@ No feature folders. The implemented REPLY 199X conversion plan and evidence live
 ## Open Questions / Outstanding Work
 
 - Ticket sales are not open in the reference; future prices and sale timing require organizer confirmation.
+- Real Sheets persistence and cleanup, approved runtime identity, reverse-proxy Origin preservation, and production edge rate limiting/monitoring remain unverified; do not expose the endpoint in production until these gates pass.
 - Contact delivery/storage, asset rights, production hosting and an official Facebook URL remain unselected.
 - Remote logo and poster load in current browser checks but still depend on third-party hosting. The provided merch form destination has not been independently checked for order fulfillment.
 

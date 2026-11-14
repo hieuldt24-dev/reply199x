@@ -1,0 +1,39 @@
+{
+  "scenarios": [
+    {
+      "scenario": "A cross-origin browser request supplies a missing, malformed, mismatched, or forwarded-header-only Origin.",
+      "ruled_out": true,
+      "rationale": "Mock-based route tests verify rejection before append. The route compares normalized HTTP(S) Origin with configured SITE_URL and does not trust forwarded-origin headers."
+    },
+    {
+      "scenario": "A request bypasses the route's JSON content-type, streaming body-size, field allowlist, type, quantity, or merch boundaries.",
+      "ruled_out": true,
+      "rationale": "Mock-based tests cover unsupported content type, malformed JSON, unknown fields, oversized streamed bodies, invalid fields, and quantity boundaries; validation rejects inputs before append."
+    },
+    {
+      "scenario": "A caller supplies a formula-looking value that is interpreted as a spreadsheet formula.",
+      "ruled_out": false,
+      "rationale": "Tests verify the mapped value reaches the mocked append unchanged and the adapter requests RAW input. No live Google Sheets behavior was tested, so destination behavior remains unverified."
+    },
+    {
+      "scenario": "A non-browser caller spoofs the configured Origin and submits repeated requests to the public endpoint.",
+      "ruled_out": false,
+      "rationale": "Origin checks constrain browser cross-origin requests but do not authenticate non-browser callers. Secure runtime identity and deployment edge rate limiting must be confirmed before production exposure."
+    },
+    {
+      "scenario": "A provider error or request payload is disclosed in the API failure response or diagnostic log.",
+      "ruled_out": true,
+      "rationale": "The route returns generic failure text and logs only a fixed error category with a generated correlation ID. Tests assert the diagnostic fields are fixed-safe."
+    },
+    {
+      "scenario": "An ambiguous append response triggers an automatic retry or a false success confirmation.",
+      "ruled_out": true,
+      "rationale": "The Sheets API call sets retry: false; the route confirms success only when exactly one row is reported; the client requires HTTP 201 and status recorded, and warns before any manual retry after an uncertain failure."
+    },
+    {
+      "scenario": "Two rapid submit activations create concurrent requests from the dialog.",
+      "ruled_out": true,
+      "rationale": "The dialog guards the pending state with a ref and the mocked UI test submits twice while pending, confirming only one fetch."
+    }
+  ]
+}

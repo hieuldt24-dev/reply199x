@@ -15,7 +15,7 @@ export function TicketsSection() {
 <span className="bg-retro-dark text-retro-paper font-space text-xs uppercase tracking-wider px-3 py-1 rounded font-bold"> VÉ CHÍNH THỨC • REPLY 199X </span><span className="font-space text-xs text-retro-red font-bold"> SERIES: #RP-2026-LIVE </span>
 </div>
 <div className="mt-4">
-<h4 className="font-epilogue font-extrabold text-2xl text-retro-dark"> Đêm Nhạc: Reply 199X – Dòng Chảy Hoài Niệm </h4><p className="font-vietnam text-sm text-retro-ink-muted mt-1"> On The Radio • 76 Thái Phiên, TP. Đà Nẵng </p>
+<h4 className="font-epilogue font-extrabold text-2xl text-retro-dark"> KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X </h4><p className="font-vietnam text-sm text-retro-ink-muted mt-1"> On The Radio • 76 Thái Phiên, TP. Đà Nẵng </p>
 </div>
 <div className="grid grid-cols-2 gap-4 mt-6">
 <div className="bg-retro-paper p-3 rounded-lg border border-retro-dark/20">

@@ -109,3 +109,8 @@ export const merchCombos = [
  { id:"tuoi-xi-tin", title:'Combo "Tuổi Xì Tin"', price:"99.000", originalPrice:"Giá gốc 119.000đ" },
  { id:"tuoi-xi-lay", title:'Combo "Tuổi Xì Lây"', price:"169.000", originalPrice:"" }
 ] as const satisfies readonly MerchCombo[];
+
+export const ticketMerchOptions = [
+  "Không kèm merch",
+  ...merchCombos.map((combo) => `${combo.title} · ${combo.price}đ`),
+] as const;

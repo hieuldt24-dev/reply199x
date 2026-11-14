@@ -11,7 +11,7 @@ Last updated: 2026-11-09
 
 ## Scope and Read When
 
-Read after the root router for source changes, runtime debugging, quality checks and harness validation. There is one package and no application unit/integration/E2E test runner. No deeper testing documents exist yet.
+Read after the root router for source changes, runtime debugging, quality checks and harness validation. There is one package with Vitest route/domain and dialog tests; no end-to-end browser runner is installed.
 
 ## Commands
 
@@ -20,6 +20,7 @@ Run from the workspace root using Node 22+. Use npm.cmd on Windows if PowerShell
 | Command | Establishes |
 |---|---|
 | npm.cmd ci | Reproducible dependency installation from package-lock.json |
+| npm.cmd test | Vitest route/domain and dialog tests using a mocked Google Sheets boundary; no live network or credentials |
 | npm.cmd run dev | Local development server, normally localhost:3000 |
 | npm.cmd run lint | ESLint including Next/TypeScript rules, zero warnings |
 | npm.cmd run typecheck | next typegen followed by tsc --noEmit |
@@ -28,7 +29,7 @@ Run from the workspace root using Node 22+. Use npm.cmd on Windows if PowerShell
 | npm.cmd run build | Production compilation and prerendering |
 | npm.cmd start | Starts an already-built production server |
 
-Do not run typegen and build concurrently: both write .next artifacts. Do not run npm test; that script does not exist.
+Do not run typegen and build concurrently: both write .next artifacts.
 
 ## Quick Procedures
 
@@ -50,10 +51,11 @@ For a complete context audit, also use the skill routing, cross-reference, keywo
 
 ## Known Gaps and Debugging
 
-- No in-project interaction, accessibility, screenshot or browser test runner is installed. Workspace `agent-browser` can record ad-hoc browser assertions and screenshots without adding a project dependency.
+- No in-project end-to-end browser or screenshot runner is installed. Workspace `agent-browser` can record ad-hoc browser assertions and screenshots without adding a project dependency.
 - /api/hello proves only an example GET response, not database readiness.
 - Lint/types/build cannot verify external image availability, real form delivery or purchasing behavior.
-- The original HTML form showed success without a backend. The converted form provides only a local preview and an email-client link; neither proves delivery or persistence.
+- The contact form provides only a local preview and an email-client link; neither proves delivery or persistence. Ticket requests use a same-origin API and mocked Sheets tests; neither mocks nor build checks prove a durable external write.
+- The ticket-request API fails closed on missing/mismatched Origin and validates request shape, but Origin is not authentication. Production exposure requires verified proxy behavior, a least-privilege runtime identity, and host-level rate limiting/monitoring. A real sheet append and cleanup require separate owner authorization.
 - The current full-project `npm.cmd run lint` scan reports existing errors and warnings under the installed `.agents/skills` tree. Record the full lint result separately from application-scoped lint instead of attributing those errors to UI source.
 - Git status/HEAD cannot be obtained until this workspace is initialized or restored as a Git repository. Do not initialize Git without a request.
 

@@ -95,6 +95,23 @@
 .event-header__brand [data-image-fallback] { font-family:"Reply Lobster",var(--font-vietnam); font-weight:400; }
 .event-header__cta:hover { background:#bd200c; border-color:var(--color-retro-gold); }
 .event-header__cta:active { background:#850f00; }
+.event-header__account { display:flex; align-items:center; gap:8px; min-width:0; }
+.event-header__name { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--color-retro-paper); font-size:13px; }
+.event-header__cta:disabled { opacity:.7; cursor:wait; }
+.login-dialog { position:fixed; inset:0; margin:auto; width:min(440px,calc(100vw - 32px)); min-height:0; max-height:calc(100dvh - 32px); overflow:auto; border:1px solid #cfb875; border-radius:16px; padding:30px 28px 28px; color:#183b2b; background:#faf3e0; box-shadow:0 20px 56px #071b1466,6px 6px 0 #152d2220; }
+.login-dialog::backdrop { background:transparent; backdrop-filter:none; }
+.login-dialog__close { position:absolute; top:12px; right:12px; display:grid; place-items:center; width:40px; height:40px; border:1px solid #183b2b26; border-radius:50%; background:#183b2b08; color:inherit; font:400 24px/1 sans-serif; cursor:pointer; }
+.login-dialog__brand { margin:0 0 12px; color:var(--color-retro-red); font:400 16px "Reply Lobster",sans-serif; letter-spacing:.08em; }
+.login-dialog h2 { display:block !important; visibility:visible !important; margin:12px 36px 10px 0; color:#183b2b !important; font:800 clamp(24px,5vw,29px)/1.25 "Reply Nunito",sans-serif !important; }
+.login-dialog #login-dialog-description { margin:0; color:#536256; font:600 15px/1.6 "Reply Nunito",sans-serif; }
+.login-dialog__google { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:50px; margin-top:20px; border:2px solid #183b2b; border-radius:9px; padding:10px 16px; color:#fffaf0 !important; background:#183b2b !important; font:800 15px/1.4 "Reply Nunito",sans-serif !important; cursor:pointer; }
+.login-dialog__google span { display:grid; place-items:center; flex:none; width:24px; height:24px; border-radius:50%; color:#4285f4; background:white; font:900 15px/1 Arial,sans-serif; }
+.login-dialog__google:hover { background:#234b39; border-color:#234b39; transform:translateY(-1px); }
+.login-dialog__google:focus-visible,.login-dialog__close:focus-visible { outline:3px solid var(--color-retro-red); outline-offset:3px; }
+.login-dialog__google:disabled { opacity:.7; cursor:wait; }
+.login-dialog__error { padding:12px; border-left:4px solid var(--color-retro-red); background:#a8322430; }
+.login-dialog__status { text-align:center; }
+.login-dialog :focus-visible { outline:3px solid var(--color-retro-red); outline-offset:3px; }
 .event-header__toggle { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; flex:none; border:1px solid #578e7699; border-radius:8px; background:transparent; color:var(--color-retro-paper); }
 .event-header__toggle:hover { background:#578e762e; border-color:var(--color-retro-gold); }
 .event-header__hamburger { font:400 25px/1 var(--font-vietnam); }
@@ -509,7 +526,7 @@ body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:
 
 /* Booking dialog: an admission ticket, with a perforated poster stub. */
 .ticket-request-dialog,.ticket-request-dialog * { box-sizing:border-box; }
-.ticket-request-dialog { width:min(1060px,calc(100vw - 40px)); max-width:none; max-height:calc(100dvh - 40px); margin:auto; padding:0; overflow:auto; overscroll-behavior:contain; border:0; border-radius:16px; background:#fff8e8; color:var(--reply-forest); box-shadow:0 32px 120px #03181099; }
+.ticket-request-dialog { width:min(820px,calc(100vw - 40px)); max-width:none; max-height:calc(100dvh - 40px); margin:auto; padding:0; overflow:auto; overscroll-behavior:contain; border:0; border-radius:14px; background:#fff8e8; color:var(--reply-forest); box-shadow:0 24px 80px #03181080; }
 .ticket-request-dialog::backdrop { background:#061f18cf; backdrop-filter:blur(8px); }
 .ticket-request-dialog__layout { position:relative; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); }
 .ticket-request-dialog__close { position:absolute; z-index:2; top:14px; right:14px; display:grid; width:44px; height:44px; place-items:center; border:1px solid #fff8e860; border-radius:50%; background:#103b2e; color:#fff8e8; font:400 28px/1 "Reply Nunito",sans-serif; cursor:pointer; transition:background-color .18s,transform .18s; }
@@ -544,7 +561,7 @@ body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:
 .ticket-request-dialog__poster::before,.ticket-request-dialog__poster::after { position:absolute; left:-12px; width:24px; height:24px; border-radius:50%; background:#0b251c; content:""; }
 .ticket-request-dialog__poster::before { top:-12px; }.ticket-request-dialog__poster::after { bottom:-12px; }
 .ticket-request-dialog__poster-heading { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; color:#dfca99; font:900 8px/1.5 "Reply Nunito",sans-serif; letter-spacing:.15em; }
-.ticket-request-dialog__poster-image { display:block; width:100%; height:auto; aspect-ratio:4/5; object-fit:contain; border-radius:3px; box-shadow:0 8px 24px #041a1550; }
+.ticket-request-dialog__poster-image { display:block; width:100%; height:auto; aspect-ratio:2478/1770; object-fit:contain; border-radius:3px; box-shadow:0 8px 24px #041a1550; }
 .ticket-request-dialog__poster figcaption { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:22px; }
 .ticket-request-dialog__date { display:flex; align-items:center; gap:10px; }
 .ticket-request-dialog__date>strong { color:#f0bf65; font:900 44px/.9 "Reply Nunito",sans-serif; letter-spacing:-.06em; }
