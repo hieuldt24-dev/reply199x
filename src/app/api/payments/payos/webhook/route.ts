@@ -8,6 +8,10 @@ export const runtime = "nodejs";
 const MAX_BODY_BYTES = 16 * 1024;
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 function json(body: Record<string, unknown>, status: number) { return NextResponse.json(body, { status, headers }); }
+function logRpcFailure(code: unknown) {
+  const safeCode = typeof code === "string" && /^(?:[0-9A-Z]{5}|PGRST[0-9]{3})$/.test(code) ? code : "unknown";
+  console.error("payos_webhook_failed", { stage: "process_rpc", code: safeCode });
+}
 
 async function readBody(request: Request): Promise<string | null> {
   const reader = request.body?.getReader();
@@ -61,7 +65,10 @@ export async function POST(request: NextRequest) {
       p_currency: parsed.currency,
       p_success: parsed.success,
     });
-    if (error || !data) return json({ error: "temporarily_unavailable" }, 503);
+    if (error || !data) {
+      logRpcFailure(error?.code);
+      return json({ error: "temporarily_unavailable" }, 503);
+    }
     // Payment and outbox are already durable. This best-effort bounded attempt
     // reduces delivery latency; scheduled retries remain the recovery path.
     if (Array.isArray(data) && data[0]?.result === "paid") {

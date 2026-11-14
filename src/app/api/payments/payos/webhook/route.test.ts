@@ -89,6 +89,14 @@ describe("POST /api/payments/payos/webhook", () => {
     expect((await POST(signedRequest())).status).toBe(503);
   });
 
+  it.each([["42702", "42702"], ["PGRST202", "PGRST202"], ["private database detail", "unknown"]])("logs only safe RPC code %s", async (code, expected) => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    rpc.mockResolvedValue({ data: null, error: { code, message: "private database detail", details: "private attendee data" } });
+    expect((await POST(signedRequest())).status).toBe(503);
+    expect(log.mock.calls).toEqual([["payos_webhook_failed", { stage: "process_rpc", code: expected }]]);
+    expect(drain).not.toHaveBeenCalled();
+  });
+
   it("logs only fixed validation diagnostics for invalid signatures and signed invalid payloads", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const request = signedRequest();
