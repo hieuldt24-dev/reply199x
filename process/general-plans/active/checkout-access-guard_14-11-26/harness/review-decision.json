@@ -1,0 +1,18 @@
+{
+  "task": "Independent review of checkout access guard migration and workload evidence",
+  "reviewer": "Codex vc-code-reviewer",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    {
+      "severity": "medium",
+      "finding": "The order_code partial index matches the checkout event anti-join columns and processing_status predicate, but G2 only asserts that the index definition exists. It does not EXPLAIN the exact anti-join or stress it against a large event ledger, so index selection and scale behavior are not yet demonstrated."
+    },
+    {
+      "severity": "medium",
+      "finding": "The coarse payment-expiry lower bounds are logically equivalent to the prior effective-deadline lower bound and make the order expiry range indexable. However, the G2 20,003-order fixture places the large volume under a different user, and the assertion checks only the index name, not the index condition. It does not demonstrate a large single-account scan or bounded upper-range behavior."
+    }
+  ],
+  "notes": "The reviewed SQL preserves strike eligibility boundaries, consumed-through semantics, service-role-only RPC access, and order-then-provider locking. The migration adds a matching partial order_code index and coarse expiry lower bounds. I found no correctness or payment-safety blocker in this focused review. Local implementation is acceptable with the documented performance evidence gaps; this decision is not production approval. Hosted Supabase parity, browser verification, live provider/auth flow, and rollout controls remain unverified.",
+  "timestamp": "2026-11-15T14:00:00+07:00"
+}

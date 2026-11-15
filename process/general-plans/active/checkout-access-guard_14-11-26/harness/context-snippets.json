@@ -1,0 +1,39 @@
+{
+  "task": "Implement login prompting, guarded ticket checkout and visibility-aware payment status loading.",
+  "artifacts": [
+    {
+      "file": "supabase/migrations/202611150001_checkout_access_guard.sql",
+      "lines": "2-16",
+      "description": "Account cooldown state is service-only with RLS; order candidates and PayOS webhook evidence have targeted indexes.",
+      "content": "create table public.checkout_access_state ( user_id uuid primary key references auth.users(id) on delete cascade, blocked_until timestamptz, consumed_through timestamptz ); enable RLS and revoke client access; index pending/expired orders by user_id and payment_expires_at and received/processed/reconciliation PayOS events by order_code."
+    },
+    {
+      "file": "supabase/migrations/202611150001_checkout_access_guard.sql",
+      "lines": "60-98",
+      "description": "Guarded RPC locks account state, uses exact-equivalent sargable lower bounds, and commits a fixed cooldown as a normal result.",
+      "content": "Lock account then pending/expired candidate orders and provider links. Use order and link deadline >= rolling-hour start, mathematically equivalent to least(deadlines) >= start; retain least(deadlines) <= now for exact upper-bound semantics. Count only issued, unpaid, unreconciled links after consumed_through and return blocked_until without raising."
+    },
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "100-136",
+      "description": "The route derives user identity from server auth and returns a structured 429 without provider work on denial.",
+      "content": "admin.rpc('create_ticket_order_v4', { p_user_id: authData.user.id, ... }); validate blocked_until and null order_id; respond checkout_restricted with ISO retryAt and Retry-After."
+    },
+    {
+      "file": "src/components/auth/HeaderAuth.tsx",
+      "lines": "32-46",
+      "description": "Visible focus refreshes are coalesced and listeners are removed on unmount.",
+      "content": "Skip refresh when document is hidden, a transition is pending, or fewer than 5 seconds have elapsed; register focus/visibility listeners and clean them up."
+    },
+    {
+      "file": "src/app/(routes)/payment/return/TicketPaymentStatus.tsx",
+      "lines": "40-100",
+      "description": "Polling requests are abortable, visibility-aware and cleaned up on terminal state/unmount.",
+      "content": "Use AbortController and a current-request guard; stop/abort on hidden; resume immediately when visible; clear timers and listener on cleanup."
+    }
+  ],
+  "logs": [],
+  "queries": [],
+  "diffSummary": "This execution completed the isolated database gate and workload evidence and aligned the candidate lock scan with its partial index. Existing auth, route and UI implementation was already present in the selected workspace.",
+  "rootCause": "The work continues the user's approved checkout access plan; hidden polling and repeated focus refreshes previously generated avoidable work, and checkout needed an atomic account-level policy."
+}

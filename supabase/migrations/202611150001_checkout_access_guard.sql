@@ -12,6 +12,8 @@ grant select, insert, update on public.checkout_access_state to service_role;
 alter table public.payos_payment_links add column checkout_issued_at timestamptz;
 create index orders_checkout_access_idx on public.orders(user_id, payment_expires_at)
   where status in ('pending_payment', 'expired');
+create index payos_payment_events_guard_lookup_idx on public.payos_payment_events(order_code)
+  where processing_status in ('received', 'processed', 'reconciliation');
 
 create function public.create_ticket_order_v4(
   p_user_id uuid, p_idempotency_key uuid, p_attendee_name text,
@@ -56,12 +58,16 @@ begin
   -- Match payment lifecycle ordering: account -> orders (stable IDs) -> links.
   -- Lock all potential recent candidates before evaluating their current states.
   perform o.id from public.orders o join public.payos_payment_links p on p.order_id=o.id
-    where o.user_id=p_user_id and least(p.expires_at,o.payment_expires_at) >= v_now-interval '1 hour'
+    where o.user_id=p_user_id and o.status in ('pending_payment','expired')
+      and o.payment_expires_at >= v_now-interval '1 hour'
+      and p.expires_at >= v_now-interval '1 hour'
       and least(p.expires_at,o.payment_expires_at) <= v_now
       and (v_state.consumed_through is null or least(p.expires_at,o.payment_expires_at)>v_state.consumed_through)
     order by o.id for update of o;
   perform p.order_code from public.payos_payment_links p join public.orders o on o.id=p.order_id
-    where o.user_id=p_user_id and least(p.expires_at,o.payment_expires_at) >= v_now-interval '1 hour'
+    where o.user_id=p_user_id and o.status in ('pending_payment','expired')
+      and o.payment_expires_at >= v_now-interval '1 hour'
+      and p.expires_at >= v_now-interval '1 hour'
       and least(p.expires_at,o.payment_expires_at) <= v_now
       and (v_state.consumed_through is null or least(p.expires_at,o.payment_expires_at)>v_state.consumed_through)
     order by o.id for update of p;
@@ -73,7 +79,9 @@ begin
       and p.checkout_issued_at < least(p.expires_at,o.payment_expires_at)
       and p.payment_link_id is not null and p.checkout_url is not null
       and p.paid_at is null and p.transaction_reference is null
-      and least(p.expires_at,o.payment_expires_at) between v_now-interval '1 hour' and v_now
+      and o.payment_expires_at >= v_now-interval '1 hour'
+      and p.expires_at >= v_now-interval '1 hour'
+      and least(p.expires_at,o.payment_expires_at) <= v_now
       and (v_state.consumed_through is null or least(p.expires_at,o.payment_expires_at)>v_state.consumed_through)
       and not exists(select 1 from public.payos_payment_events e where e.order_code=p.order_code
         and e.processing_status in ('received','processed','reconciliation'))

@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-11-15T13:43:27.965Z",
+  "environment": {
+    "runtime": "v22.22.0",
+    "platform": "win32",
+    "database": "isolated embedded PostgreSQL, localhost",
+    "sampleCount": 30
+  },
+  "measurements": {
+    "baselineV3Fresh": {
+      "sampleCount": 30,
+      "p50Ms": 1.98,
+      "p95Ms": 4.007
+    },
+    "baselineV3Replay": {
+      "sampleCount": 30,
+      "p50Ms": 1.988,
+      "p95Ms": 3.757
+    },
+    "baselineV3RestrictedAttempt": {
+      "sampleCount": 30,
+      "p50Ms": 0.777,
+      "p95Ms": 1.163
+    },
+    "guardedV4Fresh": {
+      "sampleCount": 30,
+      "p50Ms": 1.361,
+      "p95Ms": 2.03
+    },
+    "guardedV4Replay": {
+      "sampleCount": 30,
+      "p50Ms": 1.879,
+      "p95Ms": 3.663
+    },
+    "guardedV4Denied": {
+      "sampleCount": 30,
+      "p50Ms": 1.455,
+      "p95Ms": 2.415
+    }
+  },
+  "clientRequestCounts": {
+    "paymentStatus": {
+      "baselineTotal": 41,
+      "afterTotal": 22,
+      "baselineHiddenPolls": 20,
+      "afterHiddenPolls": 0
+    },
+    "authFocusBurst": {
+      "events": 20,
+      "baselineRouterRefreshes": 20,
+      "afterRouterRefreshes": 1,
+      "baselineExtraSessionFetches": 0,
+      "afterExtraSessionFetches": 0
+    }
+  },
+  "databasePlan": {
+    "fixtureOrders": 20003,
+    "candidateIndex": "orders_checkout_access_idx",
+    "chosenByExplain": true,
+    "coarseBound": "payment_expires_at >= now - 1h AND payos.expires_at >= now - 1h; exact upper bound remains least(...) <= now"
+  },
+  "invariants": {
+    "duplicateCheckoutLinkRowsPerOrder": 1,
+    "retryPreservesOrderIdentity": true,
+    "orderAmountVnd": 169000,
+    "ownerMismatchDenied": true
+  },
+  "limitations": [
+    "Local isolated database and fake-clock UI only; no hosted Supabase, browser, or production network/provider latency claim.",
+    "Measurements compare deterministic calls and request counts; they do not establish production capacity."
+  ]
+}

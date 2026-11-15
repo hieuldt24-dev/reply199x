@@ -1,0 +1,10 @@
+{
+  "task": "Implement login prompting, guarded ticket checkout and visibility-aware payment status loading.",
+  "planPath": "process/general-plans/active/checkout-access-guard_14-11-26/checkout-access-guard_PLAN_15-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": ["auth or identity", "billing or payments", "schema/data migration", "public API or external contract", "permission/trust-boundary"],
+  "approver": "user (authorization recorded in selected plan)",
+  "humanApprovalRequired": true,
+  "mustStopBeforeFinalize": true,
+  "why": "The independent reviewer approved with concerns for local work only. G8 browser evidence, hosted Supabase parity, production release gates and two scale evidence gaps remain separate."
+}

@@ -1,0 +1,11 @@
+{
+  "scenarios": [
+    { "scenario": "Anonymous or authenticated database clients read or mutate checkout_access_state", "ruled_out": true, "rationale": "RLS is enabled, client table privileges are revoked, and isolated PostgreSQL catalog assertions verify no anon/authenticated access." },
+    { "scenario": "A client supplies another user's ID to create a restricted order", "ruled_out": true, "rationale": "The route passes auth.getUser() identity to service-only v4; route tests cover authenticated ownership and the DB gate verifies owner-mismatched checkout preparation is denied." },
+    { "scenario": "Same-account concurrent requests bypass the three-strike cooldown", "ruled_out": true, "rationale": "The account row is locked before candidate scans; 12 concurrent requests all returned the same committed block deadline." },
+    { "scenario": "A provider response arriving after order/link expiry creates strike evidence", "ruled_out": true, "rationale": "The isolated PostgreSQL gate persists a late provider response and asserts checkout_issued_at stays NULL." },
+    { "scenario": "A denied request creates an order or triggers provider work", "ruled_out": true, "rationale": "The database gate confirms no order is persisted for denial; route tests confirm the provider is not called and HTTP 429 is no-store with Retry-After." },
+    { "scenario": "Hidden payment status pages continue polling or stale JSON overwrites current state", "ruled_out": true, "rationale": "AbortController, visibility and stale-response cases pass in the targeted lifecycle suite; measured hidden polls fell from 20 to zero." },
+    { "scenario": "Large volume of distinct accounts bypasses all request-level abuse controls", "ruled_out": false, "rationale": "This plan implements an account-local checkout cooldown; production edge rate limiting/monitoring and multi-account capacity remain outside the verified scope." }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "task": "Independent EVL rerun for checkout access guard",
+  "verifiedAt": "2026-11-15",
+  "commands": [
+    {
+      "step": "G1 auth/session scenarios",
+      "command": "npm.cmd test -- src/lib/supabase/session.test.ts src/components/auth",
+      "result": "PASS",
+      "notes": "EVL rerun: 2 files, 21 tests passed."
+    },
+    {
+      "step": "G2 isolated PostgreSQL migrations, permissions, policy and concurrency",
+      "command": "node scripts/test-checkout-guard-db.mjs",
+      "result": "PASS",
+      "notes": "EVL rerun applied all migrations through 202611150001_checkout_access_guard.sql. SQL permission/index assertions, migration, policy and concurrency checks passed. EXPLAIN chose orders_checkout_access_idx with 20,003 total fixture orders, but the large volume belonged to a different account and only the index name was asserted. The event anti-join index was definition-checked, not EXPLAIN/stress tested; see approved-with-concerns review decision."
+    },
+    {
+      "step": "G3 route/payment/dialog",
+      "command": "npm.cmd test -- src/app/api/ticket-orders src/app/api/payments src/lib/payments src/app/auth 'src/app/(routes)/_components/TicketRequestDialog.test.tsx'",
+      "result": "PASS",
+      "notes": "EVL rerun: 8 files, 89 tests passed. The test summary completed; Windows host inspection emitted a non-fatal Get-CimInstance access warning."
+    },
+    {
+      "step": "G4 payment status lifecycle",
+      "command": "npm.cmd test -- 'src/app/(routes)/payment/return/TicketPaymentStatus.test.tsx'",
+      "result": "PASS",
+      "notes": "EVL rerun: 1 file, 16 tests passed."
+    },
+    {
+      "step": "G5 comparative workload",
+      "command": "node scripts/test-checkout-guard-db.mjs --workload",
+      "result": "PASS",
+      "notes": "EVL rerun: 30 samples per DB case; artifact checkout-access-guard-workload_15-11-26.json. Local DB p50/p95 values, fake-clock request counts and index name are recorded. The fixture does not prove a high per-account candidate count, index condition, or anti-join ledger scale; no production performance claim."
+    },
+    {
+      "step": "G6 full automated suite",
+      "command": "npm.cmd test",
+      "result": "FAIL",
+      "notes": "EVL rerun: 20 test files passed, 1 failed; 200 tests passed, 1 failed. src/lib/supabase/route-client.test.ts > SSR cookie lifecycle > requires secure cookies in production expected secure:true but received false; AUTH_COOKIE_OPTIONS is evaluated before the test stubs NODE_ENV."
+    },
+    {
+      "step": "G6 broad repository check",
+      "command": "npm.cmd run check",
+      "result": "FAIL",
+      "notes": "EVL rerun stops in broad ESLint over installed .agents/.codex files: 269 errors and 192 warnings, chiefly CommonJS require() violations. It did not reach the check script's typecheck step."
+    },
+    {
+      "step": "G7 scoped application and script lint",
+      "command": "npx.cmd eslint src scripts --max-warnings=0",
+      "result": "PASS",
+      "notes": "EVL rerun completed with no lint findings."
+    },
+    {
+      "step": "G7 typecheck",
+      "command": "npm.cmd run typecheck",
+      "result": "PASS",
+      "notes": "EVL rerun generated Next route types successfully; TypeScript reported no errors."
+    },
+    {
+      "step": "Production build",
+      "command": "npm.cmd run build",
+      "result": "PASS",
+      "notes": "EVL rerun compiled and completed TypeScript, generated all 17 static pages, and finalized route optimization."
+    },
+    {
+      "step": "Risk artifact validation",
+      "command": "node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/checkout-access-guard_14-11-26/harness",
+      "result": "PASS",
+      "notes": "Validator passes with the independent review-decision.json recorded as approved-with-concerns. Two nonblocking performance evidence gaps remain documented there; this is not production approval."
+    }
+  ],
+  "manualChecks": [
+    {
+      "step": "G8 controlled local browser presentation",
+      "result": "SKIP",
+      "notes": "No controlled local auth/payment browser fixture or screenshots were available in the current execution."
+    },
+    {
+      "step": "Hosted Supabase, production rollout, OAuth/provider and production performance",
+      "result": "SKIP",
+      "notes": "Outside local plan authorization; local PostgreSQL and test workloads do not prove these behaviors."
+    }
+  ],
+  "result": "DONE_WITH_CONCERNS: G1-G5, scoped lint, typecheck, production build and risk artifact validation pass. G6 retains one cookie-policy test failure and broad lint debt. G8 was not run. The independent review is approved-with-concerns, documenting unproven event anti-join index selection and high per-account candidate scaling. Keep plan active/testing."
+}

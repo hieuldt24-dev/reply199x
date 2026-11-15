@@ -3,14 +3,14 @@ name: plan:checkout-access-guard
 description: "Implement initial login prompting, atomic account checkout cooldown and visibility-aware data loading."
 date: 15-11-26
 feature: general
-phase: PLAN
-status: planned
+phase: EXECUTE
+status: executing
 ---
 
 # Checkout access guard implementation plan
 
 **Date**: 15-11-26
-**Status**: PLANNED
+**Status**: EXECUTING — KEEP ACTIVE/TESTING
 **Complexity**: COMPLEX
 
 ## Overview
@@ -24,7 +24,7 @@ Locked requirements: `checkout-access-guard_SPEC_14-11-26.md` in this folder. Us
 | Field | Value |
 |---|---|
 | feature | general |
-| phase | PLAN |
+| phase | EXECUTE |
 | session-goal | Implement checkout-access-guard SPEC |
 | branch | main, baseline 059f844 |
 | worktree | D:/SE19C01-DE190318/7.FALL2026/EXE101 |
@@ -32,7 +32,7 @@ Locked requirements: `checkout-access-guard_SPEC_14-11-26.md` in this folder. Us
 | blast-radius-packages | single Next.js package, supabase/migrations, local test scripts |
 | active-plan | process/general-plans/active/checkout-access-guard_14-11-26/checkout-access-guard_PLAN_15-11-26.md |
 | test-runner | vitest; isolated PostgreSQL integration harness |
-| validate-contract | pending in this plan |
+| validate-contract | PASS — outer PVL, 15-11-26 |
 
 Context loaded: `process/context/all-context.md`, `planning/all-planning.md`, `tests/all-tests.md`, `uxui/all-uxui.md`, `uxui/component-contracts.md`; workflow routers and selected skills. Tests router has no deeper testing document. Existing context predates payment/auth implementation: current source and migrations are authoritative. Situation scan finds only this untracked task folder dirty; no existing implementation plan overlaps this SPEC.
 
@@ -127,17 +127,17 @@ Highest-risk scenario matrix: exactly 2/3 expiries; inclusive lower/current boun
 
 ## Implementation Checklist
 
-1. [ ] Add auth classification and prompt/focus regression scenarios to `session.test.ts` and `HeaderAuth.test.tsx`; verify they fail against baseline using `npm.cmd test -- src/lib/supabase/session.test.ts src/components/auth/HeaderAuth.test.tsx`.
-2. [ ] Implement session classification and HeaderAuth lifecycle; preserve LoginDialog accessibility, test Escape/manual reopen/callback state.
-3. [ ] Create isolated DB harness and fixtures. Validation ran `docker info`: Docker daemon is unavailable. Prefer a pinned Windows/x64 `embedded-postgres` test-only dependency (official project documents Node >=18 support), or disposable Docker if the daemon becomes available. The runner must actually initialize/start PostgreSQL, prove pgcrypto availability, bind only localhost on a fresh port and unique task-owned data directory, and stop/remove its own instance in try/finally without host-user creation. Never use production URLs or existing databases; fail nonzero when no real runtime is available.
-4. [ ] Add migration `202611150001_checkout_access_guard.sql`: state/evidence/indexes, guarded RPC, updated prepare evidence and explicit privileges. Keep prior migrations immutable.
-5. [ ] Exercise every migration in order in isolated PostgreSQL with minimal Supabase auth.users/auth.uid(), extensions.pgcrypto and anon/authenticated/service_role bootstrap. Model service_role BYPASSRLS and hosted-default schema/table privileges needed by existing code; run guarded RPC/concurrency as service_role, not merely superuser. Add deterministic SQL eligibility, permission, transaction and cooldown cases in `supabase/tests/checkout-access-guard.sql`, including delayed provider persistence at/after expiry, historical replay exclusion, anon/authenticated denial and revoked legacy RPC calls. Run multi-session concurrency through the harness. No SQL mocks qualify for this step.
-6. [ ] Extend ticket-orders route tests for structured denial/header, missing migration, malformed denial, no provider work while blocked, existing request replay, payload conflict and unchanged pricing; implement v4/429 handling.
-7. [ ] Extend TicketRequestDialog tests then implement localized reason/time display and identity preservation.
-8. [ ] Extend TicketPaymentStatus tests using fake timers/deferred fetch/JSON promises and visibility transitions; implement cancellation/non-overlap/retry and terminal lifecycle.
-9. [ ] Capture baseline before changing source, then run `node scripts/test-checkout-guard-db.mjs --workload` as the deterministic G5 workload gate. It writes `checkout-access-guard-workload_15-11-26.json` in this task folder, containing reproducible isolated DB baseline v3/after v4 equal-run fresh/replay/denied workloads, sample counts and elapsed p50/p95. G1/G4 tests additionally measure equal fake-clock client timelines (30s visible, 60s hidden, 30s visible) and focus bursts against baseline and after behavior; record those actual observed request counts in that JSON/report. Assert zero hidden polls, one logical provider creation, ownership and amount invariants; no unsupported provider/production capacity claim or fabricated timings.
-10. [ ] Run automated, DB, application quality and production build gates below; independently confirm via tester agent. Record all residuals honestly and keep active/testing if required proof is unavailable.
-11. [ ] Produce risk evidence pack and execution report in this task folder. Have independent reviewer record actual decision before high-risk work is described as ready. Keep deployment/migration application to production as a separate authorized action.
+1. [x] Add auth classification and prompt/focus regression scenarios; baseline and after request counts are recorded in `checkout-access-guard-auth-evidence_15-11-26.md`.
+2. [x] Implement session classification and HeaderAuth lifecycle; verify LoginDialog keyboard dismissal/manual reopen/callback recovery. Evidence is in `checkout-access-guard-auth-evidence_15-11-26.md`.
+3. [x] Create and run the isolated PostgreSQL harness. Docker is unavailable; pinned embedded PostgreSQL starts an owned localhost cluster in a task-owned temporary directory and cleans it up.
+4. [x] Add and run `202611150001_checkout_access_guard.sql`; prior migrations remain immutable.
+5. [x] Run migrations in order with auth/pgcrypto/anon/authenticated/service_role bootstrap; verify service-role permissions, legacy RPC revocation, policy thresholds, replay/excluded/late-provider evidence, and 12-session same-account concurrency. Add the provider-event anti-join partial index and prove the exact lower-bound rewrite with boundary fixtures; `EXPLAIN` must choose `orders_checkout_access_idx` for a 20,003-order fixture.
+6. [x] Extend ticket-order route tests for denial shape/header, unavailable migration, malformed results, provider call suppression, idempotency conflicts and payment safety.
+7. [x] Extend TicketRequestDialog tests and implement localized restriction feedback and identity preservation; evidence is in `payment-ui-evidence_15-11-26.md`.
+8. [x] Extend TicketPaymentStatus tests and implement visibility pause/resume, cancellation, non-overlap, retries and terminal lifecycle; evidence is in `payment-ui-evidence_15-11-26.md`.
+9. [x] Capture baseline/guarded isolated DB workload and client request counts in `checkout-access-guard-workload_15-11-26.json`; include the actual large-account `EXPLAIN` plan and no production capacity claim.
+10. [x] Run automated, DB, application quality and production build gates below; independently confirm via tester agent. Record all residuals honestly and keep active/testing where proof remains unavailable. G1-G5 and scoped quality/build gates pass on independent EVL; G6 failures and unrun G8 are recorded.
+11. [x] Produce risk evidence pack and execution report in this task folder. The independent review decision is `approved-with-concerns`, recorded in `harness/review-decision.json`, and risk artifact validation passes. Keep deployment/migration application to production as a separate authorized action.
 
 ## Acceptance Criteria
 
@@ -253,7 +253,7 @@ Failing stub: regression gates reuse existing meaningful assertions plus the new
 
 | Quality fallback | App/scripts lint and types when broad lint fails solely on unrelated harness files | Fully-Automated | G7: `npx.cmd eslint src scripts --max-warnings=0`, then `npm.cmd run typecheck` | B |
 | AC1, AC2, AC3 presentation | Local browser 390px/1280px, anonymous dismiss/Escape, signed-in/outage/blocked states using controlled local fixtures | Agent-Probe | G8 browser assertions and screenshot evidence; no production login/payment required | B |
-| Risk handoff | Actual independent review and complete evidence pack | Hybrid | G9: `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/checkout-access-guard_14-11-26/harness`; independent reviewer decision required | B |
+| Risk handoff | Actual independent review and complete evidence pack | Hybrid | G9: `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/checkout-access-guard_14-11-26/harness`; reviewer decision `approved-with-concerns`, validator PASS; two performance evidence gaps remain | B |
 
 gap-resolution legend: A proven now; B tests/evidence added by this plan; C named later plan; D named residual requiring keep-active. These rows describe developed coverage; execution and independent EVL must run the new gates. Missing G2/G5 execution cannot be reported as achieved AC3-7/AC10.
 
@@ -300,16 +300,17 @@ Execution consent: user explicitly requested implementing this SPEC; reversible 
 Verification: run G1-G9; independent tester confirms; real PostgreSQL G2 and actual G5 measurements mandatory.
 Limits: no deployment, production DB mutation, real charge or credential disclosure.
 Completion: report actual achieved criteria, residuals and independent review; keep active/testing if proof is missing.
-Next: sequential implementer, then independent tester/reviewer; orchestrator owns results.tsv.
+Next: keep this plan active/testing for unrun G8 and documented performance evidence gaps; no production deployment. The orchestrator owns results.tsv.
 ```
 
 ## Resume and Execution Handoff
 
 - Selected plan file: `process/general-plans/active/checkout-access-guard_14-11-26/checkout-access-guard_PLAN_15-11-26.md`.
-- Last completed phase: PLAN; source unchanged by planner. Locked SPEC remains intact.
-- Validate-contract status: pending; mandatory before implementation.
+- Last completed phase: PVL; EXECUTE is in progress. The locked SPEC remains intact.
+- Validate-contract status: PASS (outer PVL, 15-11-26).
 - Supporting context: all-context, planning/all-planning, tests/all-tests, uxui/all-uxui and component-contracts; research/source findings above.
-- Next step: validator checks account/order/provider lock order, committed denial semantics, permissions, historical exclusion, real DB gate feasibility and test matrix, then writes exact runnable gate contract. Execute agent receives this exact plan, not an inferred ambient plan. User authorized implementation; orchestrator handles transitions within that authorization.
+- Execution evidence so far: independent EVL reran G1-G5, scoped application/script lint, typecheck and build; those gates pass. G2 includes boundary-equivalence SQL and EXPLAIN selecting `orders_checkout_access_idx` with 20,003 total fixture orders, with the reviewer noting that same-account scaling and event anti-join plan selection remain unproven. Full `npm.cmd test` has one existing cookie-policy test failure; broad `npm.cmd run check` stops on errors under `.agents/` and `.codex/`. G8 browser checks were not run. Keep this plan active/testing.
+- Next step: retain active/testing for G8 and the documented scale evidence gaps. Do not deploy or apply migrations to production.
 - Report destination: `checkout-access-guard_REPORT_15-11-26.md` in this folder. Existing results.tsv belongs to orchestrator and must not be overwritten.
 
 ## Strategy Comparison and Next State
