@@ -14,6 +14,7 @@ type SubmissionStatus =
   | Readonly<{ kind: "pending"; message: string }>
   | Readonly<{ kind: "success"; message: string; orderId?: string; totalVnd?: number }>
   | Readonly<{ kind: "unauthorized"; message: string }>
+  | Readonly<{ kind: "restricted"; message: string }>
   | Readonly<{ kind: "error"; message: string }>;
 
 type CheckoutResponse = string;
@@ -78,11 +79,22 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
       const result = await response.json().catch(() => null) as {
         order?: { id: string; totalVnd: number; status: string };
         checkoutUrl?: CheckoutResponse;
-        error?: { code?: string };
+        error?: { code?: string; retryAt?: unknown };
       } | null;
 
       if (response.status === 401) {
         setStatus({ kind: "unauthorized", message: "Vui lòng đăng nhập Google để tiếp tục đặt vé." });
+        return;
+      }
+      if (response.status === 429 && result?.error?.code === "checkout_restricted") {
+        const retryAt = result.error.retryAt;
+        if (typeof retryAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/u.test(retryAt) || !Number.isFinite(Date.parse(retryAt))) {
+          throw new Error("Invalid checkout retry time");
+        }
+        setStatus({
+          kind: "restricted",
+          message: `Tài khoản tạm thời bị hạn chế tạo thanh toán vì có 3 đơn hết hạn trong 1 giờ. Bạn có thể đặt vé lại từ ${new Date(retryAt).toLocaleString("vi-VN")}.`,
+        });
         return;
       }
       if (result?.error?.code === "checkout_reconciliation_required") {

@@ -46,7 +46,7 @@ describe("Google OAuth/PKCE foundation", () => {
   });
   it.each(["", "?error=access_denied&code=abc", "?next=//attacker.test"])("does not exchange missing or provider-rejected codes %s", async (query) => {
     const response = await callback(new NextRequest(`http://localhost:3000/api/auth/callback${query}`));
-    expect(response.headers.get("location")).toBe("http://localhost:3000/?auth_auth_error=callback");
+    expect(response.headers.get("location")).toBe("http://localhost:3000/?auth_error=callback");
     expect(exchangeCodeForSession).not.toHaveBeenCalled();
   });
   it("rejects a callback on a mismatched host", async () => {
@@ -68,7 +68,7 @@ describe("Google OAuth/PKCE foundation", () => {
   it("stays on the local error page when Google is disabled in remote settings", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ external: { google: false } })));
     const response = await signIn(post("/api/auth/google", "http://localhost:3000"));
-    expect(response.headers.get("location")).toBe("http://localhost:3000/?auth_auth_error=unavailable");
+    expect(response.headers.get("location")).toBe("http://localhost:3000/?auth_error=unavailable");
     expect(signInWithOAuth).not.toHaveBeenCalled();
   });
   it("signs out the current browser session", async () => {

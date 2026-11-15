@@ -30,6 +30,32 @@ function orderResponse(id = "order-123", totalVnd = 169000) {
 }
 
 describe("TicketRequestDialog purchase flow", () => {
+  it("explains the account restriction and retry time while retaining form values and request identity", async () => {
+    const retryAt = "2026-11-16T12:34:56.000Z";
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue({ ok: false, status: 429, json: async () => ({ error: { code: "checkout_restricted", retryAt } }) } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+    const user = await openDialog();
+    await fillContact(user);
+    await user.click(screen.getByRole("button", { name: /Tiếp tục đặt vé/u }));
+    expect(screen.getByRole("status")).toHaveAttribute("data-status", "restricted");
+    expect(screen.getByRole("status")).toHaveTextContent("3 đơn hết hạn trong 1 giờ");
+    expect(screen.getByRole("status")).toHaveTextContent(new Date(retryAt).toLocaleString("vi-VN"));
+    expect(screen.getByLabelText(/^Email/u)).toHaveValue("minh.anh@example.com");
+    expect(fetchMock).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: /Tiếp tục đặt vé/u }));
+    const payloads = fetchMock.mock.calls.map((call) => JSON.parse(String(call[1]?.body)));
+    expect(payloads[1]).toEqual(payloads[0]);
+  });
+
+  it.each([undefined, "not-a-date", "123", 123])("safely handles a malformed restriction retry time %s", async (retryAt) => {
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue({ ok: false, status: 429, json: async () => ({ error: { code: "checkout_restricted", retryAt } }) } as Response));
+    const user = await openDialog();
+    await fillContact(user);
+    await user.click(screen.getByRole("button", { name: /Tiếp tục đặt vé/u }));
+    expect(screen.getByRole("status")).toHaveAttribute("data-status", "error");
+    expect(screen.getByRole("status")).not.toHaveTextContent("Invalid Date");
+  });
+
   it("explains reconciliation and retains the same request key on retry", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: { code: "checkout_reconciliation_required" } }) } as Response);
     vi.stubGlobal("fetch", fetchMock);

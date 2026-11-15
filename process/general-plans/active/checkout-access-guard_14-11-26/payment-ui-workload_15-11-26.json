@@ -1,0 +1,12 @@
+{
+  "scope": "TicketPaymentStatus deterministic component workload",
+  "timeline": { "visibleBeforeMs": 30000, "hiddenMs": 60000, "visibleAfterMs": 30000 },
+  "baseline": { "visibleBeforeRequests": 11, "hiddenPolls": 20, "totalRequests": 41 },
+  "after": { "visibleBeforeRequests": 11, "hiddenPolls": 0, "totalRequests": 22 },
+  "method": "Same fake-clock component scenario executed against original source before modification, then modified source. Controlled immediate pending responses; no live provider/network. Visible resume makes one immediate request.",
+  "baselineCommand": "npm.cmd test -- 'src/app/(routes)/payment/return/TicketPaymentStatus.test.tsx'",
+  "afterCommand": "npm.cmd test -- 'src/app/(routes)/payment/return/TicketPaymentStatus.test.tsx' --reporter=verbose --disableConsoleIntercept",
+  "baselineRedResult": { "failed": 6, "passed": 8, "reason": "20 hidden polls; initial-hidden request; missing abort; stale old-order JSON; HTTP/malformed errors did not retry" },
+  "afterResult": { "failed": 0, "passed": 16 },
+  "limitations": "Request-count comparison only; fake-clock response latency is not a throughput or production latency measurement. Browser presentation and live provider behavior not exercised."
+}

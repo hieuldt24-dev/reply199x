@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+﻿import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
@@ -27,6 +27,54 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("POST /api/ticket-orders", () => {
+  it("commits a restriction response without preparing or creating a provider checkout", async () => {
+    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
+    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
+    vi.stubGlobal("fetch", vi.fn());
+    const retryAt = new Date(Date.now() + 86400000).toISOString();
+    rpc.mockResolvedValue({ data: [{ order_id: null, blocked_until: retryAt }], error: null });
+    createClient.mockReturnValue({ rpc });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(429);
+    expect(await response.json()).toMatchObject({ error: { code: "checkout_restricted", retryAt } });
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(86390);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v4", expect.objectContaining({ p_user_id: userId }));
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { order_id: null, blocked_until: "invalid" },
+    { order_id: userId, total_vnd: 169000, order_status: "pending_payment", blocked_until: "invalid" },
+    { order_id: null, blocked_until: null },
+  ])("fails closed for malformed guarded results: %j", async (row) => {
+    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
+    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
+    vi.stubGlobal("fetch", vi.fn());
+    rpc.mockResolvedValue({ data: [row], error: null });
+    createClient.mockReturnValue({ rpc });
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(["PGRST202", "42883"])("fails closed when v4 migration is unavailable: %s", async (code) => {
+    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
+    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
+    rpc.mockResolvedValue({ data: null, error: { code } });
+    createClient.mockReturnValue({ rpc });
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(rpc).toHaveBeenCalledOnce();
+  });
+
+  it("preserves idempotency payload conflicts", async () => {
+    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
+    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
+    rpc.mockResolvedValue({ data: null, error: { code: "23505", message: "idempotency_payload_conflict" } });
+    createClient.mockReturnValue({ rpc });
+    expect((await POST(request(validInput))).status).toBe(409);
+    expect(rpc).toHaveBeenCalledOnce();
+  });
   it.each(["42702", "untrusted-code-with-private-data"])("logs only safe preparation diagnostics for %s", async (code) => {
     vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
     vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
@@ -84,7 +132,7 @@ describe("POST /api/ticket-orders", () => {
     vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
     vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
     vi.stubGlobal("fetch", vi.fn());
-    rpc.mockImplementation((name: string) => name === "create_ticket_order_v3"
+    rpc.mockImplementation((name: string) => name === "create_ticket_order_v4"
       ? Promise.resolve({ data: [{ order_id: userId, quantity: 1, unit_price_vnd: 169000, ticket_subtotal_vnd: 169000, merch_option: "none", merch_price_vnd: 0, total_vnd: 169000, order_status: "pending_payment", reused: false }], error: null })
       : Promise.resolve({ data: [{ order_code: 112233, amount_vnd: 169000, currency: "VND", payment_status: "pending", can_create: false, checkout_url: null, payment_link_id: null }], error: null }));
     createClient.mockReturnValue({ rpc });
@@ -97,7 +145,7 @@ describe("POST /api/ticket-orders", () => {
     vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
     vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
     vi.stubGlobal("fetch", vi.fn());
-    rpc.mockImplementation((name: string) => name === "create_ticket_order_v3"
+    rpc.mockImplementation((name: string) => name === "create_ticket_order_v4"
       ? Promise.resolve({ data: [{ order_id: userId, quantity: 1, unit_price_vnd: 169000, ticket_subtotal_vnd: 169000, merch_option: "none", merch_price_vnd: 0, total_vnd: 169000, order_status: "pending_payment", reused: false }], error: null })
       : Promise.resolve({ data: [{ order_code: 112233, amount_vnd: 169000, currency: "VND", payment_status: "pending", can_create: false, checkout_url: "https://pay.payos.vn/web/link-1", payment_link_id: "link-1" }], error: null }));
     createClient.mockReturnValue({ rpc });
@@ -129,3 +177,4 @@ describe("POST /api/ticket-orders", () => {
     expect((await POST(request({}, { "content-type": "text/plain" }))).status).toBe(415);
   });
 });
+

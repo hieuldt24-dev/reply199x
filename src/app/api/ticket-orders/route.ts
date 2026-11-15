@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const admin = createSupabaseClient(url, secretKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const { data, error } = await admin.rpc("create_ticket_order_v3", {
+    const { data, error } = await admin.rpc("create_ticket_order_v4", {
       p_user_id: authData.user.id,
       p_idempotency_key: input.idempotencyKey,
       p_attendee_name: input.name,
@@ -124,6 +124,17 @@ export async function POST(request: NextRequest) {
     }
 
     const order = Array.isArray(data) ? data[0] : null;
+    if (order?.blocked_until != null) {
+      const retryAt = typeof order.blocked_until === "string" ? Date.parse(order.blocked_until) : NaN;
+      if (order.order_id !== null || !Number.isFinite(retryAt) || retryAt <= Date.now()) {
+        return json({ error: { code: "temporarily_unavailable", message: "Order could not be confirmed." } }, 503);
+      }
+      return NextResponse.json({ error: {
+        code: "checkout_restricted",
+        message: "Tài khoản đã có 3 đơn hết hạn chưa thanh toán trong một giờ. Bạn có thể tạo đơn mới sau thời hạn tạm khóa.",
+        retryAt: new Date(retryAt).toISOString(),
+      } }, { status: 429, headers: { ...noStore, "Retry-After": String(Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))) } });
+    }
     if (!order || typeof order.order_id !== "string") {
       return json({ error: { code: "temporarily_unavailable", message: "Order could not be confirmed." } }, 503);
     }

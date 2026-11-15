@@ -27,45 +27,77 @@ export function TicketPaymentStatus({ orderId }: { orderId: string }) {
   useEffect(() => {
     let disposed = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined;
+    let activeRequest: AbortController | undefined;
+    let terminal = false;
+    let visible = document.visibilityState !== "hidden";
+
+    const schedule = (delay: number) => {
+      if (!disposed && !terminal && visible) timer = setTimeout(() => { timer = undefined; void refresh(); }, delay);
+    };
 
     const refresh = async () => {
+      if (disposed || terminal || !visible || activeRequest) return;
+      const controller = new AbortController();
+      activeRequest = controller;
+      const isCurrent = () => !disposed && !controller.signal.aborted && activeRequest === controller;
       try {
         const response = await fetch(`/api/ticket-orders/${encodeURIComponent(orderId)}`, {
           cache: "no-store",
           headers: { Accept: "application/json" },
+          signal: controller.signal,
         });
-        if (disposed) return;
+        if (!isCurrent()) return;
         if (response.status === 401) {
+          terminal = true;
           setView({ kind: "unauthorized" });
           return;
         }
-        if (!response.ok) {
-          setView({ kind: "error" });
-          return;
-        }
+        if (!response.ok) throw new Error("Status request unavailable");
         const data = await response.json() as { order?: { status?: string; totalVnd?: number; paymentExpiresAt?: string } };
-        const order = data.order;
+        if (!isCurrent()) return;
+        const order = data?.order;
         if (!order || typeof order.status !== "string" || !Number.isSafeInteger(order.totalVnd) || typeof order.paymentExpiresAt !== "string") {
-          setView({ kind: "error" });
-          return;
+          throw new Error("Invalid status response");
         }
+        terminal = terminalStatuses.has(order.status);
         setView({ kind: "ready", status: order.status, totalVnd: order.totalVnd as number, paymentExpiresAt: order.paymentExpiresAt });
         if (order.status === "paid") {
-          timer = setTimeout(() => router.push("/#su-kien"), paidRedirectDelayMs);
-        } else if (!terminalStatuses.has(order.status)) {
-          timer = setTimeout(refresh, 3000);
+          redirectTimer = setTimeout(() => router.push("/#su-kien"), paidRedirectDelayMs);
+        } else if (!terminal) {
+          schedule(3000);
         }
       } catch {
-        if (disposed) return;
+        if (!isCurrent()) return;
         setView({ kind: "error" });
-        timer = setTimeout(refresh, 5000);
+        schedule(5000);
+      } finally {
+        if (activeRequest === controller) activeRequest = undefined;
       }
     };
 
+    const onVisibilityChange = () => {
+      const nextVisible = document.visibilityState !== "hidden";
+      if (nextVisible === visible) return;
+      visible = nextVisible;
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+      if (!visible) {
+        activeRequest?.abort();
+        activeRequest = undefined;
+      } else {
+        void refresh();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
     void refresh();
     return () => {
       disposed = true;
-      if (timer) clearTimeout(timer);
+      activeRequest?.abort();
+      if (timer !== undefined) clearTimeout(timer);
+      if (redirectTimer !== undefined) clearTimeout(redirectTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [orderId, router]);
 
