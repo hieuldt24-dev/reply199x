@@ -36,7 +36,7 @@ describe("HeaderAuth", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     view.rerender(<HeaderAuth auth={{ status: "anonymous" }} />);
     expect(screen.queryByRole("dialog")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập"  }));
     expect(screen.getByRole("dialog")).toHaveAttribute("open");
   });
 
