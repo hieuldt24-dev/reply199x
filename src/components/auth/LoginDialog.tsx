@@ -7,6 +7,21 @@ export function LoginDialog({ open, error, onClose }: { open: boolean; error?: s
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
   useEffect(() => {
+    if (!open) return;
+    const previousOverflow = [document.body, document.documentElement].map(({ style }) => ({
+      style,
+      value: style.getPropertyValue("overflow"),
+      priority: style.getPropertyPriority("overflow"),
+    }));
+    previousOverflow.forEach(({ style }) => style.setProperty("overflow", "hidden", "important"));
+    return () => {
+      previousOverflow.forEach(({ style, value, priority }) => {
+        if (value) style.setProperty("overflow", value, priority);
+        else style.removeProperty("overflow");
+      });
+    };
+  }, [open]);
+  useEffect(() => {
     const element = dialog.current;
     if (!element) return;
     if (open && !element.open) {

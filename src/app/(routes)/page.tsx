@@ -5,7 +5,6 @@ import { TimelineSection } from "./_components/TimelineSection";
 import { EventsSection } from "./_components/EventsSection";
 import { MerchSection } from "./_components/MerchSection";
 import { ProcessSection } from "./_components/ProcessSection";
-import { ContactSection } from "./_components/ContactSection";
 
 export default function HomePage() {
  return (
@@ -17,7 +16,6 @@ export default function HomePage() {
 <EventsSection />
 <MerchSection />
 <ProcessSection />
-<ContactSection />
 </main>
  );
 }

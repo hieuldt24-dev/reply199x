@@ -25,20 +25,11 @@ export function Footer() {
 </div>
 
 </div>
-<div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-6 border-b border-retro-teal/20 text-xs font-vietnam">
+<div className="grid grid-cols-1 gap-8 py-6 border-b border-retro-teal/20 text-xs font-vietnam">
 <div>
-<span className="font-space text-xs font-bold uppercase text-retro-gold block mb-2">Đơn vị khởi xướng &amp; thực hiện</span><p className="text-retro-paper/90 leading-relaxed"> REPLY 199X Team — Dự án văn hóa nghệ thuật hoài niệm tái hiện thanh xuân và âm nhạc Việt Nam giai đoạn 199X – 2026. </p>
+<span className="font-space text-xs font-bold uppercase text-retro-gold block mb-2">&#272;&#416;N V&#7882; TH&#431;C HI&#7878;N</span>
+<p className="text-retro-paper/90 leading-relaxed"><strong>REPLY 199X</strong> - &quot;Xu&#244;i d&#242;ng k&#253; &#7913;c, &#273;&#225;nh th&#7913;c thanh xu&#226;n&quot;<br />D&#7921; &#225;n truy&#7873;n th&#244;ng nh&#7857;m kh&#417;i g&#7907;i c&#7843;m x&#250;c ho&#224;i ni&#7879;m c&#7911;a th&#7871; h&#7879; Millennials t&#7841;i &#272;&#224; N&#7861;ng.<br />Do sinh vi&#234;n Tr&#432;&#7901;ng &#272;&#7841;i h&#7885;c FPT &#272;&#224; N&#7861;ng th&#7921;c hi&#7879;n.</p>
 </div>
-<div>
-<span className="font-space text-xs font-bold uppercase text-retro-teal-light block mb-2">Đơn vị bảo trợ</span><p className="text-retro-paper/90 leading-relaxed"> • FPT University Đà Nẵng<br /> Đơn vị đồng hành: EVo – FUDA Event Club </p>
-</div>
-<div>
-<span className="font-space text-xs font-bold uppercase text-retro-gold block mb-2">Liên kết nhanh</span><div className="flex flex-wrap gap-x-4 gap-y-2 font-space text-xs">
-{projectLinks.facebook && <a className="text-retro-paper/80 hover:text-retro-gold" href={projectLinks.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>}<a className="text-retro-paper/80 hover:text-retro-gold" href="#gioi-thieu">Giới thiệu</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#timeline">Lịch trình</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#su-kien">Sự kiện 22/11</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#ve">Khu vực vé</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#merch">Merch</a><a className="text-retro-paper/80 hover:text-retro-gold" href="#lien-he">Bưu điện 199X</a>
-</div>
-
-</div>
-
 </div>
 <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-space text-xs text-retro-paper/60 text-center sm:text-left">
 <div className="">

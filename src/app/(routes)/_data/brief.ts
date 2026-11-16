@@ -14,7 +14,7 @@ export const brief = {
   "facebook": "Nơi cập nhật những thông tin mới nhất về dự án, các hoạt động nổi bật, câu chuyện hoài niệm và những dấu ấn trên hành trình REPLY 199X.",
   "tiktok": "Nơi những ký ức được tái hiện qua các video ngắn, nội dung tương tác và những câu chuyện gần gũi với thế hệ 8X, 9X.",
   "timeline": "Mỗi hoạt động là một điểm chạm đưa những điều thân thuộc trở lại gần hơn với hiện tại. Cùng REPLY 199X đánh dấu những cột mốc đặc biệt và tham gia hành trình trải nghiệm trong tháng 11/2026.",
-  "popup": "Một điểm hẹn đặc biệt trên hành trình REPLY 199X, nơi tinh thần hoài niệm được đưa đến gần hơn với đời sống thường ngày. Ghé thăm POP-UP để cùng cảm nhận những dấu ấn thân thuộc và lưu giữ thêm những khoảnh khắc đáng nhớ.",
+  "popup": "Một chiếc vé quay ngược thời gian đang chờ anh chị 8X9X tại REPLY 199X! Không cần cỗ máy thời gian, cũng chẳng cần tìm lại cuốn nhật ký cũ, chỉ cần ghé qua gian hàng là đã có ngay một cuộc hẹn với những điều thân thuộc.\n\nHoạt động trải nghiệm lấy cảm hứng từ những trò quen thuộc bên hiên nhà, đến những món ăn vặt từng khiến giờ ra chơi thêm rộn ràng. Tái hiện lại từng chút hình ảnh của ngày xưa, kết hợp cùng hương khói bếp phảng phất ấm áp và hoài niệm. Tất cả đã sẵn sàng để anh chị nhập cuộc tại Cơm Bưng Nước Rót vào tháng 11 này.",
   "concert": [
     "Lời Hồi Đáp - REPLY 199X là hoạt động trọng tâm của REPLY 199X, tái hiện không khí âm nhạc từng đồng hành cùng thế hệ Millennials (8X, 9X) Việt Nam.",
     "Thông qua những giai điệu quen thuộc, trình diễn trực tiếp, không gian thị giác và hoạt động tương tác, sự kiện mở ra một cuộc hẹn để mọi người cùng lắng nghe, cùng nhớ và chia sẻ những ký ức âm nhạc đã từng thuộc về mình."
@@ -30,10 +30,11 @@ export const brief = {
   "contact": "Hành trình hoài niệm chưa dừng lại ở những trải nghiệm đã qua. Hãy tiếp tục đồng hành cùng REPLY 199X để những câu chuyện thân thuộc được kể lại, những ký ức được sẻ chia và những kết nối mới tiếp tục hình thành."
 } as const;
 
-export const projectLinks: Readonly<{ facebook: string | null; tickets: string | null; tiktok: string; merch: string }> = {
+export const projectLinks: Readonly<{ facebook: string | null; tickets: string | null; tiktok: string; instagram: string; merch: string }> = {
   facebook: "https://www.facebook.com/loihoidap199x",
   tickets: null,
   tiktok: "https://www.tiktok.com/@loihoidap199x",
+  instagram: "https://www.instagram.com/loihoidap199x/",
   merch: "https://forms.gle/tW1VU8vpASc53CJa8",
 };
 

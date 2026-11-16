@@ -97,6 +97,7 @@ export const assets = {
   "logo": "/images/reply-199x-logo.png",
   cassette: "/images/reply-199x-cassette.png",
   "poster": "/images/reply-199x-event-poster.png",
+  popupPoster: "/images/reply-199x-popup.jpg",
   merchCollection: "/images/reply-199x-merch-collection.png",
   merchXiTin: "/images/reply-199x-merch-xi-tin.png",
   merchXiLay: "/images/reply-199x-merch-xi-lay.png"

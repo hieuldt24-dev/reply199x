@@ -1,70 +1,58 @@
-
-import { projectLinks, ticketDetails } from "../_data/brief";
+import Image from "next/image";
 import { TicketRequestDialog } from "./TicketRequestDialog";
 
+const voucherImage = "/images/1794567834681_48355094629491256_48355094629491256_d855c0c2ea10cd6a6d411ae92785f5d2.jpg";
+
 export function TicketsSection() {
- return (
-<div className="reply-tickets max-w-4xl mx-auto pt-6" id="ve">
-<div className="text-center mb-6">
-<span className="font-space text-xs font-bold uppercase tracking-widest text-retro-red">CUỐNG VÉ ĐIỆN TỬ • ADMISSION PASS</span><h3 className="font-epilogue font-bold text-2xl sm:text-3xl text-retro-dark uppercase tracking-tight mt-1"> KHU VỰC VÉ THAM GIA ĐÊM NHẠC </h3>
-</div>
-<div className="reply-ticket bg-retro-paper-card border-3 border-retro-dark rounded-2xl shadow-retro-solid-lg overflow-hidden flex flex-col md:flex-row relative">
-<div className="flex-1 p-6 sm:p-8 flex flex-col justify-between">
-<div>
-<div className="flex items-center justify-between pb-4 border-b-2 border-dashed border-retro-dark/20">
-<span className="bg-retro-dark text-retro-paper font-space text-xs uppercase tracking-wider px-3 py-1 rounded font-bold"> VÉ CHÍNH THỨC • REPLY 199X </span><span className="font-space text-xs text-retro-red font-bold"> SERIES: #RP-2026-LIVE </span>
-</div>
-<div className="mt-4">
-<h4 className="font-epilogue font-extrabold text-2xl text-retro-dark"> KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X </h4><p className="font-vietnam text-sm text-retro-ink-muted mt-1"> On The Radio • 76 Thái Phiên, TP. Đà Nẵng </p>
-</div>
-<div className="grid grid-cols-2 gap-4 mt-6">
-<div className="bg-retro-paper p-3 rounded-lg border border-retro-dark/20">
-<span className="font-space text-[10px] text-retro-ink-muted uppercase font-bold block">NGÀY TỔ CHỨC</span><strong className="font-epilogue text-base text-retro-dark">22.11.2026</strong>
-</div>
-<div className="bg-retro-paper p-3 rounded-lg border border-retro-dark/20">
-<span className="font-space text-[10px] text-retro-ink-muted uppercase font-bold block">KHUNG GIỜ</span><strong className="font-epilogue text-base text-retro-dark">15:00 – 19:00</strong>
-</div>
+  return (
+    <section className="reply-tickets max-w-6xl mx-auto pt-6" id="ve" aria-labelledby="ticket-section-title">
+      <header className="reply-tickets__heading mb-6">
+        <span className="font-space text-xs font-bold uppercase tracking-widest text-retro-red">CUỐNG VÉ ĐIỆN TỬ · ADMISSION PASS</span>
+        <h3 id="ticket-section-title" className="font-epilogue font-bold text-2xl sm:text-3xl text-retro-dark uppercase tracking-tight mt-1">Khu vực vé tham gia đêm nhạc</h3>
+      </header>
 
-</div>
+      <article className="reply-ticket reply-ticket--compact">
+        <div className="reply-ticket__info">
+          <div className="reply-ticket__header">
+            <span>VÉ CHÍNH THỨC · REPLY 199X</span>
+            <span>SERIES: #RP-2026-LIVE</span>
+          </div>
 
-</div>
-<div className="mt-6 pt-4 border-t-2 border-dashed border-retro-dark/20 flex flex-wrap items-center justify-between gap-3">
-<div>
-<span className="font-space text-xs text-retro-ink-muted font-bold block">GIÁ VÉ NIÊM YẾT</span><span className="bg-amber-100 text-amber-900 border border-amber-300 font-space text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider inline-block mt-0.5">{ticketDetails.price}</span>
-</div>
-<span className="font-vietnam text-xs text-retro-ink-muted italic"> * Chưa mở bán chính thức. Ban tổ chức sẽ thông báo thời gian mở cổng vé. </span>
-</div>
+          <div className="reply-ticket__event">
+            <h4>Không gian âm nhạc hoài niệm REPLY 199X</h4>
+            <p>On The Radio · 76 Thái Phiên, TP. Đà Nẵng</p>
+          </div>
 
-</div>
-<div className="hidden md:flex flex-col justify-between items-center w-8 bg-retro-paper-card relative border-x-2 border-dashed border-retro-dark/40 py-2">
-<div className="w-6 h-6 rounded-full bg-retro-paper border-2 border-retro-dark -mt-6">
+          <dl className="reply-ticket__details">
+            <div>
+              <dt>Ngày tổ chức</dt>
+              <dd>22.11.2026</dd>
+            </div>
+            <div>
+              <dt>Khung giờ</dt>
+              <dd>15:00–19:00</dd>
+            </div>
+          </dl>
 
-</div>
-<div className="text-retro-dark/30 font-space text-[10px] uppercase rotate-90 whitespace-nowrap tracking-widest font-bold">
- XÉ TẠI ĐÂY • TEAR HERE 
-</div>
-<div className="w-6 h-6 rounded-full bg-retro-paper border-2 border-retro-dark -mb-6">
+          <p className="reply-ticket__perk">Vé kèm phiếu gồm 1 phần nước và 1 phần bánh xưa.</p>
 
-</div>
+          <div className="reply-ticket__actions">
+            <TicketRequestDialog className="reply-ticket__contact">Liên hệ về vé</TicketRequestDialog>
+          </div>
+        </div>
 
-</div>
-<div className="w-full md:w-72 bg-retro-paper p-6 sm:p-8 flex flex-col justify-between items-center text-center border-t-2 md:border-t-0 border-dashed border-retro-dark/30">
-<div className="flex flex-col items-center gap-1.5">
-<span className="retro-icon text-4xl text-retro-dark" aria-hidden="true">▣</span><span className="font-space text-xs font-bold uppercase tracking-wider text-retro-forest">CUỐNG VÉ KIỂM SOÁT</span><p className="font-vietnam text-xs text-retro-ink-muted mt-1">Đăng ký để nhận tin ngay khi mở cổng bán vé:</p>
-</div>
-<div className="w-full my-6 flex flex-col gap-2.5">
-{projectLinks.tickets ? <a className="reply-action" href={projectLinks.tickets} target="_blank" rel="noopener noreferrer">Đặt vé ngay</a> : <TicketRequestDialog className="reply-action">Đặt vé ngay</TicketRequestDialog>}
-<a className="w-full inline-flex items-center justify-center gap-1.5 bg-retro-red hover:bg-[#b81700] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-all hover:-translate-y-0.5" href="#lien-he"><span className="retro-icon text-sm" aria-hidden="true">♧</span><span className="">Đăng ký nhận thông báo vé</span></a><span className="font-space text-[11px] text-retro-ink-muted font-bold uppercase"> TRẠNG THÁI: CHƯA BÁN VÉ </span>
-</div>
-<div className="font-space text-[10px] text-retro-ink-muted">
-<a className="reply-text-link" href="#su-kien">Tìm hiểu thêm ↗</a>
-</div>
+        <div className="reply-ticket__perforation" aria-hidden="true" />
 
-</div>
-
-</div>
-
-</div>
-
- );
+        <figure className="reply-ticket__artwork">
+          <Image
+            src={voucherImage}
+            alt="Phiếu nước REPLY 199X: một phần nước và một phần bánh xưa, sử dụng tại On The Radio trong ngày sự kiện 22.11.2026"
+            fill
+            priority={false}
+            sizes="(max-width: 767px) 100vw, (max-width: 1279px) 42vw, 480px"
+          />
+        </figure>
+      </article>
+    </section>
+  );
 }

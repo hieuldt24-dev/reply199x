@@ -50,7 +50,7 @@ export function TicketsSection() {
 <span className="retro-icon text-4xl text-retro-dark" aria-hidden="true">▣</span><span className="font-space text-xs font-bold uppercase tracking-wider text-retro-forest">CUỐNG VÉ KIỂM SOÁT</span><p className="font-vietnam text-xs text-retro-ink-muted mt-1">Đăng ký để nhận tin ngay khi mở cổng bán vé:</p>
 </div>
 <div className="w-full my-6 flex flex-col gap-2.5">
-<a className="w-full inline-flex items-center justify-center gap-1.5 bg-retro-red hover:bg-[#b81700] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-all hover:-translate-y-0.5" href="#lien-he"><span className="retro-icon text-sm" aria-hidden="true">♧</span><span className="">Đăng ký nhận thông báo vé</span></a><span className="font-space text-[11px] text-retro-ink-muted font-bold uppercase"> TRẠNG THÁI: CHƯA BÁN VÉ </span>
+<a className="w-full inline-flex items-center justify-center gap-1.5 bg-retro-red hover:bg-[#b81700] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-all hover:-translate-y-0.5" href="#lien-he"><span className="retro-icon text-sm" aria-hidden="true">♧</span><span className="">Đăng ký nhận thông báo vé</span></a><span className="font-space text-[11px] text-retro-ink-muted font-bold uppercase"> TRẠNG THÁI: ĐÃ MỞ BÁN </span>
 </div>
 <div className="font-space text-[10px] text-retro-ink-muted">
  KÊNH PHÁT HÀNH DUY NHẤT CỦA BTC 
