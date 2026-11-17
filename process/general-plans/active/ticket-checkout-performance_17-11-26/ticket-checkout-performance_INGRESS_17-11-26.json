@@ -1,0 +1,42 @@
+{
+  "command": "node scripts/measure-ticket-order-ingress.mjs --base-url http://127.0.0.1:3001 --rate 50 --duration 10",
+  "exitCode": 0,
+  "capturedAt": "2026-11-17T08:58:53.301Z",
+  "server": {
+    "command": "npm.cmd start -- --hostname 127.0.0.1 --port 3001",
+    "env": {
+      "SITE_URL": "http://127.0.0.1:3001",
+      "PAYOS_CHECKOUT_ENABLED": "false"
+    },
+    "nextBuildId": "AQzcvrFqxKAfjLDM4dLNT"
+  },
+  "node": "v22.22.0",
+  "platform": "win32",
+  "summary": {
+    "label": "unauthenticated_ingress_only",
+    "target": "http://127.0.0.1:3001",
+    "rate": 50,
+    "durationSeconds": 10,
+    "readiness": {
+      "status": 405,
+      "ready": true,
+      "timeout": false,
+      "elapsedMs": 35.752
+    },
+    "sent": 500,
+    "completed": 500,
+    "skipped": 0,
+    "statusDistribution": {
+      "403": 500
+    },
+    "redirectCount": 0,
+    "transportErrors": 0,
+    "timeouts": 0,
+    "failures": 0,
+    "latencyMs": {
+      "p50": 2.375,
+      "p95": 3.522,
+      "max": 10.661
+    }
+  }
+}

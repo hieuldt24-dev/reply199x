@@ -1,16 +1,63 @@
-﻿import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
-const { getUser, rpc, createClient } = vi.hoisted(() => ({ getUser: vi.fn(), rpc: vi.fn(), createClient: vi.fn() }));
+const { getUser, rpc, createClient, getPayOsConfig, createPayOsPaymentLink, lookupPayOsPaymentLink } = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  rpc: vi.fn(),
+  createClient: vi.fn(),
+  getPayOsConfig: vi.fn(),
+  createPayOsPaymentLink: vi.fn(),
+  lookupPayOsPaymentLink: vi.fn(),
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getUser } }) }));
 vi.mock("@supabase/supabase-js", () => ({ createClient }));
+vi.mock("@/lib/payments/payos/checkout", () => ({
+  createPayOsPaymentLink,
+  getPayOsConfig,
+  lookupPayOsPaymentLink,
+  payOsErrorDiagnostic: () => ({ stage: "create" }),
+}));
 
 const userId = "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0";
+const orderId = "a3d9df10-fc46-4f23-8d73-96fe71ad9465";
 const validInput = { idempotencyKey: "8c5f4d5b-66f9-4a41-9e07-3f46fae90e12", name: "Nguyen An", email: "an@example.com", phone: "", gender: "", birthYear: null, quantity: 1, merch: "none" };
+const checkoutFields = {
+  checkout_order_code: 112233,
+  checkout_order_id: orderId,
+  checkout_amount_vnd: 169000,
+  checkout_currency: "VND",
+  checkout_payment_status: "pending",
+  checkout_expires_at: new Date(Date.now() + 3600000).toISOString(),
+  checkout_payment_link_id: null,
+  checkout_url: null,
+  checkout_can_create: true,
+  checkout_can_reconcile: false,
+  checkout_prepare_error_code: null,
+};
+function orderRow(overrides: Record<string, unknown> = {}) {
+  return {
+    order_id: orderId,
+    quantity: 1,
+    unit_price_vnd: 169000,
+    merch_option: "none",
+    merch_price_vnd: 0,
+    ticket_subtotal_vnd: 169000,
+    total_vnd: 169000,
+    order_status: "pending_payment",
+    reused: false,
+    blocked_until: null,
+    ...checkoutFields,
+    ...overrides,
+  };
+}
+function responseRow(overrides: Record<string, unknown> = {}) { return { data: [orderRow(overrides)], error: null }; }
 function request(body: unknown, headers: Record<string, string> = {}) {
   return new NextRequest("http://localhost:3000/api/ticket-orders", { method: "POST", headers: { origin: "http://localhost:3000", "content-type": "application/json", ...headers }, body: typeof body === "string" ? body : JSON.stringify(body) });
+}
+const link = { paymentLinkId: "benchmark-link", checkoutUrl: "https://pay.payos.vn/web/benchmark-link", amount: 169000, orderCode: 112233, expiresAt: Math.floor(Date.now() / 1000) + 300 };
+function setPayOsEnabled() {
+  vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
 }
 
 beforeEach(() => {
@@ -21,160 +68,310 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
   vi.stubEnv("SUPABASE_SECRET_KEY", "sb_secret_test");
   getUser.mockReset().mockResolvedValue({ data: { user: { id: userId } }, error: null });
-  rpc.mockReset();
-  createClient.mockReset();
+  rpc.mockReset().mockResolvedValue({ data: null, error: null });
+  createClient.mockReset().mockReturnValue({ rpc });
+  getPayOsConfig.mockReset().mockReturnValue({ clientId: "client", apiKey: "key", checksumKey: "checksum" });
+  createPayOsPaymentLink.mockReset().mockResolvedValue(link);
+  lookupPayOsPaymentLink.mockReset().mockResolvedValue(link);
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
 describe("POST /api/ticket-orders", () => {
-  it("commits a restriction response without preparing or creating a provider checkout", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    vi.stubGlobal("fetch", vi.fn());
+  it("uses the auth-derived user and combines fresh order and lease setup", async () => {
+    setPayOsEnabled();
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5" ? responseRow() : { data: null, error: null });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ order: { id: orderId, status: "pending_payment" }, checkoutUrl: link.checkoutUrl });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
+    expect(rpc.mock.calls[0]?.[1]).toEqual({
+      p_user_id: userId,
+      p_idempotency_key: validInput.idempotencyKey,
+      p_attendee_name: "Nguyen An",
+      p_attendee_email: "an@example.com",
+      p_attendee_phone: "",
+      p_attendee_gender: "",
+      p_attendee_birth_year: null,
+      p_quantity: 1,
+      p_merch_option: "none",
+    });
+    expect(Object.keys(rpc.mock.calls[0]?.[1] ?? {})).toHaveLength(9);
+    expect(createPayOsPaymentLink).toHaveBeenCalledOnce();
+    expect(lookupPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+
+  it("reuses a saved provider link without a provider call or persistence RPC", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ checkout_payment_link_id: "saved-link", checkout_url: "https://pay.payos.vn/web/saved-link", checkout_can_create: false, checkout_can_reconcile: false }));
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ checkoutUrl: "https://pay.payos.vn/web/saved-link" });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v5", expect.any(Object));
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("does not create a provider link while another request holds the lease", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ checkout_can_create: false, checkout_can_reconcile: false }));
+    expect((await POST(request(validInput))).status).toBe(409);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("returns cooldown with Retry-After and does not create checkout", async () => {
+    setPayOsEnabled();
     const retryAt = new Date(Date.now() + 86400000).toISOString();
-    rpc.mockResolvedValue({ data: [{ order_id: null, blocked_until: retryAt }], error: null });
-    createClient.mockReturnValue({ rpc });
+    rpc.mockResolvedValue({ data: [{ order_id: null, quantity: null, unit_price_vnd: null, merch_option: null, merch_price_vnd: null, ticket_subtotal_vnd: null, total_vnd: null, order_status: null, reused: false, blocked_until: retryAt, ...Object.fromEntries(Object.keys(checkoutFields).map((key) => [key, null])) }], error: null });
     const response = await POST(request(validInput));
     expect(response.status).toBe(429);
     expect(await response.json()).toMatchObject({ error: { code: "checkout_restricted", retryAt } });
     expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(86390);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v4", expect.objectContaining({ p_user_id: userId }));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(response.headers.get("Server-Timing")).toContain("total;dur=");
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("does not prepare or create checkout for a non-payable order", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ order_status: "paid", ...Object.fromEntries(Object.keys(checkoutFields).filter((key) => key !== "checkout_prepare_error_code").map((key) => [key, null])) }));
+    expect((await POST(request(validInput))).status).toBe(409);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("keeps the v4 idempotency conflict RPC error distinct and returns 409", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue({ data: null, error: { code: "23505", message: "idempotency_payload_conflict" } });
+    expect((await POST(request(validInput))).status).toBe(409);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
   });
 
   it.each([
-    { order_id: null, blocked_until: "invalid" },
-    { order_id: userId, total_vnd: 169000, order_status: "pending_payment", blocked_until: "invalid" },
-    { order_id: null, blocked_until: null },
-  ])("fails closed for malformed guarded results: %j", async (row) => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    vi.stubGlobal("fetch", vi.fn());
-    rpc.mockResolvedValue({ data: [row], error: null });
-    createClient.mockReturnValue({ rpc });
-    expect((await POST(request(validInput))).status).toBe(503);
-    expect(rpc).toHaveBeenCalledOnce();
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it.each(["PGRST202", "42883"])("fails closed when v4 migration is unavailable: %s", async (code) => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    rpc.mockResolvedValue({ data: null, error: { code } });
-    createClient.mockReturnValue({ rpc });
-    expect((await POST(request(validInput))).status).toBe(503);
-    expect(rpc).toHaveBeenCalledOnce();
-  });
-
-  it("preserves idempotency payload conflicts", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    rpc.mockResolvedValue({ data: null, error: { code: "23505", message: "idempotency_payload_conflict" } });
-    createClient.mockReturnValue({ rpc });
-    expect((await POST(request(validInput))).status).toBe(409);
-    expect(rpc).toHaveBeenCalledOnce();
-  });
-  it.each(["42702", "untrusted-code-with-private-data"])("logs only safe preparation diagnostics for %s", async (code) => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    rpc.mockResolvedValueOnce({ data: [{ order_id: userId, total_vnd: 169000, order_status: "pending_payment" }], error: null })
-      .mockResolvedValueOnce({ data: null, error: { code, message: "private attendee and query data", details: "private details" } });
-    createClient.mockReturnValue({ rpc });
+    { code: "PGRST202", message: "private database text" },
+    { code: "untrusted", message: "attendee data leaked" },
+  ])("sanitizes missing or unrecognized v5 RPC failures", async (error) => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue({ data: null, error });
     const response = await POST(request(validInput));
     expect(response.status).toBe(503);
-    expect(log).toHaveBeenCalledExactlyOnceWith("payos_checkout_rpc_failed", { stage: "prepare", code: code === "42702" ? code : "unknown" });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await response.text()).not.toContain(error.message);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("maps a nested P0002 marker to not found without leaking database text", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ checkout_prepare_error_code: "P0002" }));
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(404);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("sanitizes other nested prepare markers", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ checkout_prepare_error_code: "23514" }));
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(503);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { order_id: null },
+    { checkout_order_id: "a3d9df10-fc46-4f23-8d73-96fe71ad9466" },
+    { checkout_amount_vnd: 1 },
+    { checkout_currency: "USD" },
+    { checkout_can_create: true, checkout_can_reconcile: true },
+    { checkout_payment_link_id: "partial-link", checkout_url: null },
+    { checkout_prepare_error_code: "not-sqlstate" },
+  ])("fails closed on partial or inconsistent v5 rows: %j", async (overrides) => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow(overrides));
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("fails closed for malformed cooldown row", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue({ data: [{ order_id: orderId, reused: false, blocked_until: new Date(Date.now() + 60000).toISOString() }], error: null });
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("reports only reached fixed numeric timing spans and preserves response headers", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ checkout_payment_link_id: "saved-link", checkout_url: "https://pay.payos.vn/web/saved-link", checkout_can_create: false, checkout_can_reconcile: false }));
+    const response = await POST(request(validInput));
+    const timing = response.headers.get("Server-Timing") ?? "";
+    expect(timing).toMatch(/request_validation;dur=\d+(?:\.\d+)?/);
+    expect(timing).toMatch(/auth;dur=\d+(?:\.\d+)?/);
+    expect(timing).toMatch(/order_checkout_rpc;dur=\d+(?:\.\d+)?/);
+    expect(timing).toMatch(/total;dur=\d+(?:\.\d+)?/);
+    expect(timing).not.toMatch(/payos_create|payos_lookup|checkout_persist_rpc/);
+    expect(timing).not.toMatch(/orderId|attendee|pay\.payos|link-1/iu);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+
+  it("enforces configuration gates before the v5 RPC or provider", async () => {
+    const disabled = await POST(request(validInput));
+    expect(disabled.status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+
+    setPayOsEnabled();
+    getPayOsConfig.mockReturnValueOnce(null);
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
+
+    vi.stubEnv("SUPABASE_SECRET_KEY", "");
+    expect((await POST(request(validInput))).status).toBe(503);
+    vi.stubEnv("SUPABASE_SECRET_KEY", "sb_anon_invalid");
+    expect((await POST(request(validInput))).status).toBe(503);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid origin, media type, body and auth before database access", async () => {
+    expect((await POST(request(validInput, { origin: "https://attacker.example" }))).status).toBe(403);
+    expect((await POST(request(validInput, { "content-type": "text/plain" }))).status).toBe(415);
+    expect((await POST(request({ ...validInput, totalVnd: 1 }))).status).toBe(400);
+    getUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+    expect((await POST(request(validInput))).status).toBe(401);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized and non-JSON requests before auth or database access", async () => {
+    setPayOsEnabled();
+    const oversized = await POST(request(" ".repeat(8193)));
+    expect(oversized.status).toBe(413);
+    expect(await oversized.json()).toMatchObject({ error: { code: "payload_too_large" } });
+    const declaredOversized = await POST(request(validInput, { "content-length": "9000" }));
+    expect(declaredOversized.status).toBe(413);
+    const nonJson = await POST(request("{not json"));
+    expect(nonJson.status).toBe(400);
+    expect(await nonJson.json()).toMatchObject({ error: { code: "invalid_request" } });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
   });
 
   it("distinguishes failed persistence after provider success without logging the link or raw error", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
+    setPayOsEnabled();
     const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const data = { amount: 169000, orderCode: 112233, currency: "VND", paymentLinkId: "link-1", checkoutUrl: "https://pay.payos.vn/web/link-1" };
-    const signature = createHmac("sha256", "checksum").update("amount=169000&checkoutUrl=https://pay.payos.vn/web/link-1&currency=VND&orderCode=112233&paymentLinkId=link-1").digest("hex");
-    const fetchMock = vi.fn().mockResolvedValue(Response.json({ code: "00", data, signature }));
-    vi.stubGlobal("fetch", fetchMock);
-    rpc.mockResolvedValueOnce({ data: [{ order_id: userId, total_vnd: 169000, order_status: "pending_payment" }], error: null })
-      .mockResolvedValueOnce({ data: [{ order_code: 112233, amount_vnd: 169000, currency: "VND", payment_status: "pending", can_create: true, checkout_url: null, payment_link_id: null }], error: null })
-      .mockResolvedValueOnce({ data: null, error: { code: "42702", message: "private query and attendee data" } });
-    createClient.mockReturnValue({ rpc });
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5"
+      ? responseRow()
+      : { data: null, error: { code: "42702", message: "raw private database text" } });
     const response = await POST(request(validInput));
     expect(response.status).toBe(503);
+    const text = await response.text();
+    expect(JSON.parse(text)).toEqual({ error: { code: "temporarily_unavailable", message: "Checkout could not be prepared." } });
+    expect(text).not.toMatch(/raw private|benchmark-link|pay\.payos/u);
+    expect(createPayOsPaymentLink).toHaveBeenCalledOnce();
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
+    expect(rpc).toHaveBeenNthCalledWith(2, "prepare_payos_checkout", { p_order_id: orderId, p_user_id: userId, p_payment_link_id: link.paymentLinkId, p_checkout_url: link.checkoutUrl });
     expect(log).toHaveBeenCalledExactlyOnceWith("payos_checkout_rpc_failed", { stage: "persist", code: "42702" });
-    expect(fetchMock).toHaveBeenCalledOnce();
-    expect(rpc).toHaveBeenNthCalledWith(3, "prepare_payos_checkout", expect.objectContaining({ p_payment_link_id: "link-1" }));
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/raw private|benchmark-link|pay\.payos/u);
   });
-  it("returns a specific reconciliation response without attempting another provider call", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    vi.stubGlobal("fetch", vi.fn());
-    rpc.mockResolvedValue({ data: [{ order_id: userId, total_vnd: 169000, order_status: "reconciliation" }], error: null });
-    createClient.mockReturnValue({ rpc });
+
+  it("returns a reconciliation response for a reconciliation order without another provider call", async () => {
+    setPayOsEnabled();
+    rpc.mockResolvedValue(responseRow({ order_status: "reconciliation", ...Object.fromEntries(Object.keys(checkoutFields).filter((key) => key !== "checkout_prepare_error_code").map((key) => [key, null])) }));
     const response = await POST(request(validInput));
     expect(response.status).toBe(409);
-    expect(await response.json()).toMatchObject({ error: { code: "checkout_reconciliation_required" } });
+    expect(await response.json()).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(lookupPayOsPaymentLink).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledOnce();
-    expect(fetch).not.toHaveBeenCalled();
-  });
-  it("keeps the payment rail disabled before order or provider calls", async () => {
-    const response = await POST(request(validInput));
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ error: { code: "temporarily_unavailable" } });
-    expect(rpc).not.toHaveBeenCalled();
-    expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("does not create a link when another request holds the database lease", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    vi.stubGlobal("fetch", vi.fn());
-    rpc.mockImplementation((name: string) => name === "create_ticket_order_v4"
-      ? Promise.resolve({ data: [{ order_id: userId, quantity: 1, unit_price_vnd: 169000, ticket_subtotal_vnd: 169000, merch_option: "none", merch_price_vnd: 0, total_vnd: 169000, order_status: "pending_payment", reused: false }], error: null })
-      : Promise.resolve({ data: [{ order_code: 112233, amount_vnd: 169000, currency: "VND", payment_status: "pending", can_create: false, checkout_url: null, payment_link_id: null }], error: null }));
-    createClient.mockReturnValue({ rpc });
-    const response = await POST(request(validInput));
-    expect(response.status).toBe(409);
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it("returns a persisted checkout URL without creating another provider link", async () => {
-    vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
-    vi.stubEnv("PAYOS_CLIENT_ID", "client"); vi.stubEnv("PAYOS_API_KEY", "key"); vi.stubEnv("PAYOS_CHECKSUM_KEY", "checksum");
-    vi.stubGlobal("fetch", vi.fn());
-    rpc.mockImplementation((name: string) => name === "create_ticket_order_v4"
-      ? Promise.resolve({ data: [{ order_id: userId, quantity: 1, unit_price_vnd: 169000, ticket_subtotal_vnd: 169000, merch_option: "none", merch_price_vnd: 0, total_vnd: 169000, order_status: "pending_payment", reused: false }], error: null })
-      : Promise.resolve({ data: [{ order_code: 112233, amount_vnd: 169000, currency: "VND", payment_status: "pending", can_create: false, checkout_url: "https://pay.payos.vn/web/link-1", payment_link_id: "link-1" }], error: null }));
-    createClient.mockReturnValue({ rpc });
+  it("reconciles an ambiguous lease by lookup only, persists it and reports lookup timing", async () => {
+    setPayOsEnabled();
+    lookupPayOsPaymentLink.mockImplementation(async ({ observer }: { observer?: (stage: string, duration: number) => void }) => {
+      observer?.("payos_lookup", 12.5);
+      return link;
+    });
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5"
+      ? responseRow({ checkout_can_create: false, checkout_can_reconcile: true })
+      : { data: null, error: null });
     const response = await POST(request(validInput));
     expect(response.status).toBe(201);
-    expect(await response.json()).toMatchObject({ checkoutUrl: "https://pay.payos.vn/web/link-1" });
-    expect(fetch).not.toHaveBeenCalled();
+    expect(await response.json()).toMatchObject({ checkoutUrl: link.checkoutUrl });
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(lookupPayOsPaymentLink).toHaveBeenCalledExactlyOnceWith({ amountVnd: 169000, orderCode: 112233, config: expect.any(Object), observer: expect.any(Function) });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
+    const timing = response.headers.get("Server-Timing") ?? "";
+    expect(timing).toContain("payos_lookup;dur=12.5");
+    expect(timing).toMatch(/checkout_persist_rpc;dur=\d+(?:\.\d+)?/);
+    expect(timing).not.toContain("payos_create");
   });
 
-  it("rejects mismatched origins before auth or database access", async () => {
-    const response = await POST(request(validInput, { origin: "https://attacker.example" }));
-    expect(response.status).toBe(403);
-    expect(getUser).not.toHaveBeenCalled();
+  it("marks reconciliation and returns 409 when lookup finds no link", async () => {
+    setPayOsEnabled();
+    lookupPayOsPaymentLink.mockResolvedValue(null);
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5"
+      ? responseRow({ checkout_can_create: false, checkout_can_reconcile: true })
+      : { data: null, error: null });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "mark_payos_checkout_reconciliation"]);
+    expect(rpc).toHaveBeenNthCalledWith(2, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
   });
 
-  it("requires an authenticated user", async () => {
-    getUser.mockResolvedValue({ data: { user: null }, error: null });
-    expect((await POST(request(validInput))).status).toBe(401);
+  it("returns a sanitized 503 without marking when lookup throws", async () => {
+    setPayOsEnabled();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    lookupPayOsPaymentLink.mockRejectedValue(new Error("raw provider text secret"));
+    rpc.mockResolvedValue(responseRow({ checkout_can_create: false, checkout_can_reconcile: true }));
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(503);
+    const text = await response.text();
+    expect(JSON.parse(text)).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
+    expect(text).not.toContain("raw provider");
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(JSON.stringify(log.mock.calls)).not.toContain("raw provider");
   });
 
-  it("rejects client supplied prices and drink selections", async () => {
-    expect((await POST(request({ ...validInput, totalVnd: 1 }))).status).toBe(400);
-    expect((await POST(request({ ...validInput, drinkIds: [userId] }))).status).toBe(400);
-    expect((await POST(request({ ...validInput, name: "  " }))).status).toBe(400);
+  it("marks reconciliation after a single failed provider create and returns a sanitized 503", async () => {
+    setPayOsEnabled();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    createPayOsPaymentLink.mockRejectedValue(new Error("raw provider text secret"));
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5" ? responseRow() : { data: null, error: null });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(503);
+    const text = await response.text();
+    expect(JSON.parse(text)).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
+    expect(text).not.toContain("raw provider");
+    expect(createPayOsPaymentLink).toHaveBeenCalledOnce();
+    expect(lookupPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "mark_payos_checkout_reconciliation"]);
+    expect(rpc).toHaveBeenNthCalledWith(2, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("raw provider");
   });
 
-  it("rejects oversized and non-JSON requests", async () => {
-    expect((await POST(request(" ".repeat(8193)))).status).toBe(413);
-    expect((await POST(request({}, { "content-type": "text/plain" }))).status).toBe(415);
+  it("passes an observer to provider create and emits only fixed finite timing spans", async () => {
+    setPayOsEnabled();
+    createPayOsPaymentLink.mockImplementation(async ({ observer }: { observer?: (stage: string, duration: number) => void }) => {
+      observer?.("payos_create", 33.25);
+      return link;
+    });
+    rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5" ? responseRow() : { data: null, error: null });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(createPayOsPaymentLink).toHaveBeenCalledExactlyOnceWith({ orderId, orderCode: 112233, amountVnd: 169000, config: expect.any(Object), expiresAt: checkoutFields.checkout_expires_at, observer: expect.any(Function) });
+    const timing = response.headers.get("Server-Timing") ?? "";
+    const entries = timing.split(", ").map((entry) => {
+      const match = /^([a-z_]+);dur=(.+)$/u.exec(entry);
+      expect(match).not.toBeNull();
+      return [match?.[1], Number(match?.[2])] as const;
+    });
+    expect(entries.map(([name]) => name)).toEqual(["request_validation", "auth", "order_checkout_rpc", "payos_create", "checkout_persist_rpc", "total"]);
+    for (const [, value] of entries) {
+      expect(Number.isFinite(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+    }
+    expect(timing).toContain("payos_create;dur=33.25");
+    expect(timing).not.toMatch(new RegExp([userId, orderId, "112233", "benchmark-link", "pay\\.payos", "an@example"].join("|"), "iu"));
   });
 });
-

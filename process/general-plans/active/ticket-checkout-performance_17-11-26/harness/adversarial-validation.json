@@ -1,0 +1,14 @@
+{
+  "task": "Ticket checkout performance: adversarial scenarios.",
+  "scenarios": [
+    { "scenario": "Caller calls create_ticket_order_v5 directly with anon/authenticated key to create orders for another user", "ruled_out": true, "rationale": "Migration revokes execute from public, anon, authenticated and grants only service_role; asserted by isolated PostgreSQL permission checks." },
+    { "scenario": "Body-supplied user id spoofs order owner", "ruled_out": true, "rationale": "Route passes p_user_id: authData.user.id only; route tests assert exact auth-derived arguments." },
+    { "scenario": "search_path hijack of SECURITY DEFINER function", "ruled_out": true, "rationale": "Function sets search_path = '' ; verified by DB runner." },
+    { "scenario": "Retry/replay or provider timeout causes a second PayOS create POST or duplicate order/link", "ruled_out": true, "rationale": "Idempotency + lease logic delegated to v4; PayOS tests assert max one POST with GET fallback; DB concurrency/replay checks pass." },
+    { "scenario": "v4 conflict error smuggled into prepare marker to produce misleading 404", "ruled_out": true, "rationale": "Error channels separated; 23505 stays RPC error -> 409; route tests (b)-(f)." },
+    { "scenario": "Server-Timing leaks identity/order/provider data", "ruled_out": true, "rationale": "Fixed stage names and numeric durations only; route data-exclusion tests." },
+    { "scenario": "Observer exception alters payment outcome", "ruled_out": true, "rationale": "Observer wrapped in try/catch; tested." },
+    { "scenario": "Ingress probe pointed at a remote/production host or following redirects", "ruled_out": true, "rationale": "Loopback-only host allowlist, no credentials, redirect: manual, hard caps; parser tests." },
+    { "scenario": "Hosted deployment behaves differently (proxy Origin, network latency, migration not applied)", "ruled_out": false, "rationale": "Not tested; local/isolated evidence only. Known gap." }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "task": "Ticket checkout performance: service-role-only v5 combined order+checkout-prepare RPC, route mapping, Server-Timing, PayOS observer, loopback ingress probe.",
+  "snippets": [
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "144-160",
+      "description": "Pre-RPC gates (PAYOS_CHECKOUT_ENABLED, PayOS config, SUPABASE_SECRET_KEY) return 503 before any order RPC; v5 RPC called only after gates.",
+      "content": "if (process.env.PAYOS_CHECKOUT_ENABLED !== \"true\") { ... } const secretKey = process.env.SUPABASE_SECRET_KEY; ... await admin.rpc(\"create_ticket_order_v5\", {"
+    },
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "161",
+      "description": "Trust boundary: p_user_id derived only from the authenticated Supabase user, never from the request body.",
+      "content": "p_user_id: authData.user.id,"
+    },
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "174, 186-199",
+      "description": "Error-channel separation: RPC error 23505 + idempotency_payload_conflict -> 409; v5 row validated before provider work; nested prepare marker P0002 -> 404, other safe marker -> sanitized 503.",
+      "content": "if (error.code === \"23505\" && ... includes(\"idempotency_payload_conflict\")) ... if (row.checkout_prepare_error_code === \"P0002\") return json(..., 404);"
+    },
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "108",
+      "description": "Server-Timing header with fixed stage names only (no identity/order/provider data).",
+      "content": "response.headers.set(\"Server-Timing\", values.join(\", \"));"
+    },
+    {
+      "file": "supabase/migrations/202611170001_ticket_order_checkout_v5.sql",
+      "lines": "16-17, 68, 89-90",
+      "description": "SECURITY DEFINER with empty search_path; nested exception block catches only prepare errors; execute revoked from public/anon/authenticated and granted only to service_role.",
+      "content": "security definer\nset search_path = ''\n... exception when others then ...\nrevoke all on function public.create_ticket_order_v5(...) from public, anon, authenticated;\ngrant execute on function public.create_ticket_order_v5(...) to service_role;"
+    },
+    {
+      "file": "src/lib/payments/payos/checkout.ts",
+      "lines": "93-95, 108, 156-159",
+      "description": "Observer invoked from finally once per started create/lookup; observer exceptions swallowed so they cannot change payment outcomes; fallback GET reuses observer, no repeat POST.",
+      "content": "try { observer(stage, Math.max(0, performance.now() - startedAt)); } catch { /* Observability must not change payment outcomes. */ }"
+    },
+    {
+      "file": "scripts/measure-ticket-order-ingress.mjs",
+      "lines": "5-7, 20-22, 40, 72",
+      "description": "Probe hard caps (rate<=50, duration<=30, in-flight<=100), loopback-only HTTP target without credentials, redirect: manual.",
+      "content": "const MAX_RATE = 50; const MAX_DURATION = 30; const MAX_IN_FLIGHT = 100; ... [\"localhost\", \"127.0.0.1\", \"::1\"].includes(host) ... redirect: \"manual\""
+    }
+  ],
+  "sourceHashes": {
+    "src/app/api/ticket-orders/route.ts": "7eb3d4dd06fdc8c8f60dc7f58caef8ac8766e9b4acd1635372dd583663c678e4",
+    "supabase/migrations/202611170001_ticket_order_checkout_v5.sql": "a0d20ec3b65c3cdc00cc30fee541a5a94ee72ec0c7eedb52abd42dac64610f5c",
+    "src/lib/payments/payos/checkout.ts": "1ac75b5e3098655f98f46054cdcec5c877930f67321f1767d052e2d792de84aa",
+    "scripts/measure-ticket-order-ingress.mjs": "b98d13230f084e6f435527f1711cffc869c8bb132aa57ec5e5d06fede582f992"
+  }
+}

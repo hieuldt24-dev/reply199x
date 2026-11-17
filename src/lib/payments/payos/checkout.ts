@@ -3,6 +3,7 @@ import { getSiteOrigin } from "@/lib/supabase/config";
 
 export type PayOsConfig = Readonly<{ clientId: string; apiKey: string; checksumKey: string }>;
 export type PayOsLink = Readonly<{ checkoutUrl: string; paymentLinkId: string; amount: number; orderCode: number; expiresAt: number }>;
+export type PayOsOperationObserver = (stage: "payos_create" | "payos_lookup", durationMs: number) => void;
 type RecordValue = Record<string, unknown>;
 
 const CHECKOUT_HOSTS = new Set(["pay.payos.vn"]);
@@ -89,13 +90,22 @@ export function validatePayOsLinkResponse(value: unknown, expected: { amount: nu
   return { checkoutUrl: url.toString(), paymentLinkId: data.paymentLinkId, amount: expected.amount, orderCode: expected.orderCode, expiresAt };
 }
 
-export async function lookupPayOsPaymentLink(input: { amountVnd: number; orderCode: number; config: PayOsConfig; fetchImpl?: typeof fetch }): Promise<PayOsLink | null> {
+function observePayOsOperation(observer: PayOsOperationObserver | undefined, stage: "payos_create" | "payos_lookup", startedAt: number) {
+  if (!observer) return;
+  try { observer(stage, Math.max(0, performance.now() - startedAt)); } catch { /* Observability must not change payment outcomes. */ }
+}
+
+export async function lookupPayOsPaymentLink(input: { amountVnd: number; orderCode: number; config: PayOsConfig; fetchImpl?: typeof fetch; observer?: PayOsOperationObserver }): Promise<PayOsLink | null> {
   let response: Response;
-  try { response = await (input.fetchImpl ?? fetch)(`https://api-merchant.payos.vn/v2/payment-requests/${input.orderCode}`, {
-    method: "GET",
-    headers: { "x-client-id": input.config.clientId, "x-api-key": input.config.apiKey },
-    signal: AbortSignal.timeout(8000),
-  }); } catch { throw new PayOsProviderError("lookup"); }
+  const startedAt = performance.now();
+  try {
+    response = await (input.fetchImpl ?? fetch)(`https://api-merchant.payos.vn/v2/payment-requests/${input.orderCode}`, {
+      method: "GET",
+      headers: { "x-client-id": input.config.clientId, "x-api-key": input.config.apiKey },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch { throw new PayOsProviderError("lookup"); }
+  finally { observePayOsOperation(input.observer, "payos_lookup", startedAt); }
   if (response.status === 404) return null;
   const root = await response.json().catch(() => null);
   const data = record(record(root)?.data);
@@ -111,7 +121,7 @@ export async function lookupPayOsPaymentLink(input: { amountVnd: number; orderCo
   return { paymentLinkId: data.id, checkoutUrl: `https://pay.payos.vn/web/${data.id}`, amount: input.amountVnd, orderCode: input.orderCode, expiresAt: Math.floor(Date.now() / 1000) + 300 };
 }
 
-export async function createPayOsPaymentLink(input: { orderId: string; orderCode: number; amountVnd: number; config: PayOsConfig; siteOrigin?: string; fetchImpl?: typeof fetch; now?: number; expiresAt?: string }): Promise<PayOsLink> {
+export async function createPayOsPaymentLink(input: { orderId: string; orderCode: number; amountVnd: number; config: PayOsConfig; siteOrigin?: string; fetchImpl?: typeof fetch; now?: number; expiresAt?: string; observer?: PayOsOperationObserver }): Promise<PayOsLink> {
   if (!/^[0-9a-f-]{36}$/iu.test(input.orderId) || !Number.isSafeInteger(input.amountVnd) || input.amountVnd < 1) throw new Error("Invalid order for PayOS.");
   const origin = input.siteOrigin ?? getSiteOrigin();
   const returnUrl = new URL("/payment/return", origin);
@@ -130,7 +140,9 @@ export async function createPayOsPaymentLink(input: { orderId: string; orderCode
   const expiredAt = Math.floor(expiresAtMs / 1000);
   // Only called for the DB's one-time can_create claim. Subsequent attempts
   // use lookup only, even after the creation lease expires.
-  let response: Response;
+  let response: Response | null = null;
+  let requestFailed = false;
+  const startedAt = performance.now();
   try {
     response = await (input.fetchImpl ?? fetch)("https://api-merchant.payos.vn/v2/payment-requests", {
       method: "POST",
@@ -139,13 +151,19 @@ export async function createPayOsPaymentLink(input: { orderId: string; orderCode
       signal: AbortSignal.timeout(8000),
     });
   } catch {
-    const reconciled = await lookupPayOsPaymentLink({ amountVnd: amount, orderCode, config: input.config, fetchImpl: input.fetchImpl });
+    requestFailed = true;
+  } finally {
+    observePayOsOperation(input.observer, "payos_create", startedAt);
+  }
+  if (requestFailed) {
+    const reconciled = await lookupPayOsPaymentLink({ amountVnd: amount, orderCode, config: input.config, fetchImpl: input.fetchImpl, observer: input.observer });
     if (reconciled) return reconciled;
     throw new PayOsProviderError("create");
   }
+  if (!response) throw new PayOsProviderError("create");
   if (!response.ok) {
     if (response.status >= 500) {
-      const reconciled = await lookupPayOsPaymentLink({ amountVnd: amount, orderCode, config: input.config, fetchImpl: input.fetchImpl });
+      const reconciled = await lookupPayOsPaymentLink({ amountVnd: amount, orderCode, config: input.config, fetchImpl: input.fetchImpl, observer: input.observer });
       if (reconciled) return reconciled;
       throw new PayOsProviderError("create", response.status);
     }

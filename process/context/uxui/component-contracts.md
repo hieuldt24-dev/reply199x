@@ -74,7 +74,7 @@ The source has two Google-hosted bitmap assets: the logo and event poster. Prese
 | Email | Preserve `loihoidap199x@gmail.com`; a `mailto:` link may open the user's mail client |
 | Contact form | Clearly explain it is a local preview before interaction. Validate inputs and allow preview/edit without resetting user text. Announce feedback accessibly. Do not display the source's fabricated saved-success message |
 
-No database, payment, email transport, ticket allocation, contact persistence or newsletter subscription is supplied. Ticket-request submissions use a server-side route to the organizer's fixed Google Sheets registration tab; automated tests mock that boundary and do not prove durable persistence. The contact form remains a local preview and email-client link. Order completion on Google Forms and delivery through an email client remain outside this application's verified behavior.
+Scope note (2026-11-17): this contract covers the home route's preserved UI. The app also has Supabase auth, PayOS ticket checkout and a Sheets paid-order outbox on the server; see `process/context/all-context.md` for that backend and its verification limits. No email transport, ticket allocation, contact persistence or newsletter subscription is supplied. Ticket-request submissions use a server-side route to the organizer's fixed Google Sheets registration tab; automated tests mock that boundary and do not prove durable persistence. The contact form remains a local preview and email-client link. Order completion on Google Forms and delivery through an email client remain outside this application's verified behavior.
 
 ## Accessibility and Responsive Rules
 

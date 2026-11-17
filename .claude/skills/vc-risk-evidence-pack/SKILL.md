@@ -36,6 +36,8 @@ From `process/development-protocols/orchestration.md` ("High-Risk Execution Hand
 
 Per **task-folder artefact colocation**, all artifacts go inside the selected plan's task folder (e.g. `process/features/{feature}/active/{slug}_{date}/harness/` or `process/general-plans/active/{slug}_{date}/harness/`), so the whole pack moves with the plan as a unit. Legacy path `reports/harness/` is deprecated for new writes; never write the pack to a sibling `reports/` dir or any ad-hoc location. The validator script lives at `.claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs`.
 
+**Folder exception:** `harness/` is the single permitted subfolder inside a task folder; the rest of the task folder stays flat (`plan-lifecycle.md` §Task Folder Naming). **Schema authority:** the validator is authoritative for required fields and values. It requires `risk-gate.json` (`task, planPath, riskLevel, riskClasses, mustStopBeforeFinalize, humanApprovalRequired, why`), `context-snippets.json` (`task`), `verification.json` (`task, commands, manualChecks, result`) and `review-decision.json` (`task, decision, blockingFindings, nonBlockingFindings, notes`), with `decision` one of `approved`, `approved-with-concerns`, `rejected`. A high-risk pack without `adversarial-validation.json` only warns. The example JSON below is illustrative and does not override the validator.
+
 ### 1. `risk-gate.json`
 Records the risk class, work description, and approver identity before work begins or is finalized.
 

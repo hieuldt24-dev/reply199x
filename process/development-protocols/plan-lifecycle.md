@@ -253,7 +253,7 @@ Every task's artifacts — plan, spec, reports, and references — live together
 - Slug uses lowercase kebab-case, consistent across all files in the folder
 - Date is the task creation date (not the migration date)
 - Task folder name is STABLE — it does NOT gain a `completed_` prefix when archived; `active/foo_08-06-26/` moves to `completed/foo_08-06-26/` unchanged
-- Task folder contents are flat — no subfolders inside task folders
+- Task folder contents are flat — no subfolders inside task folders, with ONE narrow exception: a high-risk task may hold a single `harness/` subfolder with its five risk-pack JSON files (`risk-gate.json`, `context-snippets.json`, `verification.json`, `review-decision.json`, `adversarial-validation.json`; see `vc-risk-evidence-pack`). No other subfolders are allowed; the `harness/` folder moves with the task folder as a unit.
 
 ### Artifact Types
 

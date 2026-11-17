@@ -77,8 +77,26 @@ describe("PayOS payment-link contract", () => {
     const fetchMock = vi.fn<typeof fetch>()
       .mockRejectedValueOnce(new Error("ambiguous timeout"))
       .mockResolvedValueOnce(new Response("{}", { status: 404 }));
-    await expect(createPayOsPaymentLink({ orderId: "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0", orderCode: 77, amountVnd: 169000, config: { clientId: "id", apiKey: "key", checksumKey: "checksum" }, fetchImpl: fetchMock })).rejects.toThrow("automatic retry is disabled");
+    const observer = vi.fn();
+    await expect(createPayOsPaymentLink({ orderId: "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0", orderCode: 77, amountVnd: 169000, config: { clientId: "id", apiKey: "key", checksumKey: "checksum" }, fetchImpl: fetchMock, observer })).rejects.toThrow("automatic retry is disabled");
     expect(fetchMock.mock.calls.filter((call) => call[1]?.method === "POST")).toHaveLength(1);
+    expect(observer.mock.calls.map(([stage]) => stage)).toEqual(["payos_create", "payos_lookup"]);
+    expect(observer.mock.calls.every(([, duration]) => typeof duration === "number" && Number.isFinite(duration) && duration >= 0)).toBe(true);
+  });
+
+  it("isolates observer errors from successful creates and observes direct lookup failures", async () => {
+    const data = { amount: 169000, orderCode: 77, currency: "VND", paymentLinkId: "plink-77", checkoutUrl: "https://pay.payos.vn/web/plink-77" };
+    const signed = "amount=169000&checkoutUrl=https://pay.payos.vn/web/plink-77&currency=VND&orderCode=77&paymentLinkId=plink-77";
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code: "00", data, signature: createHmac("sha256", "checksum").update(signed).digest("hex") }));
+    const observer = vi.fn<(...args: ["payos_create" | "payos_lookup", number]) => void>(() => { throw new Error("metrics sink failed"); });
+    await expect(createPayOsPaymentLink({ orderId: "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0", orderCode: 77, amountVnd: 169000, config: { clientId: "id", apiKey: "key", checksumKey: "checksum" }, fetchImpl: fetchMock, observer })).resolves.toMatchObject({ paymentLinkId: "plink-77" });
+    expect(observer).toHaveBeenCalledOnce();
+    expect(observer.mock.calls[0]?.[0]).toBe("payos_create");
+
+    const failedObserver = vi.fn();
+    await expect(lookupPayOsPaymentLink({ amountVnd: 169000, orderCode: 77, config: { clientId: "id", apiKey: "key", checksumKey: "checksum" }, fetchImpl: vi.fn<typeof fetch>().mockRejectedValue(new Error("offline")), observer: failedObserver })).rejects.toThrow("automatic retry is disabled");
+    expect(failedObserver).toHaveBeenCalledOnce();
+    expect(failedObserver.mock.calls[0]?.[0]).toBe("payos_lookup");
   });
 
   it("accepts only a correctly signed success webhook with matching required field shapes", () => {

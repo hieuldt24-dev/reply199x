@@ -55,6 +55,8 @@ const bootstrap = `
 const params = (user, key = randomUUID(), quantity = 1) => [user, key, "Test Buyer", "buyer@example.test", "", "", null, quantity, "none"];
 const call = (client, user, key, quantity = 1, version = 4) => client.query(
   `select * from public.create_ticket_order_v${version}($1,$2,$3,$4,$5,$6,$7,$8,$9)`, params(user, key, quantity));
+const callV5 = (client, user, key = randomUUID(), quantity = 1) => client.query(
+  "select * from public.create_ticket_order_v5($1,$2,$3,$4,$5,$6,$7,$8,$9)", params(user, key, quantity));
 const assertSql = async (client, sql, values = []) => {
   const result = await client.query(sql, values);
   assert.equal(result.rows[0]?.ok, true, result.rows[0]?.message ?? sql);
@@ -92,6 +94,61 @@ async function measure(fn, count) {
   }
   return { sampleCount: values.length, p50Ms: percentile(values, 0.5), p95Ms: percentile(values, 0.95) };
 }
+async function compareCombinedRpcLatency(admin, service) {
+  const legacySamples = [];
+  const combinedSamples = [];
+  const measureFresh = async (kind, user, key) => {
+    await service.query("begin");
+    try {
+      const startedAt = performance.now();
+      let result;
+      if (kind === "legacy_v4_plus_prepare") {
+        const order = (await call(service, user, key, 1, 4)).rows[0];
+        const checkout = (await service.query("select * from public.prepare_payos_checkout($1,$2,null,null)", [order.order_id, user])).rows[0];
+        result = { orderId: order.order_id, total: order.total_vnd, status: order.order_status, orderCode: checkout.order_code, checkoutOrderId: checkout.order_id, amount: checkout.amount_vnd, currency: checkout.currency, paymentStatus: checkout.payment_status, canCreate: checkout.can_create, canReconcile: checkout.can_reconcile, rpcCount: 2 };
+      } else {
+        const row = (await callV5(service, user, key)).rows[0];
+        result = { orderId: row.order_id, total: row.total_vnd, status: row.order_status, orderCode: row.checkout_order_code, checkoutOrderId: row.checkout_order_id, amount: row.checkout_amount_vnd, currency: row.checkout_currency, paymentStatus: row.checkout_payment_status, canCreate: row.checkout_can_create, canReconcile: row.checkout_can_reconcile, rpcCount: 1 };
+      }
+      const elapsedMs = performance.now() - startedAt;
+      await service.query("rollback");
+      assert.ok(result.orderId && result.checkoutOrderId === result.orderId && result.total === 169000);
+      assert.equal(result.amount, 169000);
+      assert.equal(result.currency, "VND");
+      assert.equal(result.paymentStatus, "pending");
+      assert.equal(result.canCreate, true);
+      assert.equal(result.canReconcile, false);
+      return { elapsedMs, result };
+    } catch (error) {
+      await service.query("rollback").catch(() => undefined);
+      throw error;
+    }
+  };
+
+  for (let index = 0; index < 50; index += 1) {
+    const user = await newUser(admin);
+    const key = randomUUID();
+    const first = index % 2 === 0 ? "legacy_v4_plus_prepare" : "combined_v5";
+    const second = first === "legacy_v4_plus_prepare" ? "combined_v5" : "legacy_v4_plus_prepare";
+    const firstSample = await measureFresh(first, user, key);
+    const secondSample = await measureFresh(second, user, key);
+    const legacy = first === "legacy_v4_plus_prepare" ? firstSample : secondSample;
+    const combined = first === "combined_v5" ? firstSample : secondSample;
+    const comparable = ({ total: legacy.result.total, status: legacy.result.status, amount: legacy.result.amount, currency: legacy.result.currency, paymentStatus: legacy.result.paymentStatus, canCreate: legacy.result.canCreate, canReconcile: legacy.result.canReconcile });
+    const candidate = ({ total: combined.result.total, status: combined.result.status, amount: combined.result.amount, currency: combined.result.currency, paymentStatus: combined.result.paymentStatus, canCreate: combined.result.canCreate, canReconcile: combined.result.canReconcile });
+    assert.deepEqual(candidate, comparable, "paired legacy and v5 outcomes must match");
+    legacySamples.push(legacy.elapsedMs);
+    combinedSamples.push(combined.elapsedMs);
+  }
+  return {
+    samplePairs: 50,
+    order: "alternating legacy-v4-plus-prepare / v5 by pair",
+    reset: "same user and idempotency input within each pair; each timed transaction rolled back before the paired sample",
+    legacyV4PlusPrepare: { p50Ms: percentile(legacySamples, 0.5), p95Ms: percentile(legacySamples, 0.95), rpcCount: 2 },
+    combinedV5: { p50Ms: percentile(combinedSamples, 0.5), p95Ms: percentile(combinedSamples, 0.95), rpcCount: 1 },
+    limitation: "isolated embedded PostgreSQL only; excludes network and hosted Supabase latency",
+  };
+}
 
 try {
   await postgres.initialise();
@@ -119,9 +176,53 @@ try {
     and not has_table_privilege('authenticated','public.checkout_access_state','insert')
     and not has_table_privilege('authenticated','public.checkout_access_state','update')
     and not has_table_privilege('authenticated','public.checkout_access_state','delete') as ok`);
+  await assertSql(admin, `select has_function_privilege('service_role','public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
+    and not has_function_privilege('anon','public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
+    and not has_function_privilege('authenticated','public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
+    and (select p.prosecdef and coalesce(p.proconfig,'{}') @> array['search_path=""']
+      from pg_proc p where p.oid='public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)'::regprocedure) as ok`);
+  const v5Columns = await admin.query(`select pg_catalog.format_type(a.atttypid,null) as type
+    from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+    cross join lateral unnest(p.proallargtypes,p.proargmodes,p.proargnames) with ordinality as a(atttypid,mode,name,ordinality)
+    where n.nspname='public' and p.proname='create_ticket_order_v5' and a.mode='t' order by a.ordinality`);
+  assert.deepEqual(v5Columns.rows.map(row => row.type), ["uuid", "smallint", "integer", "text", "integer", "integer", "integer", "ticket_order_status", "boolean", "timestamp with time zone", "integer", "uuid", "integer", "text", "text", "timestamp with time zone", "text", "text", "boolean", "boolean", "text"], "v5 must expose the planned typed result contract");
   const smokeUser = await newUser(admin);
-  const smoke = await call(service, smokeUser, randomUUID());
+  const smoke = await callV5(service, smokeUser, randomUUID());
   assert.equal(smoke.rows[0].total_vnd, 169000);
+  assert.equal(smoke.rows[0].checkout_order_id, smoke.rows[0].order_id);
+  assert.equal(smoke.rows[0].checkout_amount_vnd, smoke.rows[0].total_vnd);
+  assert.equal(smoke.rows[0].checkout_currency, "VND");
+  assert.equal(smoke.rows[0].checkout_can_create, true);
+  assert.equal(smoke.rows[0].checkout_can_reconcile, false);
+
+  // A failure during only the nested checkout preparation rolls back that subtransaction,
+  // retains the order, and leaves later unrelated preparations functional.
+  const failureKey = randomUUID();
+  await admin.query(`create function public.test_checkout_prepare_failure() returns trigger language plpgsql as $$
+    begin
+      if exists(select 1 from public.orders o where o.id=new.order_id
+        and o.idempotency_key=current_setting('test.checkout_prepare_failure_key', true)::uuid) then
+        raise exception 'injected_prepare_failure' using errcode='P0002';
+      end if;
+      return new;
+    end;
+  $$`);
+  await admin.query("create trigger test_checkout_prepare_failure before insert on public.payos_payment_links for each row execute function public.test_checkout_prepare_failure()");
+  try {
+    const failureUser = await newUser(admin);
+    await service.query("select set_config('test.checkout_prepare_failure_key',$1,false)", [failureKey]);
+    const failedPrepare = (await callV5(service, failureUser, failureKey)).rows[0];
+    assert.equal(failedPrepare.checkout_prepare_error_code, "P0002");
+    assert.equal(failedPrepare.checkout_order_id, null);
+    assert.equal(Number((await admin.query("select count(*)::int as n from public.orders where id=$1", [failedPrepare.order_id])).rows[0].n), 1, "nested prepare failure must retain the created order");
+    const control = (await callV5(service, await newUser(admin), randomUUID())).rows[0];
+    assert.equal(control.checkout_prepare_error_code, null, "fixture-scoped trigger must not affect control preparations");
+    assert.equal(control.checkout_order_id, control.order_id);
+  } finally {
+    await service.query("select set_config('test.checkout_prepare_failure_key','',false)");
+    await admin.query("drop trigger if exists test_checkout_prepare_failure on public.payos_payment_links");
+    await admin.query("drop function if exists public.test_checkout_prepare_failure()");
+  }
 
   // Prove that the coarse, equivalent lower bounds make a large-account candidate scan use the partial order index.
   const indexUser = await newUser(admin);
@@ -158,6 +259,10 @@ try {
   assert.equal(blocked.order_id, null);
   assert.ok(Date.parse(blocked.blocked_until) > Date.now() + 23 * 60 * 60 * 1000);
   const initialBlock = blocked.blocked_until;
+  const blockedV5 = (await callV5(service, blockedUser, randomUUID())).rows[0];
+  assert.equal(blockedV5.order_id, null, "v5 must preserve cooldown outcomes");
+  assert.ok(blockedV5.blocked_until);
+  assert.equal(blockedV5.checkout_order_id, null);
   const deniedKey = randomUUID();
   const existingOrdersBeforeDenial = Number((await admin.query("select count(*)::int as n from public.orders where user_id=$1", [blockedUser])).rows[0].n);
   assert.equal((await call(service, blockedUser, deniedKey)).rows[0].order_id, null);
@@ -173,6 +278,49 @@ try {
   const replay = (await call(service, replayUser, replayKey, 1)).rows[0];
   assert.equal(replay.order_id, prior.order_id);
   await assert.rejects(() => call(service, replayUser, replayKey, 2), /idempotency_payload_conflict/);
+  const replayV5 = (await callV5(service, replayUser, replayKey, 1)).rows[0];
+  assert.equal(replayV5.order_id, prior.order_id);
+  assert.equal(replayV5.reused, true);
+  assert.equal(replayV5.checkout_order_id, prior.order_id);
+  await assert.rejects(() => callV5(service, replayUser, replayKey, 2), /idempotency_payload_conflict/);
+
+  const nonPayableUser = await newUser(admin);
+  const nonPayableKey = randomUUID();
+  const nonPayableOrder = (await call(admin, nonPayableUser, nonPayableKey, 1, 3)).rows[0];
+  await admin.query("update public.orders set status='paid' where id=$1", [nonPayableOrder.order_id]);
+  const nonPayableV5 = (await callV5(service, nonPayableUser, nonPayableKey)).rows[0];
+  assert.equal(nonPayableV5.order_status, "paid");
+  assert.equal(nonPayableV5.checkout_order_id, null, "v5 must not prepare a non-payable order");
+
+  // v5 lease lifecycle through the real functions: fresh lease, held lease,
+  // ambiguous (expired, already attempted) lease, then saved-link reuse.
+  const lifecycleUser = await newUser(admin);
+  const lifecycleKey = randomUUID();
+  const freshLease = (await callV5(service, lifecycleUser, lifecycleKey)).rows[0];
+  assert.equal(freshLease.checkout_can_create, true);
+  assert.equal(freshLease.checkout_can_reconcile, false);
+  const heldLease = (await callV5(service, lifecycleUser, lifecycleKey)).rows[0];
+  assert.equal(heldLease.order_id, freshLease.order_id);
+  assert.equal(heldLease.checkout_order_code, freshLease.checkout_order_code);
+  assert.equal(heldLease.checkout_can_create, false, "held lease must not allow another create");
+  assert.equal(heldLease.checkout_can_reconcile, false, "held lease must not request reconciliation");
+  assert.equal(heldLease.checkout_payment_link_id, null);
+  assert.equal(heldLease.checkout_url, null);
+  console.log("v5 held-lease outcome PASS (can_create=false, can_reconcile=false)");
+  await admin.query("update public.payos_payment_links set creation_lease_until=now()-interval '1 second' where order_id=$1", [freshLease.order_id]);
+  const ambiguous = (await callV5(service, lifecycleUser, lifecycleKey)).rows[0];
+  assert.equal(ambiguous.checkout_can_create, false, "expired attempted lease must not allow a second create");
+  assert.equal(ambiguous.checkout_can_reconcile, true, "expired attempted lease must request reconciliation");
+  assert.equal(ambiguous.checkout_url, null);
+  console.log("v5 ambiguous-reconcile outcome PASS (can_create=false, can_reconcile=true)");
+  await service.query("select * from public.prepare_payos_checkout($1,$2,$3,$4)", [freshLease.order_id, lifecycleUser, "saved-link-v5", "https://pay.payos.vn/web/saved-link-v5"]);
+  const savedLink = (await callV5(service, lifecycleUser, lifecycleKey)).rows[0];
+  assert.equal(savedLink.checkout_payment_link_id, "saved-link-v5");
+  assert.equal(savedLink.checkout_url, "https://pay.payos.vn/web/saved-link-v5");
+  assert.equal(savedLink.checkout_can_create, false);
+  assert.equal(savedLink.checkout_can_reconcile, false);
+  assert.equal(Number((await admin.query("select count(*)::int as n from public.payos_payment_links where order_id=$1", [freshLease.order_id])).rows[0].n), 1);
+  console.log("v5 saved-link reuse outcome PASS (link id + url set, both flags false)");
 
   // Old, never-issued, failed and reconciliation evidence is not counted.
   const excludedUser = await newUser(admin);
@@ -232,7 +380,23 @@ try {
     assert.ok(concurrentResults.every((result) => result.rows[0].order_id === null && new Date(result.rows[0].blocked_until).getTime() === new Date(concurrentResults[0].rows[0].blocked_until).getTime()));
   } finally { await Promise.all(concurrent.map((client) => client.end())); }
 
+  const sameKeyUser = await newUser(admin);
+  const sameKey = randomUUID();
+  const concurrentReplays = await Promise.all(Array.from({ length: 12 }, () => connect("service_role")));
+  try {
+    const results = await Promise.all(concurrentReplays.map((client) => callV5(client, sameKeyUser, sameKey)));
+    const ids = results.map((result) => result.rows[0].order_id);
+    assert.equal(new Set(ids).size, 1, "concurrent same-key v5 requests must preserve one order identity");
+    assert.equal(Number((await admin.query("select count(*)::int as n from public.orders where user_id=$1", [sameKeyUser])).rows[0].n), 1);
+    assert.equal(Number((await admin.query("select count(*)::int as n from public.payos_payment_links where order_id=$1", [ids[0]])).rows[0].n), 1);
+    const creators = results.filter((result) => result.rows[0].checkout_can_create === true).length;
+    assert.equal(creators, 1, `exactly one concurrent same-key v5 request may own provider creation (got ${creators})`);
+    assert.ok(results.every((result) => result.rows[0].checkout_can_create === true || (result.rows[0].checkout_can_create === false && result.rows[0].checkout_can_reconcile === false)));
+    console.log("v5 concurrent same-key exactly-one-creator PASS (12 requests, 1 can_create=true)");
+  } finally { await Promise.all(concurrentReplays.map((client) => client.end())); }
+
   console.log("real PostgreSQL G2 migration, permissions, policy and concurrency checks PASS");
+  console.log("v5 paired database timing", JSON.stringify(await compareCombinedRpcLatency(admin, service)));
 
   if (process.argv.includes("--workload")) {
     const runs = Number(process.env.CHECKOUT_WORKLOAD_SAMPLES ?? 30);

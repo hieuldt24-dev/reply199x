@@ -775,7 +775,7 @@ High-risk classes:
 Controller rules:
 
 1. Note the risk class in the task summary or selected plan context.
-2–4. Full 5-artifact schema and auto-stop rule: invoke `vc-risk-evidence-pack`.
+2–4. Full 5-artifact schema and auto-stop rule: invoke `vc-risk-evidence-pack`. The pack lives in the selected task folder's `harness/` subfolder (`{slug}_{date}/harness/`) — the one permitted exception to the flat task-folder rule in `plan-lifecycle.md` (§Task Folder Naming). Validate it with `node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs <task-folder>/harness/`; the validator, not the illustrative JSON in the skill, is the authority for required fields and `decision` values.
 5. Keep this manual-first. Do not invent a blocking hook or alternate workflow owner.
 
 ## Research First for Service-Shaped Features

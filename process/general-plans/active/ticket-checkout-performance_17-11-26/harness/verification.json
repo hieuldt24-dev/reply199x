@@ -1,0 +1,129 @@
+{
+  "task": "Ticket checkout performance: verification gates (local and isolated only).",
+  "commands": [
+    {
+      "step": "Route/PayOS/ingress unit suites (vitest on src/app/api/ticket-orders, src/lib/payments/payos, src/lib/ticket-orders)",
+      "command": "npm.cmd test -- src/app/api/ticket-orders src/lib/payments/payos src/lib/ticket-orders",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "79/79 pass; run by orchestrator earlier this session, not re-run by execute-agent."
+    },
+    {
+      "step": "Candidate route benchmark vs immutable baseline",
+      "command": "CHECKOUT_PERF_MODE=candidate CHECKOUT_PERF_BASELINE=<baseline json> npm.cmd test -- src/app/api/ticket-orders/route.performance.test.ts",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "p50 74.929 -> 45.781 ms (-29.148 ms, -38.9%); p95 140.028 -> 61.316 ms; RPCs 3 -> 2; 50x201 both modes; 0 failures."
+    },
+    {
+      "step": "Isolated PostgreSQL migration/permission/concurrency/v5 timing runner",
+      "command": "node scripts/test-checkout-guard-db.mjs",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Re-run 2026-11-17 by execute-agent. All migrations incl. 202611170001 PASS; v5 paired timing 50 pairs: legacy v4+prepare p50 1.219/p95 1.965 ms (2 RPC) vs v5 p50 1.039/p95 1.309 ms (1 RPC). Embedded PostgreSQL only."
+    },
+    {
+      "step": "Production build before ingress (attempt 1)",
+      "command": "npm.cmd run build",
+      "exitCode": 1,
+      "result": "FAIL",
+      "notes": "Compilation succeeded; Next.js 16.4.3 stopped with SecurityFatalError security-advisory notice. No upgrade performed (no new dependencies allowed)."
+    },
+    {
+      "step": "Production build before ingress (retry)",
+      "command": "npm.cmd run build",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "BUILD_ID AQzcvrFqxKAfjLDM4dLNT"
+    },
+    {
+      "step": "Readiness check (boundary: GET must be exactly 405)",
+      "command": "node -e \"fetch('http://127.0.0.1:3001/api/ticket-orders',{redirect:'manual'}).then(r=>{if(r.status!==405)process.exit(1);console.log('ready')})\"",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "printed ready"
+    },
+    {
+      "step": "Loopback ingress probe 50 req/s x 10 s, no Origin (failure path: expected 403 origin rejection)",
+      "command": "node scripts/measure-ticket-order-ingress.mjs --base-url http://127.0.0.1:3001 --rate 50 --duration 10",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "sent 500, completed 500, skipped 0, 403x500, transportErrors 0, timeouts 0, redirects 0, p50 2.375 / p95 3.522 / max 10.661 ms. Server stopped afterwards; nothing listening on 3001."
+    },
+    {
+      "step": "Scoped ESLint",
+      "command": "npm.cmd exec -- eslint src/app/api/ticket-orders/route.ts src/app/api/ticket-orders/route.test.ts src/app/api/ticket-orders/route.performance.test.ts src/lib/payments/payos/checkout.ts src/lib/payments/payos/checkout.test.ts src/lib/ticket-orders/measure-ticket-order-ingress.test.ts scripts/measure-ticket-order-ingress.mjs scripts/test-checkout-guard-db.mjs --max-warnings=0",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": ""
+    },
+    {
+      "step": "Typecheck",
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "next typegen && tsc --noEmit"
+    },
+    {
+      "step": "Final build (attempt 1)",
+      "command": "npm.cmd run build",
+      "exitCode": 1,
+      "result": "FAIL",
+      "notes": "Same Next.js SecurityFatalError advisory stop after successful compilation."
+    },
+    {
+      "step": "Final build (retry)",
+      "command": "npm.cmd run build",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "BUILD_ID Gd6_KxhDv4RSc-Ht_zLkR"
+    },
+    {
+      "step": "Review-fix supplement: route/PayOS/probe unit suites (H1,M2,H2,M1,M4)",
+      "command": "npx vitest run src/app/api/ticket-orders/route.test.ts src/lib/payments/payos/checkout.test.ts src/lib/ticket-orders/measure-ticket-order-ingress.test.ts",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "2026-11-17 execute-agent supplement. 3 files, 61/61. Adds 413/non-JSON, persist-failure, reconciliation-status, lookup success/null/throw, create-throw, full v5 RPC args, Server-Timing observer coverage; probe import path fixed and no-network import made non-vacuous."
+    },
+    {
+      "step": "Review-fix supplement: isolated PostgreSQL v5 lease outcomes (M3)",
+      "command": "node scripts/test-checkout-guard-db.mjs",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "New PASS lines: v5 held-lease (false,false); ambiguous-reconcile (false,true); saved-link reuse (link+url, false,false); concurrent same-key exactly one checkout_can_create=true of 12. P0002 trigger case/control and teardown unchanged. Paired p50 v5 1.029 vs legacy 1.245 ms."
+    },
+    {
+      "step": "Review-fix supplement: scoped ESLint",
+      "command": "npm.cmd exec -- eslint <plan item-10 file list> --max-warnings=0",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Clean."
+    },
+    {
+      "step": "Review-fix supplement: typecheck",
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Clean. Build/server/benchmark not re-run; left to EVL. CANDIDATE json restored from pre-rerun scratchpad copy so cited p50 45.781 ms matches disk."
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "Ingress summary prints no request bodies or headers and is labelled unauthenticated_ingress_only",
+      "result": "PASS"
+    },
+    {
+      "check": "Candidate routeSha256 equals current route.ts sha256 (7eb3d4dd...)",
+      "result": "PASS"
+    },
+    {
+      "check": "No live PayOS, hosted Supabase, deploy or remote migration performed",
+      "result": "PASS"
+    }
+  ],
+  "result": "PASS_WITH_CONCERNS",
+  "concerns": [
+    "npm.cmd run build exits 1 on first attempt each time due to a Next.js 16.4.3 security-advisory stop; passes on retry. Upgrade decision is the user's.",
+    "Hosted migration application, real PayOS and authenticated 50 req/s capacity are unverified."
+  ]
+}

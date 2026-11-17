@@ -1,0 +1,15 @@
+{
+  "task": "Execute ticket checkout performance plan: capture a controlled authenticated baseline, add the service-role-only v5 checkout RPC, preserve route/payment behavior, and verify with isolated PostgreSQL and local ingress tests.",
+  "planPath": "process/general-plans/active/ticket-checkout-performance_17-11-26/ticket-checkout-performance_PLAN_17-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "auth or identity",
+    "billing or payments",
+    "schema/data migration or destructive data mutation",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": true,
+  "why": "The plan adds a privileged PostgreSQL function and migration inside authenticated ticket checkout/payment flow. Keep execution local and isolated: no live PayOS calls, hosted credentials, deployment, or production migration. Require explicit execution-mode entry and a reviewer decision before finalization."
+}

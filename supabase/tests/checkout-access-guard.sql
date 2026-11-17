@@ -36,6 +36,20 @@ begin
      or has_function_privilege('authenticated', 'public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)', 'execute') then
     raise exception 'client role can execute guarded checkout RPC';
   end if;
+  if not has_function_privilege('service_role', 'public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)', 'execute') then
+    raise exception 'service_role cannot execute combined checkout RPC';
+  end if;
+  if has_function_privilege('anon', 'public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)', 'execute')
+     or has_function_privilege('authenticated', 'public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)', 'execute') then
+    raise exception 'client role can execute combined checkout RPC';
+  end if;
+  if not exists (
+    select 1 from pg_proc p
+    where p.oid='public.create_ticket_order_v5(uuid,uuid,text,text,text,text,integer,integer,text)'::regprocedure
+      and p.prosecdef and coalesce(p.proconfig,'{}') @> array['search_path=""']
+  ) then
+    raise exception 'combined checkout RPC must be SECURITY DEFINER with an empty search_path';
+  end if;
   if has_function_privilege('service_role', 'public.create_ticket_order_v3(uuid,uuid,text,text,text,text,integer,integer,text)', 'execute') then
     raise exception 'service_role can bypass guarded checkout through legacy RPC';
   end if;

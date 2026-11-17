@@ -1,0 +1,16 @@
+{
+  "task": "Ticket checkout performance: v5 checkout RPC, route, PayOS observer, ingress probe.",
+  "reviewer": "vc-code-reviewer (independent agent, second pass)",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "L1: the import test in src/lib/ticket-orders/measure-ticket-order-ingress.test.ts cannot detect removal of the CLI main guard in scripts/measure-ticket-order-ingress.mjs.",
+    "L2: src/app/api/ticket-orders/route.performance.test.ts overwrites the CANDIDATE json on every candidate run; the cited run is preserved as ticket-checkout-performance_CANDIDATE_17-11-26.json and the later rerun as ..._CANDIDATE_RERUN_17-11-26.json.",
+    "L3: the REPORT cited 79 and 61 for different test sets (broad three-directory run vs the three-file review-fix run); the later full EVL run is 87 tests in 6 files. Corrected in the REPORT closeout.",
+    "L4: the ingress probe VALID_BODY nests an attendee object while the route's schema is flat; harmless because every probe request is rejected with 403 on Origin first.",
+    "L5: the truncated-stream 400 path in the route is untested.",
+    "Next.js 16.4.3 production build exits 1 on the first run because of a security-advisory stop, then exits 0 on retry; the dependency upgrade is a separate user-approved task."
+  ],
+  "notes": "Round 1 (vc-code-reviewer): REQUEST_CHANGES for test-evidence gaps H1, H2, M1-M4. A test-side-only fix cycle closed them (no production code, migration, measured script, baseline or risk-gate change). Round 2 (vc-code-reviewer): DECISION APPROVE_WITH_CONCERNS with no High or Medium findings open and the five Low items above. EVL confirmation by vc-tester was green twice. The approval covers local and isolated-PostgreSQL behavior ONLY. Unverified and outside this approval: hosted Supabase (migration 202611170001 is NOT applied to any hosted database), production, live PayOS, authenticated 50 req/s capacity, and proxy Origin behavior. risk-gate mustStopBeforeFinalize stays true and humanApprovalRequired stays true: the user still decides on commit, hosted migration and deployment.",
+  "timestamp": "2026-11-17T09:45:00Z"
+}
