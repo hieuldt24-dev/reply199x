@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { MERCH_OPTIONS, TICKET_UNIT_PRICE_VND, validateCreateTicketOrder } from "./validation";
 
 const key = "8c5f4d5b-66f9-4a41-9e07-3f46fae90e12";
-const attendee = { name: "Nguyễn An", email: "an@example.com", phone: "", gender: "", birthYear: null };
+const survey = { source: ["zalo", "facebook"], area: "hai-chau", attendance: "confirmed" };
+const attendee = { name: "Nguyễn An", email: "an@example.com", phone: "", gender: "", birthYear: null, survey };
+const order = (overrides: Record<string, unknown> = {}) => ({ idempotencyKey: key, ...attendee, quantity: 1, merch: "none", ...overrides });
+const withSurvey = (overrides: Record<string, unknown>) => order({ survey: { ...survey, ...overrides } });
 
 describe("validateCreateTicketOrder", () => {
   it.each([1, 2, 3, 4])("computes server price for %i tickets including drink", (quantity) => {
@@ -43,9 +46,56 @@ describe("validateCreateTicketOrder", () => {
       birthYear: "2000",
       quantity: 2,
       merch: "tuoi-xi-tin",
+      survey,
     })).toMatchObject({
       name: "Nguyễn An", email: "An@Example.com", phone: "+84 123 456", gender: "female", birthYear: 2000,
       ticketSubtotalVnd: 338000, merchPriceVnd: 99000, totalVnd: 437000,
     });
   });
+
+  it("returns the survey normalized to canonical Q6 order", () => {
+    expect(validateCreateTicketOrder(order())?.survey).toEqual({ source: ["facebook", "zalo"], area: "hai-chau", attendance: "confirmed" });
+  });
+
+  it("gives the same survey for two click orders of the same Q6 set", () => {
+    const first = validateCreateTicketOrder(withSurvey({ source: ["website", "tiktok", "facebook"] }));
+    const second = validateCreateTicketOrder(withSurvey({ source: ["facebook", "website", "tiktok"] }));
+    expect(first?.survey).toEqual(second?.survey);
+    expect(first?.survey.source).toEqual(["facebook", "tiktok", "website"]);
+  });
+
+  const prototypeNames = ["constructor", "__proto__", "toString", "hasOwnProperty"];
+
+  const invalidSurveyCases: readonly (readonly [string, unknown])[] = [
+    ["survey missing", { idempotencyKey: key, name: attendee.name, email: attendee.email, quantity: 1, merch: "none" }],
+    ["survey null", order({ survey: null })],
+    ["survey array", order({ survey: [survey] })],
+    ["survey string", order({ survey: "facebook" })],
+    ["source missing", order({ survey: { area: "hai-chau", attendance: "confirmed" } })],
+    ["area missing", order({ survey: { source: ["facebook"], attendance: "confirmed" } })],
+    ["attendance missing", order({ survey: { source: ["facebook"], area: "hai-chau" } })],
+    ["source not array", withSurvey({ source: "facebook" })],
+    ["source element not string", withSurvey({ source: ["facebook", 7] })],
+    ["source duplicate", withSurvey({ source: ["zalo", "zalo"] })],
+    ["source duplicate after normalization", withSurvey({ source: ["zalo", "facebook", "zalo"] })],
+    ["source empty", withSurvey({ source: [] })],
+    ["source unknown", withSurvey({ source: ["instagram"] })],
+    ["area unknown", withSurvey({ area: "ha-noi" })],
+    ["area wrong type", withSurvey({ area: 3 })],
+    ["attendance unknown", withSurvey({ attendance: "maybe" })],
+    ["attendance wrong type", withSurvey({ attendance: false })],
+    ["unknown key inside survey", withSurvey({ other: "x" })],
+    ["unknown key outside survey", order({ surveyExtra: true })],
+    ...prototypeNames.flatMap((name) => [
+      [`source prototype id ${name}`, withSurvey({ source: [name] })],
+      [`area prototype id ${name}`, withSurvey({ area: name })],
+      [`attendance prototype id ${name}`, withSurvey({ attendance: name })],
+    ] as const),
+  ];
+
+  it.each(invalidSurveyCases)("rejects an invalid survey with a bare null: %s", (_name, payload) => {
+    expect(validateCreateTicketOrder(payload)).toBeNull();
+  });
+
+  // Oversized bodies are rejected by the route's existing 8 KiB limit before validation runs (covered in route tests).
 });

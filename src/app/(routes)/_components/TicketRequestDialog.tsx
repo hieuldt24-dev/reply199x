@@ -4,6 +4,7 @@ import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { merchCombos } from "../_data/home";
 import { MERCH_OPTIONS, TICKET_UNIT_PRICE_VND, type MerchOption } from "@/lib/ticket-orders/validation";
 import { RemoteImage } from "./RemoteImage";
+import { TicketSurveyFields, useTicketSurvey } from "./TicketSurveyFields";
 
 type TicketRequestDialogProps = Readonly<{
   className: string;
@@ -35,12 +36,14 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
   const [formKey, setFormKey] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [merchOption, setMerchOption] = useState<MerchOption>("none");
+  const survey = useTicketSurvey(fieldId);
 
   function resetSuccessfulSubmission() {
     setFormKey((key) => key + 1);
     setStatus(null);
     setQuantity(1);
     setMerchOption("none");
+    survey.reset();
     idempotencyKey.current = null;
     idempotencyPayload.current = null;
   }
@@ -48,6 +51,8 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submittingRef.current) return;
+    const surveyAnswers = survey.validate();
+    if (!surveyAnswers) return;
 
     submittingRef.current = true;
     setStatus({ kind: "pending", message: "Đang gửi yêu cầu của bạn…" });
@@ -63,6 +68,7 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
       birthYear: birthYearInput === "" ? null : Number(birthYearInput),
       quantity: selectedQuantity,
       merch: selectedMerch,
+      survey: surveyAnswers,
     };
     const payloadFingerprint = JSON.stringify(attendee);
     if (idempotencyPayload.current !== payloadFingerprint) {
@@ -83,7 +89,7 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
       } | null;
 
       if (response.status === 401) {
-        setStatus({ kind: "unauthorized", message: "Vui lòng đăng nhập Google để tiếp tục đặt vé." });
+        setStatus({ kind: "unauthorized", message: "Vui lòng đăng nhập Google để tiếp tục đặt phiếu nước." });
         return;
       }
       if (response.status === 429 && result?.error?.code === "checkout_restricted") {
@@ -93,7 +99,7 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
         }
         setStatus({
           kind: "restricted",
-          message: `Tài khoản tạm thời bị hạn chế tạo thanh toán vì có 3 đơn hết hạn trong 1 giờ. Bạn có thể đặt vé lại từ ${new Date(retryAt).toLocaleString("vi-VN")}.`,
+          message: `Tài khoản tạm thời bị hạn chế tạo thanh toán vì có 3 đơn hết hạn trong 1 giờ. Bạn có thể đặt lại phiếu nước từ ${new Date(retryAt).toLocaleString("vi-VN")}.`,
         });
         return;
       }
@@ -116,7 +122,7 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
           kind: "success",
           orderId: result.order.id,
           totalVnd: result.order.totalVnd,
-          message: "Đang chuyển bạn đến PayOS để thanh toán. Trạng thái vé chỉ cập nhật sau khi hệ thống xác nhận giao dịch.",
+          message: "Đang chuyển bạn đến PayOS để thanh toán. Trạng thái phiếu nước chỉ cập nhật sau khi hệ thống xác nhận giao dịch.",
         });
       } else {
         resetSuccessfulSubmission();
@@ -167,13 +173,13 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
             </div>
             <header className="ticket-request-dialog__intro">
               <span className="ticket-request-dialog__eyebrow">KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X · 22.11.2026</span>
-              <h2 id={`${fieldId}-title`}>Một vé về<br /><em>thanh xuân.</em></h2>
+              <h2 id={`${fieldId}-title`}>Một phiếu nước về<br /><em>thanh xuân.</em></h2>
             </header>
 
             <div className="ticket-request-dialog__fields">
               <label htmlFor={`${fieldId}-name`}>
                 <span className="ticket-request-dialog__label">Họ và tên <small>Bắt buộc</small></span>
-                <input id={`${fieldId}-name`} name="name" type="text" autoComplete="name" maxLength={120} placeholder="Tên trên vé" required />
+                <input id={`${fieldId}-name`} name="name" type="text" autoComplete="name" maxLength={120} placeholder="Tên trên phiếu nước" required />
               </label>
               <label htmlFor={`${fieldId}-email`}>
                 <span className="ticket-request-dialog__label">Email <small>Bắt buộc</small></span>
@@ -198,9 +204,9 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
                 <input id={`${fieldId}-birth-year`} name="birthYear" type="number" inputMode="numeric" min={1900} max={new Date().getFullYear()} step={1} placeholder="2000" />
               </label>
               <label htmlFor={`${fieldId}-quantity`}>
-                <span className="ticket-request-dialog__label">Số lượng vé · 169.000đ/vé</span>
+                <span className="ticket-request-dialog__label">Số lượng phiếu nước · 169.000đ/phiếu</span>
                 <select id={`${fieldId}-quantity`} name="quantity" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))}>
-                  {[1, 2, 3, 4].map((quantity) => <option key={quantity} value={quantity}>{quantity} vé</option>)}
+                  {[1, 2, 3, 4].map((quantity) => <option key={quantity} value={quantity}>{quantity} phiếu</option>)}
                 </select>
               </label>
               <label className="ticket-request-dialog__merch" htmlFor={`${fieldId}-merch`}>
@@ -212,13 +218,15 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
               </label>
             </div>
 
+            <TicketSurveyFields idPrefix={fieldId} survey={survey} />
+
             <p className="ticket-request-dialog__notice">
-              Tạm tính: <strong>{(quantity * TICKET_UNIT_PRICE_VND + MERCH_OPTIONS[merchOption].priceVnd).toLocaleString("vi-VN")}đ</strong>. Đơn sẽ chờ thanh toán; chưa có QR hoặc xác nhận vé.
+              Tạm tính: <strong>{(quantity * TICKET_UNIT_PRICE_VND + MERCH_OPTIONS[merchOption].priceVnd).toLocaleString("vi-VN")}đ</strong>. Đơn sẽ chờ thanh toán; chưa có QR hoặc xác nhận phiếu nước.
             </p>
             <p className="ticket-request-dialog__privacy">Email nhập trên biểu mẫu sẽ được lưu cùng đơn hàng, kể cả khi khác email Google.</p>
 
             <button className="ticket-request-dialog__submit" type="submit" disabled={status?.kind === "pending" || status?.kind === "success"}>
-              {status?.kind === "pending" ? "Đang tạo đơn…" : status?.kind === "success" ? "Đơn đã được tạo" : "Tiếp tục đặt vé"}
+              {status?.kind === "pending" ? "Đang tạo đơn…" : status?.kind === "success" ? "Đơn đã được tạo" : "Tiếp tục đặt phiếu nước"}
               <span aria-hidden="true">→</span>
             </button>
             <p

@@ -1,0 +1,15 @@
+{
+  "task": "Execute ticket order survey plan: add three mandatory survey questions to the ticket order form, persist them in a new table via migration 202611170003, and write them to the 17-column (A:Q) Google Sheet for paid orders.",
+  "planPath": "process/general-plans/active/ticket-order-survey_17-11-26/ticket-order-survey_PLAN_17-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "billing or payments",
+    "schema/data migration or destructive data mutation",
+    "public API or external contract changes",
+    "permission, secret, or trust-boundary logic",
+    "personal data sent to a third party (Google Sheets)"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": true,
+  "why": "The plan touches the authenticated ticket checkout route, adds a forward-only migration with service-role-only SECURITY DEFINER functions, extends the public POST /api/ticket-orders contract, and sends user survey answers to a third-party Sheet. Execution stays local and isolated: do not apply migrations to a hosted database, do not set environment variables, do not deploy, do not enable checkout, do not write to the real Sheet, and do not call live PayOS. Require explicit execution-mode entry and an independent reviewer decision before finalization."
+}

@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getSiteOrigin, getSupabaseConfig } from "@/lib/supabase/config";
 import { createClient as createSessionClient } from "@/lib/supabase/server";
+import { SURVEY_RPC, type TicketSurvey } from "@/lib/ticket-orders/survey";
 import { validateCreateTicketOrder } from "@/lib/ticket-orders/validation";
 import { createPayOsPaymentLink, getPayOsConfig, lookupPayOsPaymentLink, payOsErrorDiagnostic, type PayOsLink, type PayOsOperationObserver } from "@/lib/payments/payos/checkout";
 
@@ -19,6 +20,52 @@ function logCheckoutRpcFailure(stage: "prepare" | "persist", code: unknown) {
     stage,
     code: typeof code === "string" && CHECKOUT_RPC_CODES.has(code) ? code : "unknown",
   });
+}
+
+// Upper bound on how long a 201 waits for the survey save; the link is returned either way.
+const SURVEY_JOIN_TIMEOUT_MS = 1500;
+type SurveySaveFailure = "timeout" | "rpc_error" | "unexpected";
+type RpcClient = { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<unknown> };
+
+// Logs only a fixed reason and an allowlisted SQLSTATE: never order, user or answer data.
+function logSurveySaveFailure(reason: SurveySaveFailure, code?: unknown) {
+  console.error("ticket_survey_save_failed", {
+    reason,
+    code: typeof code === "string" && CHECKOUT_RPC_CODES.has(code) ? code : "unknown",
+  });
+}
+
+// Starts the survey save; the returned promise never rejects (failures are logged here).
+function startSurveySave(admin: RpcClient, orderId: string, userId: string, survey: TicketSurvey): Promise<void> {
+  try {
+    return Promise.resolve(admin.rpc(SURVEY_RPC.upsert, {
+      p_order_id: orderId,
+      p_user_id: userId,
+      p_source: [...survey.source],
+      p_area: survey.area,
+      p_attendance: survey.attendance,
+    })).then((result) => {
+      const error = result && typeof result === "object" ? (result as { error?: unknown }).error : undefined;
+      if (error) logSurveySaveFailure("rpc_error", typeof error === "object" ? (error as { code?: unknown }).code : undefined);
+    }, () => logSurveySaveFailure("unexpected"));
+  } catch {
+    logSurveySaveFailure("unexpected");
+    return Promise.resolve();
+  }
+}
+
+// Waits for the save at most SURVEY_JOIN_TIMEOUT_MS; never cancels the save and always clears its timer.
+async function joinSurveySave(save: Promise<void>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timedOut = await Promise.race([
+      save.then(() => false),
+      new Promise<boolean>((resolveTimeout) => { timer = setTimeout(() => resolveTimeout(true), SURVEY_JOIN_TIMEOUT_MS); }),
+    ]);
+    if (timedOut) logSurveySaveFailure("timeout");
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 
 function finiteDuration(value: number) {
@@ -211,16 +258,22 @@ export async function POST(request: NextRequest) {
     if (!validPreparedCheckout(row)) return json({ error: { code: "temporarily_unavailable", message: "Order could not be confirmed." } }, 503);
     if (row.checkout_payment_status !== "pending") return json({ error: { code: "order_not_payable", message: "This order is no longer available for payment." } }, 409);
 
+    // Classify once: only a payable order on a branch that can return a link saves the survey.
+    const branch = typeof row.checkout_url === "string" && typeof row.checkout_payment_link_id === "string"
+      ? "saved-link"
+      : row.checkout_can_create === true ? "create" : row.checkout_can_reconcile === true ? "reconcile" : "pending";
+    if (branch === "pending") {
+      return json({ error: { code: "checkout_pending", message: "Checkout is being prepared. Retry shortly." } }, 409);
+    }
+    const surveySave = startSurveySave(admin, String(row.order_id), authData.user.id, input.survey);
+
     let checkoutUrl: string;
-    if (typeof row.checkout_url === "string" && typeof row.checkout_payment_link_id === "string") {
-      checkoutUrl = row.checkout_url;
+    if (branch === "saved-link") {
+      checkoutUrl = String(row.checkout_url);
     } else {
       let link: PayOsLink | null = null;
       const observer: PayOsOperationObserver = (stage, duration) => addSpan(stage, duration);
-      if (row.checkout_can_create !== true) {
-        if (row.checkout_can_reconcile !== true) {
-          return json({ error: { code: "checkout_pending", message: "Checkout is being prepared. Retry shortly." } }, 409);
-        }
+      if (branch === "reconcile") {
         try {
           link = await lookupPayOsPaymentLink({ amountVnd: Number(row.total_vnd), orderCode: Number(row.checkout_order_code), config: payosConfig, observer });
         } catch (error) {
@@ -255,6 +308,7 @@ export async function POST(request: NextRequest) {
       checkoutUrl = link.checkoutUrl;
     }
 
+    await joinSurveySave(surveySave);
     return json({
       order: {
         id: row.order_id,

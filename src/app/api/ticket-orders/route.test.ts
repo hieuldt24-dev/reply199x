@@ -21,7 +21,8 @@ vi.mock("@/lib/payments/payos/checkout", () => ({
 
 const userId = "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0";
 const orderId = "a3d9df10-fc46-4f23-8d73-96fe71ad9465";
-const validInput = { idempotencyKey: "8c5f4d5b-66f9-4a41-9e07-3f46fae90e12", name: "Nguyen An", email: "an@example.com", phone: "", gender: "", birthYear: null, quantity: 1, merch: "none" };
+const validInput = { idempotencyKey: "8c5f4d5b-66f9-4a41-9e07-3f46fae90e12", name: "Nguyen An", email: "an@example.com", phone: "", gender: "", birthYear: null, quantity: 1, merch: "none", survey: { source: ["website", "facebook"], area: "hai-chau", attendance: "confirmed" } };
+const savedSurveyArgs = { p_order_id: orderId, p_user_id: userId, p_source: ["facebook", "website"], p_area: "hai-chau", p_attendance: "confirmed" };
 const checkoutFields = {
   checkout_order_code: 112233,
   checkout_order_id: orderId,
@@ -83,7 +84,7 @@ describe("POST /api/ticket-orders", () => {
     const response = await POST(request(validInput));
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ order: { id: orderId, status: "pending_payment" }, checkoutUrl: link.checkoutUrl });
-    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "prepare_payos_checkout"]);
     expect(rpc.mock.calls[0]?.[1]).toEqual({
       p_user_id: userId,
       p_idempotency_key: validInput.idempotencyKey,
@@ -108,7 +109,9 @@ describe("POST /api/ticket-orders", () => {
     const response = await POST(request(validInput));
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ checkoutUrl: "https://pay.payos.vn/web/saved-link" });
-    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v5", expect.any(Object));
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, "create_ticket_order_v5", expect.any(Object));
+    expect(rpc).toHaveBeenNthCalledWith(2, "upsert_ticket_order_survey", savedSurveyArgs);
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
   });
 
@@ -117,6 +120,7 @@ describe("POST /api/ticket-orders", () => {
     rpc.mockResolvedValue(responseRow({ checkout_can_create: false, checkout_can_reconcile: false }));
     expect((await POST(request(validInput))).status).toBe(409);
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v5", expect.any(Object));
   });
 
   it("returns cooldown with Retry-After and does not create checkout", async () => {
@@ -137,6 +141,7 @@ describe("POST /api/ticket-orders", () => {
     rpc.mockResolvedValue(responseRow({ order_status: "paid", ...Object.fromEntries(Object.keys(checkoutFields).filter((key) => key !== "checkout_prepare_error_code").map((key) => [key, null])) }));
     expect((await POST(request(validInput))).status).toBe(409);
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("create_ticket_order_v5", expect.any(Object));
   });
 
   it("keeps the v4 idempotency conflict RPC error distinct and returns 409", async () => {
@@ -259,15 +264,15 @@ describe("POST /api/ticket-orders", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
     rpc.mockImplementation(async (name: string) => name === "create_ticket_order_v5"
       ? responseRow()
-      : { data: null, error: { code: "42702", message: "raw private database text" } });
+      : name === "upsert_ticket_order_survey" ? { data: true, error: null } : { data: null, error: { code: "42702", message: "raw private database text" } });
     const response = await POST(request(validInput));
     expect(response.status).toBe(503);
     const text = await response.text();
     expect(JSON.parse(text)).toEqual({ error: { code: "temporarily_unavailable", message: "Checkout could not be prepared." } });
     expect(text).not.toMatch(/raw private|benchmark-link|pay\.payos/u);
     expect(createPayOsPaymentLink).toHaveBeenCalledOnce();
-    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
-    expect(rpc).toHaveBeenNthCalledWith(2, "prepare_payos_checkout", { p_order_id: orderId, p_user_id: userId, p_payment_link_id: link.paymentLinkId, p_checkout_url: link.checkoutUrl });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "prepare_payos_checkout"]);
+    expect(rpc).toHaveBeenNthCalledWith(3, "prepare_payos_checkout", { p_order_id: orderId, p_user_id: userId, p_payment_link_id: link.paymentLinkId, p_checkout_url: link.checkoutUrl });
     expect(log).toHaveBeenCalledExactlyOnceWith("payos_checkout_rpc_failed", { stage: "persist", code: "42702" });
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/raw private|benchmark-link|pay\.payos/u);
   });
@@ -297,7 +302,7 @@ describe("POST /api/ticket-orders", () => {
     expect(await response.json()).toMatchObject({ checkoutUrl: link.checkoutUrl });
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
     expect(lookupPayOsPaymentLink).toHaveBeenCalledExactlyOnceWith({ amountVnd: 169000, orderCode: 112233, config: expect.any(Object), observer: expect.any(Function) });
-    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "prepare_payos_checkout"]);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "prepare_payos_checkout"]);
     const timing = response.headers.get("Server-Timing") ?? "";
     expect(timing).toContain("payos_lookup;dur=12.5");
     expect(timing).toMatch(/checkout_persist_rpc;dur=\d+(?:\.\d+)?/);
@@ -314,8 +319,8 @@ describe("POST /api/ticket-orders", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
-    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "mark_payos_checkout_reconciliation"]);
-    expect(rpc).toHaveBeenNthCalledWith(2, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "mark_payos_checkout_reconciliation"]);
+    expect(rpc).toHaveBeenNthCalledWith(3, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
   });
 
   it("returns a sanitized 503 without marking when lookup throws", async () => {
@@ -329,7 +334,9 @@ describe("POST /api/ticket-orders", () => {
     expect(JSON.parse(text)).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
     expect(text).not.toContain("raw provider");
     expect(createPayOsPaymentLink).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, "create_ticket_order_v5", expect.any(Object));
+    expect(rpc).toHaveBeenNthCalledWith(2, "upsert_ticket_order_survey", savedSurveyArgs);
     expect(JSON.stringify(log.mock.calls)).not.toContain("raw provider");
   });
 
@@ -345,8 +352,8 @@ describe("POST /api/ticket-orders", () => {
     expect(text).not.toContain("raw provider");
     expect(createPayOsPaymentLink).toHaveBeenCalledOnce();
     expect(lookupPayOsPaymentLink).not.toHaveBeenCalled();
-    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "mark_payos_checkout_reconciliation"]);
-    expect(rpc).toHaveBeenNthCalledWith(2, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "mark_payos_checkout_reconciliation"]);
+    expect(rpc).toHaveBeenNthCalledWith(3, "mark_payos_checkout_reconciliation", { p_order_code: 112233 });
     expect(JSON.stringify(log.mock.calls)).not.toContain("raw provider");
   });
 
@@ -373,5 +380,162 @@ describe("POST /api/ticket-orders", () => {
     }
     expect(timing).toContain("payos_create;dur=33.25");
     expect(timing).not.toMatch(new RegExp([userId, orderId, "112233", "benchmark-link", "pay\\.payos", "an@example"].join("|"), "iu"));
+  });
+});
+
+describe("POST /api/ticket-orders survey save", () => {
+  const savedLinkRow = { checkout_payment_link_id: "saved-link", checkout_url: "https://pay.payos.vn/web/saved-link", checkout_can_create: false, checkout_can_reconcile: false };
+  const nullCheckout = Object.fromEntries(Object.keys(checkoutFields).filter((key) => key !== "checkout_prepare_error_code").map((key) => [key, null]));
+  const surveyLogs = (log: { mock: { calls: unknown[][] } }) => log.mock.calls.filter(([event]) => event === "ticket_survey_save_failed");
+  function surveyRpc(onSurvey: () => unknown, rowOverrides: Record<string, unknown> = {}) {
+    rpc.mockImplementation((name: string) => {
+      if (name === "upsert_ticket_order_survey") return onSurvey();
+      return Promise.resolve(name === "create_ticket_order_v5" ? responseRow(rowOverrides) : { data: null, error: null });
+    });
+  }
+
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("(a) saves the normalized survey for the new order and the session user only", async () => {
+    setPayOsEnabled();
+    surveyRpc(async () => ({ data: true, error: null }));
+    const response = await POST(request({ ...validInput, survey: { source: ["website", "zalo", "facebook"], area: "son-tra", attendance: "unsure" } }));
+    expect(response.status).toBe(201);
+    expect(rpc).toHaveBeenNthCalledWith(2, "upsert_ticket_order_survey", { p_order_id: orderId, p_user_id: userId, p_source: ["facebook", "zalo", "website"], p_area: "son-tra", p_attendance: "unsure" });
+    expect(rpc.mock.calls.filter(([name]) => name === "upsert_ticket_order_survey")).toHaveLength(1);
+  });
+
+  it.each([
+    { code: "42501", expected: "42501" },
+    { code: "XX000", expected: "unknown" },
+  ])("(b) returns 201 with the link and logs only an allowlisted code when the save fails: $code", async ({ code, expected }) => {
+    setPayOsEnabled();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    surveyRpc(async () => ({ data: null, error: { code, message: "raw private database text" } }));
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ checkoutUrl: link.checkoutUrl });
+    expect(surveyLogs(log)).toEqual([["ticket_survey_save_failed", { reason: "rpc_error", code: expected }]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain("raw private");
+  });
+
+  it("(c) returns 201 with the link at the 1500 ms bound when the save hangs and clears its timer", async () => {
+    setPayOsEnabled();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    surveyRpc(() => new Promise(() => undefined), savedLinkRow);
+    let settled = false;
+    const pending = POST(request(validInput)).then((response) => { settled = true; return response; });
+    while (vi.getTimerCount() === 0) await new Promise((resolveTick) => setImmediate(resolveTick));
+    await vi.advanceTimersByTimeAsync(1499);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const response = await pending;
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ checkoutUrl: "https://pay.payos.vn/web/saved-link" });
+    expect(surveyLogs(log)).toEqual([["ticket_survey_save_failed", { reason: "timeout", code: "unknown" }]]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([
+    ["throws synchronously", () => { throw new Error("raw sync failure"); }],
+    ["rejects", () => Promise.reject(new Error("raw async failure"))],
+  ])("(d) returns 201 with the link when the save %s", async (_label, onSurvey) => {
+    setPayOsEnabled();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    surveyRpc(onSurvey);
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ checkoutUrl: link.checkoutUrl });
+    expect(surveyLogs(log)).toEqual([["ticket_survey_save_failed", { reason: "unexpected", code: "unknown" }]]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain("raw");
+  });
+
+  it("(e) never logs order, user or answer data", async () => {
+    setPayOsEnabled();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    surveyRpc(async () => ({ data: null, error: { code: "P0002", message: `order ${orderId} user ${userId}`, details: "hai-chau website facebook" } }));
+    expect((await POST(request(validInput))).status).toBe(201);
+    expect(surveyLogs(log)).toEqual([["ticket_survey_save_failed", { reason: "rpc_error", code: "P0002" }]]);
+    const text = JSON.stringify(log.mock.calls);
+    for (const forbidden of [orderId, userId, "facebook", "website", "hai-chau", "confirmed", "Facebook", "Hải Châu", "an@example.com", "Nguyen An"]) {
+      expect(text).not.toContain(forbidden);
+    }
+  });
+
+  it.each([
+    ["missing", Object.fromEntries(Object.entries(validInput).filter(([key]) => key !== "survey"))],
+    ["empty source", { ...validInput, survey: { source: [], area: "hai-chau", attendance: "confirmed" } }],
+    ["prototype-name area", { ...validInput, survey: { source: ["facebook"], area: "constructor", attendance: "confirmed" } }],
+    ["extra key", { ...validInput, survey: { source: ["facebook"], area: "hai-chau", attendance: "confirmed", other: "x" } }],
+  ])("(f) rejects a %s survey with 400 invalid_request and no RPC call", async (_label, body) => {
+    setPayOsEnabled();
+    const response = await POST(request(body));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: { code: "invalid_request", message: "Check the request and try again." } });
+    expect(rpc).not.toHaveBeenCalled();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["checkout_pending", { checkout_can_create: false, checkout_can_reconcile: false }],
+    ["order_not_payable", { order_status: "paid", ...nullCheckout }],
+    ["checkout_reconciliation_required", { order_status: "reconciliation", ...nullCheckout }],
+    ["a non-pending payment status", { checkout_payment_status: "paid" }],
+  ])("(g) returns 409 and does not save the survey for %s", async (_label, overrides) => {
+    setPayOsEnabled();
+    surveyRpc(async () => ({ data: true, error: null }), overrides);
+    expect((await POST(request(validInput))).status).toBe(409);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5"]);
+  });
+
+  it("(h) saves and joins on the saved-link branch without a provider call", async () => {
+    setPayOsEnabled();
+    let saved = false;
+    surveyRpc(async () => { await new Promise((resolveSave) => setTimeout(resolveSave, 5)); saved = true; return { data: true, error: null }; }, savedLinkRow);
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(saved).toBe(true);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey"]);
+    expect(createPayOsPaymentLink).not.toHaveBeenCalled();
+    expect(lookupPayOsPaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("(i) starts the save before the reconcile lookup finishes", async () => {
+    setPayOsEnabled();
+    const events: string[] = [];
+    lookupPayOsPaymentLink.mockImplementation(async () => { await new Promise((resolveLookup) => setTimeout(resolveLookup, 5)); events.push("lookup:end"); return link; });
+    surveyRpc(async () => { events.push("survey:start"); return { data: true, error: null }; }, { checkout_can_create: false, checkout_can_reconcile: true });
+    const response = await POST(request(validInput));
+    expect(response.status).toBe(201);
+    expect(events).toEqual(["survey:start", "lookup:end"]);
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["create_ticket_order_v5", "upsert_ticket_order_survey", "prepare_payos_checkout"]);
+  });
+
+  it("(j) keeps the provider failure response when the save already started and leaves no unhandled rejection", async () => {
+    setPayOsEnabled();
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => { unhandled.push(reason); };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      createPayOsPaymentLink.mockRejectedValue(new Error("raw provider text"));
+      surveyRpc(() => Promise.reject(new Error("raw survey failure")));
+      const response = await POST(request(validInput));
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({ error: { code: "checkout_reconciliation_required", message: "Checkout needs manual reconciliation." } });
+      await new Promise((resolveTick) => setTimeout(resolveTick, 20));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
+  it("(k) keeps only the fixed Server-Timing names when the survey is saved", async () => {
+    setPayOsEnabled();
+    surveyRpc(async () => ({ data: true, error: null }));
+    const response = await POST(request(validInput));
+    const names = (response.headers.get("Server-Timing") ?? "").split(", ").map((entry) => entry.split(";")[0]);
+    expect(names).toEqual(["request_validation", "auth", "order_checkout_rpc", "checkout_persist_rpc", "total"]);
   });
 });

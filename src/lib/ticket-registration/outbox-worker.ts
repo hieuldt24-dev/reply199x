@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import { parseSurvey, SURVEY_READ_FAILED_CODE, SURVEY_RPC, type TicketSurvey } from "@/lib/ticket-orders/survey";
 import { upsertPaidTicketOrder, type PaidTicketOrder } from "./paid-orders";
 
 type RpcResult = { data: unknown; error: { message?: string } | null };
@@ -18,7 +19,24 @@ export function createOutboxAdminClient(): OutboxAdmin | null {
   }
 }
 
+// [] means no survey row (empty G/H/M). Any other unexpected result fails closed so
+// the order is retried instead of being marked synced with blank survey cells.
+async function readOrderSurvey(admin: OutboxAdmin, orderId: string): Promise<TicketSurvey | null> {
+  let result: RpcResult;
+  try {
+    result = await admin.rpc(SURVEY_RPC.get, { p_order_id: orderId });
+  } catch {
+    throw new Error(SURVEY_READ_FAILED_CODE);
+  }
+  if (result.error || !Array.isArray(result.data) || result.data.length > 1) throw new Error(SURVEY_READ_FAILED_CODE);
+  if (result.data.length === 0) return null;
+  const survey = parseSurvey(result.data[0]);
+  if (!survey) throw new Error(SURVEY_READ_FAILED_CODE);
+  return survey;
+}
+
 function errorCode(error: unknown): string {
+  if (error instanceof Error && error.message === SURVEY_READ_FAILED_CODE) return SURVEY_READ_FAILED_CODE;
   if (error instanceof Error && error.message === "duplicate_sheet_order_rows") return "duplicate_rows";
   if (error instanceof Error && error.message === "invalid_paid_order") return "invalid_order";
   if (error instanceof Error && error.message === "invalid_sheet_range") return "invalid_range";
@@ -34,7 +52,8 @@ export async function drainPaidTicketSheetOutbox(admin: OutboxAdmin, limit = 1):
 
   for (const raw of data as PaidTicketOrder[]) {
     try {
-      const rowNumber = await upsertPaidTicketOrder(raw);
+      const survey = await readOrderSurvey(admin, raw.order_id);
+      const rowNumber = await upsertPaidTicketOrder(raw, survey);
       const completed = await admin.rpc("complete_paid_ticket_sheet_sync", {
         p_outbox_id: raw.outbox_id,
         p_lease_token: raw.lease_token,

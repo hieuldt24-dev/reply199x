@@ -569,6 +569,15 @@ body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:
 .ticket-request-dialog__fields input::placeholder { color:#7a7c6c; font-size:14px; font-weight:500; opacity:1; }
 .ticket-request-dialog__fields :is(input,select):hover { border-color:#243c2e80; }
 .ticket-request-dialog__merch { grid-column:1/-1; }
+.ticket-request-dialog__survey { display:grid; gap:16px; margin-top:22px; padding-top:20px; border-top:1px dashed #183b2b40; }
+.ticket-request-dialog__survey-group { min-width:0; margin:0; padding:14px 14px 12px; border:1px solid #243c2e30; border-radius:8px; background:#fffdf7; }
+.ticket-request-dialog__survey-group[data-invalid="true"] { border-color:var(--reply-red); }
+.ticket-request-dialog__survey-question { max-width:100%; padding:0 4px; color:#183b2b; font:900 12px/1.5 "Reply Nunito",sans-serif; white-space:normal; overflow-wrap:anywhere; }
+.ticket-request-dialog__survey-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 12px; margin-top:8px; }
+.ticket-request-dialog__survey-option { display:flex; min-width:0; min-height:44px; align-items:center; gap:10px; margin:0; padding:6px 4px; color:#183b2b; font:600 14px/1.4 "Reply Nunito",sans-serif; cursor:pointer; }
+.ticket-request-dialog__survey-option span { min-width:0; overflow-wrap:anywhere; }
+.ticket-request-dialog__survey-option input { flex:none; width:20px; height:20px; margin:0; accent-color:var(--reply-red); cursor:pointer; }
+.ticket-request-dialog__survey-error { margin:6px 4px 0; color:#9b2c1f; font:700 12px/1.5 "Reply Nunito",sans-serif; }
 .ticket-request-dialog__submit { display:flex; width:100%; min-height:50px; align-items:center; justify-content:space-between; gap:16px; margin-top:24px; padding:12px 18px; border:1px solid var(--reply-red); border-radius:6px; background:var(--reply-red); color:#fff8e8; box-shadow:0 3px 0 #782417; font:900 15px/1.4 "Reply Nunito",sans-serif; cursor:pointer; transition:background-color .18s,transform .18s; }
 .ticket-request-dialog__submit span { font-size:24px; font-weight:400; line-height:1; }
 .ticket-request-dialog__submit:hover { background:#912a1e; transform:translateY(-1px); }
@@ -605,6 +614,7 @@ body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:
  .ticket-request-dialog__poster::before,.ticket-request-dialog__poster::after { top:-12px; bottom:auto; }
  .ticket-request-dialog__poster::before { left:-12px; }.ticket-request-dialog__poster::after { left:auto; right:-12px; }
  .ticket-request-dialog__poster-heading,.ticket-request-dialog__poster-image,.ticket-request-dialog__poster figcaption { width:100%; max-width:380px; }
+ .ticket-request-dialog__survey-options { grid-template-columns:minmax(0,1fr); }
 }
 @media(max-width:420px) {
  .ticket-request-dialog__fields { grid-template-columns:minmax(0,1fr); gap:14px; }

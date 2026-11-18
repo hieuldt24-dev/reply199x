@@ -1,3 +1,5 @@
+import { parseSurvey, type TicketSurvey } from "./survey";
+
 export const TICKET_UNIT_PRICE_VND = 169_000;
 export const TICKET_ORDER_LIMIT = 4;
 
@@ -18,6 +20,7 @@ export type CreateTicketOrderInput = Readonly<{
   birthYear: number | null;
   quantity: number;
   merch: MerchOption;
+  survey: TicketSurvey;
 }>;
 
 export type ValidatedTicketOrder = Readonly<CreateTicketOrderInput & {
@@ -46,7 +49,7 @@ function normalizeBirthYear(value: unknown): number | null | undefined {
 export function validateCreateTicketOrder(payload: unknown): ValidatedTicketOrder | null {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
   const record = payload as Record<string, unknown>;
-  if (Object.keys(record).some((key) => !["idempotencyKey", "name", "email", "phone", "gender", "birthYear", "quantity", "merch"].includes(key))) return null;
+  if (Object.keys(record).some((key) => !["idempotencyKey", "name", "email", "phone", "gender", "birthYear", "quantity", "merch", "survey"].includes(key))) return null;
   if (typeof record.idempotencyKey !== "string" || !uuidPattern.test(record.idempotencyKey)) return null;
   if (!isSafeString(record.name, 120) || !isSafeString(record.email, 254)) return null;
   if (record.phone !== undefined && !isSafeString(record.phone, 40)) return null;
@@ -55,6 +58,8 @@ export function validateCreateTicketOrder(payload: unknown): ValidatedTicketOrde
   if (birthYear === undefined || (birthYear !== null && (birthYear < 1900 || birthYear > new Date().getFullYear()))) return null;
   if (!Number.isInteger(record.quantity) || (record.quantity as number) < 1 || (record.quantity as number) > TICKET_ORDER_LIMIT) return null;
   if (typeof record.merch !== "string" || !Object.hasOwn(MERCH_OPTIONS, record.merch)) return null;
+  const survey = parseSurvey(record.survey);
+  if (!survey) return null;
 
   const name = record.name.trim();
   const email = record.email.trim();
@@ -75,6 +80,7 @@ export function validateCreateTicketOrder(payload: unknown): ValidatedTicketOrde
     birthYear,
     quantity,
     merch,
+    survey,
     ticketSubtotalVnd,
     merchPriceVnd,
     totalVnd: ticketSubtotalVnd + merchPriceVnd,

@@ -81,3 +81,5 @@ begin
   end if;
 end;
 $$;
+
+do $$ begin raise notice 'SENTINEL checkout-access-guard.sql'; end $$;

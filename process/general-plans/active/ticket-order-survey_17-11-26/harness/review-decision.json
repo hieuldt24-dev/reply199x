@@ -1,0 +1,22 @@
+{
+  "task": "Ticket order survey: 3 mandatory survey questions, ticket_order_survey table (migration 202611170003), A:Q Sheet writer, worker survey read.",
+  "reviewer": "vc-code-reviewer (independent, read-only; did not author this change)",
+  "decision": "approved-with-concerns",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    "M1: runbook says create_ticket_order_v5 is already in production but all-context and the prior review-decision say migration 202611170001 is NOT applied; add a to_regprocedure check and reconcile docs before enabling checkout.",
+    "M2: a survey that never persists (save failure, 1500 ms timeout, serverless freeze) is unrecoverable and the paid order syncs with blank G/H/M undetected; add a paid-orders-without-survey query to the runbook; requeue cannot recover it.",
+    "M3: the always-on old-baseline sha256 test hashes raw bytes (autocrlf=true, no .gitattributes) and reads the active/ path; it breaks on a CRLF checkout and when the task is archived; normalize line endings and tolerate the completed/ path.",
+    "M4: consent/retention for survey data sent to the third-party Sheet is not a gate in the owner's production order; make it a precondition to enabling checkout.",
+    "M5: no scheduler and no retry cap; survey_read_failed adds a failure mode on the paid path; require a scheduler or manual sync routine before enabling checkout.",
+    "L1: requeue overwrites the whole A:Q row including hand edits.",
+    "L2: migration is not re-runnable (create table without if not exists).",
+    "L3: runbook lacks a PostgREST schema-reload fallback.",
+    "L4: CANDIDATE JSON overwritten per run; author capture only in scratchpad.",
+    "L5: do not commit .claude/hooks/.logs/hook-log.jsonl.",
+    "L6: aria-invalid on fieldset is not valid ARIA; use a data attribute.",
+    "L7: same-key retry with different answers overwrites while pending; small TOCTOU after payment."
+  ],
+  "notes": "Approval covers local Vitest and isolated PostgreSQL behavior only. No Blocker or High issue found. Hard constraints verified: no existing migration, payment function, outbox function, webhook route, or old benchmark baseline modified. component-contracts.md row: keep (listed in the plan Touchpoints). Unverified and outside this approval: migration 202611170003 on a hosted database, real 17-column Sheet write (AC15), PostgREST array argument end to end (K.2), hosted latency of the 1500 ms join (K.1), live PayOS, consent/retention. risk-gate mustStopBeforeFinalize and humanApprovalRequired stay true.",
+  "timestamp": "2026-11-18T04:04:05Z"
+}

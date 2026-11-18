@@ -2,11 +2,11 @@
 name: context:all-context
 description: "EXE101 / REPLY 199X repository architecture and agent context router."
 keywords: project, architecture, stack, repository, bootstrap, harness
-date: 17-11-26
+date: 18-11-26
 ---
 # EXE101 / REPLY 199X — All Context
 
-Last updated: 2026-11-17
+Last updated: 2026-11-18
 
 ## Product and Current State
 
@@ -18,9 +18,11 @@ Backend now present in source (verified from `src/`, `supabase/migrations/` and 
 
 - **Supabase** (`@supabase/ssr`, `@supabase/supabase-js`): Google sign-in through `src/app/api/auth/*`, session cookies refreshed by `src/proxy.ts`, and a service-role server client used by order/payment routes.
 - **Ticket orders and PayOS checkout:** `POST /api/ticket-orders` (authenticated; validates input, creates the order and initial checkout lease in ONE service-role-only RPC `create_ticket_order_v5`, then creates or reuses a PayOS payment link, persists it, and returns the checkout URL; adds a `Server-Timing` header with fixed stage names). `GET /api/ticket-orders/[orderId]` reads an order. Checkout is gated by `PAYOS_CHECKOUT_ENABLED === "true"`. `POST /api/payments/payos/webhook` records the verified PayOS event and paid state. A SePay IPN route (`/api/payments/sepay/ipn`) and `src/lib/payments/sepay` remain from an earlier rail. `/payment/return` is a browser return page and does not confirm payment.
+- **Ticket order survey (implemented in source, uncommitted; all locally runnable gates green after independent EVL cycle 2 and review on 2026-11-18; checkout OFF; rollout owner-run):** the ticket dialog asks three mandatory questions: Q6 event source (multi-select, at least one), Q8 area (single), Q9 attendance certainty (single). Stable ids and labels live in `src/lib/ticket-orders/survey.ts` (shared, pure); the client validates, `validateCreateTicketOrder` and `parseSurvey` re-validate (generic `400 invalid_request`). `POST /api/ticket-orders` still calls `create_ticket_order_v5` with its 9 keys, then saves the survey through service-role-only `upsert_ticket_order_survey` IN PARALLEL with the PayOS step (not on the `checkout_pending` branch) and joins it with a 1500 ms cap, so a save failure or timeout never blocks the 201 with the payment link; failures log only `{reason, code}`. Data lives in `public.ticket_order_survey` (keyed by order, composite FK to orders(id, user_id), CHECKs on ids, RLS on, service_role-only) via migration `202611170003`, with `get_ticket_order_survey`, helper `ticket_survey_source_valid` and manual-compensation `requeue_synced_sheet_sync_for_survey(order_id)`. The outbox worker reads the survey per order before writing the Sheet: no row means blank G/H/M and synced; a read error fails the row with `survey_read_failed` and writes nothing. A survey saved after its order synced is a known race (AC20) with no automatic detection; the requeue function is the manual fix. Rollout runbook: `process/general-plans/active/ticket-order-survey_17-11-26/ticket-order-survey_REF_17-11-26.md`.
 - **Checkout access guard:** a per-user cooldown/consumed-window state in Postgres (`checkout_access_state`) checked inside the checkout RPCs.
+- **Sheet layout A:Q (17 columns):** A time, B name, C email, D phone, E gender, F birth year, G source (Q6, labels joined with `;`), H area (Q8), I tickets, J merch, K total, L status, M attendance (Q9), N order ID (index 13, used for row lookup/update `A{n}:Q{n}`), O PayOS code, P paid time, Q PaymentLink ID. Code default and the only accepted range ending is `!A:Q`; the previous 14-column range is rejected fail-closed (`invalid_sheet_range`, outbox code `invalid_range`). Production state recorded 2026-11-18: the real Sheet is already 17 columns while the deployed app is still the old 14-column writer, so no sync may run until the new app is deployed; local `.env` still holds the previous range (owner edits it); production rows written before the cutover keep the order ID at index 10 and would be duplicated by a re-sync.
 - **Google Sheets:** `POST /api/ticket-requests` records ticket requests to the registration tab (a request only, not a reservation or purchase). A paid-order outbox (`sheet_sync_outbox`) is written when a paid webhook is processed and drained by `src/lib/ticket-registration/outbox-worker.ts`, triggered by `POST /api/internal/sheets-sync` with a bearer `SHEETS_SYNC_WORKER_SECRET`. Migration `202611170002` adds a `synced_at` fill trigger and a service_role-only `enqueue_paid_ticket_sheet_sync(order_id)` re-queue function.
-- **Migrations** (`supabase/migrations/`, applied to hosted databases by the owner, not by agents): `202611130001`-`005` (ticket sales schema, order RPC, merch pricing, SePay, attendee snapshot), `202611140006`-`009` (PayOS links, Sheet outbox worker, alias and webhook-conflict fixes), `202611150001` (checkout access guard, `create_ticket_order_v4`), `202611170001` (`create_ticket_order_v5`), `202611170002` (outbox manual-ops safety). As recorded on 2026-11-17: `202611170002` and `202611140007` were applied to the production Supabase by the user, and one production order's outbox row was observed `synced`; `202611170001` is NOT applied to any hosted database and was verified only locally and against isolated PostgreSQL.
+- **Migrations** (`supabase/migrations/`, applied to hosted databases by the owner, not by agents): `202611130001`-`005` (ticket sales schema, order RPC, merch pricing, SePay, attendee snapshot), `202611140006`-`009` (PayOS links, Sheet outbox worker, alias and webhook-conflict fixes), `202611150001` (checkout access guard, `create_ticket_order_v4`), `202611170001` (`create_ticket_order_v5`; applied to production per the owner's read-only check on 2026-11-18), `202611170002` (outbox manual-ops safety), `202611170003` (ticket order survey table and functions; exists in the repo, NOT applied to any hosted database, verified only locally and against isolated PostgreSQL). As recorded on 2026-11-17: `202611170002` and `202611140007` were applied to the production Supabase by the user, and one production order's outbox row was observed `synced`. On 2026-11-18 the owner ran a read-only check in the production SQL Editor: `create_ticket_order_v4 = true`, `create_ticket_order_v5 = true`, and for v5 `service_role` true, `anon` false, `authenticated` false; so `202611170001` IS applied to production. `202611170003` is NOT applied to any hosted database.
 
 What is and is not verified: local Vitest tests, an isolated embedded-PostgreSQL runner, a mocked-RPC route benchmark and a loopback ingress probe pass. Hosted checkout latency, live PayOS behavior, authenticated production capacity and proxy Origin behavior are unverified. A mocked test or a successful build does not prove a real sheet write or a real payment.
 
@@ -82,7 +84,8 @@ src/
   proxy.ts                     Supabase session refresh and no-store headers
   components/                  Button, Card, Navbar, Footer
   lib/                         constants.ts, utils.ts, supabase/, payments/{payos,sepay}/,
-                               ticket-orders/, ticket-registration/ (Sheets + outbox worker)
+                               ticket-orders/ (incl. survey.ts shared survey contract),
+                               ticket-registration/ (Sheets A:Q + outbox worker)
   styles/globals.css           Tailwind v4 retro theme and responsive styles
   test/setup.ts                Vitest setup (jest-dom, RTL cleanup, mock restore)
   types/index.ts               ApiResponse<T>
@@ -123,12 +126,13 @@ Compatibility note: this workspace currently has an ordinary `.agents/skills/` d
 - Preserve Vietnamese Unicode, existing anchor IDs, section order, typography and retro tokens from the source. See the UI contract for details.
 - Do not add services, dependencies or pretend transaction endpoints as part of a visual conversion.
 - Payment and order rules: the browser never decides payment state; only the verified webhook persists paid. Checkout RPCs are SECURITY DEFINER with an empty `search_path` and granted to service_role only. Do not blind-retry provider calls; ambiguous provider outcomes go through lookup/reconcile. Migrations are forward-only; never edit an applied migration, add a new one.
+- Survey answers are stored and transported as stable ids, never labels; a migration CHECK list and `survey.ts` must match (enforced by `src/lib/ticket-orders/survey-migration-drift.test.ts`). Look up id to label with `Object.hasOwn`/`Map` (prototype-name ids are invalid). Side work that must not block checkout is started as a never-rejecting promise and joined with a capped `Promise.race` whose timer is cleared in `finally`. Worker reads distinguish "no data" (blank, proceed) from "read failed" (fail the row, write nothing).
 - Server-Timing uses fixed stage names only (no identity, order or provider data). The performance harness (mocked-RPC route benchmark, ingress probe) measures handler/ingress behavior, never hosted latency.
 
 ## Environment and Configuration
 
 - `SITE_URL` is used by `robots.ts`, `sitemap.ts`, and ticket-request origin validation; the API compares normalized origins and does not trust forwarded headers. The server-only Sheets adapter uses `GOOGLE_SHEETS_SPREADSHEET_ID` and lazily obtains Google Application Default Credentials. Do not put credential values or credential-file contents in tracked files. Production remains blocked until a least-privilege runtime identity, public-origin proxy behavior, data access/retention, and edge rate limiting/monitoring are verified.
-- Other variable NAMES (see `.env.example`; values are never recorded in tracked files): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, server-only `SUPABASE_SECRET_KEY`, `GOOGLE_APPLICATION_CREDENTIALS` / `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEETS_PAID_ORDERS_RANGE` (tab range ending `!A:N`, default `Registrations!A:N`), `SHEETS_SYNC_WORKER_SECRET` (at least 32 characters), `SEPAY_*`, and `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_CHECKOUT_ENABLED`.
+- Other variable NAMES (see `.env.example`; values are never recorded in tracked files): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, server-only `SUPABASE_SECRET_KEY`, `GOOGLE_APPLICATION_CREDENTIALS` / `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEETS_PAID_ORDERS_RANGE` (tab range ending `!A:Q`, default `Registrations!A:Q`), `SHEETS_SYNC_WORKER_SECRET` (at least 32 characters), `SEPAY_*`, and `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_CHECKOUT_ENABLED`.
 - Secrets belong in ignored local environment files and server-only code. Never write a secret value (including a pasted worker secret) into tracked files, reports or chat summaries.
 - next.config.ts enables reactStrictMode and disables poweredByHeader.
 - tsconfig.json uses bundler resolution, strict mode and noEmit.
@@ -150,7 +154,8 @@ No feature folders. All current work is under `process/general-plans/active/` ta
 ## Open Questions / Outstanding Work
 
 - Ticket prices and sale timing in the public content still require organizer confirmation; checkout stays off unless `PAYOS_CHECKOUT_ENABLED` is `"true"`.
-- Unverified: hosted migration `202611170001` and non-production latency, live PayOS behavior and the live rail, authenticated production capacity, reverse-proxy Origin preservation, and production edge rate limiting/monitoring.
+- Unverified: hosted migration `202611170003` (not applied), and non-production latency, live PayOS behavior and the live rail, authenticated production capacity, reverse-proxy Origin preservation, and production edge rate limiting/monitoring.
+- Survey feature, unverified or open: migration `202611170003` not applied to any hosted DB; real 17-column Sheet write (owner probe on a Sheet copy, AC15 CONDITIONAL); PostgREST passing a JS array to a `text[]` argument end to end (route tests mock the RPC); the 1500 ms join bound on hosted infrastructure and serverless behavior after the response; no automatic detection of the late-survey race; a paid order created after the cutover can have NO survey row (save failed or timed out) and its answers are unrecoverable (read-only detection query in the runbook, section 4a); consent and retention for survey data in the third-party Sheet undecided; no "Other" option and no backfill of old orders. Checkout stays OFF. Backlog: `process/general-plans/backlog/ticket-order-survey-followups_17-11-26/ticket-order-survey-followups_NOTE_17-11-26.md`.
 - Known operational gaps: no scheduler in the repo calls `/api/internal/sheets-sync` (Vercel Hobby cron is daily only); the PayOS webhook awaits Sheets before replying to PayOS (consider `after()`); no outbox retry cap or alerting; no SQL test covers migration `202611170002`; the Next.js 16.4.3 advisory needs a user-approved upgrade.
 - Contact delivery/storage, asset rights, production hosting and an official Facebook URL remain unselected.
 - Remote logo and poster load in current browser checks but still depend on third-party hosting. The provided merch form destination has not been independently checked for order fulfillment.
@@ -161,7 +166,7 @@ Sources: package.json, package-lock.json, README.md, tsconfig.json, next.config.
 
 ## Scan Metadata
 
-- Generated: 2026-11-09 (fresh bootstrap); refreshed 2026-11-17 from source evidence (delta, UPDATE PROCESS).
+- Generated: 2026-11-09 (fresh bootstrap); refreshed 2026-11-18 from source evidence (ticket order survey, P6 docs).
 - Repo HEAD at refresh: 6663d9c on `main`, with uncommitted working-tree changes. Commits go directly on `main` only when the user asks.
 - Package manager: npm (package-lock.json); on PowerShell use npm.cmd when npm.ps1 is blocked.
 - Scope: source/configuration and installed harness, excluding caches, node_modules and secret files.

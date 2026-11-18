@@ -70,6 +70,7 @@ The source has two Google-hosted bitmap assets: the logo and event poster. Prese
 | TikTok | Preserve `https://www.tiktok.com/@loihoidap199x`; new-tab links use `rel="noopener noreferrer"` |
 | Merchandise order CTA | Preserve `https://forms.gle/tW1VU8vpASc53CJa8`; this opens an external form, not an in-app checkout |
 | Tickets | Preserve the sales-not-open state; the request dialog submits details for organizer review and confirms only a recorded request, never a reservation or purchase |
+| Ticket dialog survey | `_components/TicketSurveyFields.tsx` (Client leaf) renders three mandatory groups after the merch block: Q6 source (checkboxes, at least one), Q8 area and Q9 attendance (radios); verbatim Vietnamese question text from `src/lib/ticket-orders/survey.ts`, no question number, asterisk or required badge; per-group `role="alert"` errors, focus on the first invalid group, no `fetch` while any group is empty; answers reset after a successful submit. Known existing issue outside this task: the dialog shows a mobile horizontal scroll from the poster notch `::after` (`right:-12px`) |
 | Facebook | Upcoming/unavailable state; do not invent an official page URL |
 | Email | Preserve `loihoidap199x@gmail.com`; a `mailto:` link may open the user's mail client |
 | Contact form | Clearly explain it is a local preview before interaction. Validate inputs and allow preview/edit without resetting user text. Announce feedback accessibly. Do not display the source's fabricated saved-success message |

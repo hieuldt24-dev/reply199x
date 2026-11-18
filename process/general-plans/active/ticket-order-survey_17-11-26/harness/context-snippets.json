@@ -1,0 +1,53 @@
+{
+  "task": "Ticket order survey: three mandatory survey questions, survey table via migration 202611170003, route save in parallel with PayOS, Sheet A:Q worker. Local and isolated-PostgreSQL work only.",
+  "snippets": [
+    {
+      "file": "supabase/migrations/202611170003_ticket_order_survey.sql",
+      "lines": "19-36",
+      "description": "Table keyed by order with composite FK (order_id, user_id) to orders, CHECK allowlists on stable ids, RLS enabled, revoke from public/anon/authenticated, grant to service_role only.",
+      "content": "constraint ticket_order_survey_order_owner_fkey foreign key (order_id, user_id) references public.orders (id, user_id) on delete cascade ... alter table public.ticket_order_survey enable row level security; revoke all on table public.ticket_order_survey from public, anon, authenticated; grant select, insert, update on table public.ticket_order_survey to service_role;"
+    },
+    {
+      "file": "supabase/migrations/202611170003_ticket_order_survey.sql",
+      "lines": "40-57",
+      "description": "Trust boundary: upsert is SECURITY DEFINER with empty search_path; a missing order and another user's order raise the same P0002 error.",
+      "content": "returns boolean language plpgsql security definer set search_path = '' ... if p_order_id is null or p_user_id is null or not exists (select 1 from public.orders o where o.id = p_order_id and o.user_id = p_user_id) then raise exception 'order_not_found' using errcode = 'P0002';"
+    },
+    {
+      "file": "supabase/migrations/202611170003_ticket_order_survey.sql",
+      "lines": "85-92",
+      "description": "Every new function is revoked from public/anon/authenticated and granted to service_role with its exact signature.",
+      "content": "revoke all on function public.upsert_ticket_order_survey(uuid, uuid, text[], text, text) from public, anon, authenticated; grant execute on function public.upsert_ticket_order_survey(uuid, uuid, text[], text, text) to service_role;"
+    },
+    {
+      "file": "src/app/api/ticket-orders/route.ts",
+      "lines": "26, 39-69, 268, 311",
+      "description": "Survey save starts as a never-rejecting promise (p_user_id only from the session user), joined with a Promise.race capped at 1500 ms whose timer is cleared in finally; the pending branch returns 409 before any save.",
+      "content": "const SURVEY_JOIN_TIMEOUT_MS = 1500; function startSurveySave(admin, orderId, userId, survey) ...; const surveySave = startSurveySave(admin, String(row.order_id), authData.user.id, input.survey); ... await joinSurveySave(surveySave);"
+    },
+    {
+      "file": "src/lib/ticket-orders/validation.ts",
+      "lines": "52-62",
+      "description": "survey is allow-listed and re-validated server-side by parseSurvey; invalid or missing survey returns null (generic 400).",
+      "content": "[... \"merch\", \"survey\"].includes(key) ... const survey = parseSurvey(record.survey); if (!survey) return null;"
+    },
+    {
+      "file": "src/lib/ticket-registration/outbox-worker.ts",
+      "lines": "22-35, 55-56",
+      "description": "Worker distinguishes no survey (blank G/H/M) from a read failure (survey_read_failed, nothing written, row failed) and reads the survey before the Sheet write.",
+      "content": "async function readOrderSurvey(admin, orderId) ... throw new Error(SURVEY_READ_FAILED_CODE); ... const survey = await readOrderSurvey(admin, raw.order_id); const rowNumber = await upsertPaidTicketOrder(raw, survey);"
+    },
+    {
+      "file": "src/lib/ticket-registration/paid-orders.ts",
+      "lines": "25-31, 50, 70, 93",
+      "description": "Sheet range fails closed unless it ends in !A:Q; 17-column row with order id at index 13; update range A{n}:Q{n}.",
+      "content": "const defaultPaidOrdersRange = \"Registrations!A:Q\"; if (!/^.{1,200}!A:Q$/.test(range)) throw new Error(\"invalid_sheet_range\"); const orderIdColumnIndex = 13; ... !A${rowNumber}:Q${rowNumber}"
+    },
+    {
+      "file": "scripts/test-checkout-guard-db.mjs",
+      "lines": "15-22, 218-239",
+      "description": "Runner runs every supabase/tests/*.sql with a fixed-list tripwire and per-file sentinel notices; table default privileges to anon/authenticated are granted only before the survey migration so revoke assertions are not vacuous; artifacts dir overridable by CHECKOUT_GUARD_ARTIFACTS_DIR.",
+      "content": "const EXPECTED_SQL_TESTS = [\"checkout-access-guard.sql\", \"ticket-order-survey.sql\"]; assert.deepEqual(sqlTests, EXPECTED_SQL_TESTS, ...); assert.ok(notices.includes(`SENTINEL ${filename}`), ...)"
+    }
+  ]
+}

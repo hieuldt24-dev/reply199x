@@ -1,0 +1,175 @@
+{
+  "task": "Ticket order survey: final verification record after EVL cycle 2 (independent vc-tester run, PowerShell, local and isolated-PostgreSQL only). Source of every result below: ticket-order-survey-evl-iteration-002_REPORT_18-11-26.md. GJ.10, G3.1 re-capture and G4.2 re-run are NOT done.",
+  "commands": [
+    {
+      "step": "Baseline before any edit (P1)",
+      "command": "npm.cmd test; npm.cmd run lint; npm.cmd run typecheck; npm.cmd run build (twice)",
+      "exitCode": "1 / 1 / 0 / 1 then 0",
+      "result": "RECORDED",
+      "notes": "From ticket-order-survey-lint-baseline_REF_17-11-26.md: 236 tests with 1 pre-existing failure (route-client.test.ts secure cookie); lint 461 problems in 118 files, none under src/, scripts/ or supabase/; typecheck clean; build exit 1 (Next 16.4.3 advisory) then 0."
+    },
+    {
+      "step": "G1.1 shared contract and validation tests",
+      "command": "npx.cmd vitest run src/lib/ticket-orders/survey.test.ts src/lib/ticket-orders/validation.test.ts",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "90 tests. EVL cycle 2, spawned vc-tester."
+    },
+    {
+      "step": "G2.1 isolated PostgreSQL runner",
+      "command": "node scripts/test-checkout-guard-db.mjs",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Disposable embedded PostgreSQL, 11 migrations, both SQL files and sentinels (EVL cycle 1 detail; green again in cycle 2). Does not prove a hosted database."
+    },
+    {
+      "step": "G2.2 migration/contract drift test",
+      "command": "npx.cmd vitest run src/lib/ticket-orders/survey-migration-drift.test.ts",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "3 tests."
+    },
+    {
+      "step": "Red-proof A, B and C (each on a scratchpad copy)",
+      "command": "per plan Verification Evidence (mutated copy must fail)",
+      "exitCode": "1 / 1 / 1 (expected failures)",
+      "result": "PASS",
+      "notes": "Each red-proof exits 1 as required, so the corresponding tests are not vacuous. Run by vc-tester, not by the author."
+    },
+    {
+      "step": "G3.1 baseline capture",
+      "command": "CHECKOUT_PERF_MODE=baseline npm.cmd test -- src/app/api/ticket-orders/route.performance.test.ts",
+      "exitCode": "not re-run",
+      "result": "NOT-RE-RUN",
+      "notes": "Author file ticket-order-survey_BASELINE_17-11-26.json used; its hash was recorded. Baseline p50 76.157 ms, serial RPCs {2:50}, survey RPC {0:50}. No _BASELINE_R2 file exists."
+    },
+    {
+      "step": "G3.2 route tests",
+      "command": "npx.cmd vitest run src/app/api/ticket-orders src/app/api/payments src/app/api/internal",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "78 tests."
+    },
+    {
+      "step": "G3.3 candidate benchmark (mocked RPC 15 ms, PayOS 30 ms, 50 samples)",
+      "command": "CHECKOUT_PERF_MODE=candidate CHECKOUT_PERF_BASELINE=<new baseline json> npm.cmd test -- src/app/api/ticket-orders/route.performance.test.ts",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Authoritative EVL cycle 2 run: candidate p50 74.239 ms vs baseline 76.157 ms (delta -1.918 ms, limit +10 ms); serial RPCs {2:50}; survey RPC {1:50}; survey started before PayOS finished 50 of 50; 0 failures; always-on old-baseline sha256 test green. EVL cycle 1 run was p50 77.538 ms (+1.381 ms). Handler-only; not hosted latency. The candidate JSON on disk is overwritten per run."
+    },
+    {
+      "step": "G4.1 dialog and survey fields tests",
+      "command": "npx.cmd vitest run \"src/app/(routes)/_components/TicketRequestDialog.test.tsx\"",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "18 tests (includes the L6 data-invalid change)."
+    },
+    {
+      "step": "G4.2 browser widths 360/390/768/1280",
+      "command": "agent-browser screenshots",
+      "exitCode": "not re-run",
+      "result": "NOT-RE-RUN",
+      "notes": "Author evidence only: survey-form-360.png, -390.png, -768.png, -1280.png in the task folder. The CSS selector changed in the fix cycle (aria-invalid to data-invalid) and screenshots were not re-captured. Pre-existing mobile horizontal scroll from the poster notch ::after is outside this task."
+    },
+    {
+      "step": "G5.1 Sheet adapter and worker tests",
+      "command": "npx.cmd vitest run src/lib/ticket-registration src/app/api/internal",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "37 tests."
+    },
+    {
+      "step": "GJ.1 full unit suite",
+      "command": "npm.cmd test",
+      "exitCode": 1,
+      "result": "PASS-WITH-KNOWN-FAILURE",
+      "notes": "349 of 350 pass; the single failure is the known pre-existing src/lib/supabase/route-client.test.ts secure-cookie test (also failing in the baseline)."
+    },
+    {
+      "step": "GJ.2 lint against baseline",
+      "command": "npm.cmd run lint; npx.cmd eslint <touched paths> --max-warnings=0",
+      "exitCode": "1 (full) / 0 (scoped)",
+      "result": "PASS-EQUALS-BASELINE",
+      "notes": "461 problems, all under .agents/.claude/.codex, equal to the recorded baseline; none under src/, scripts/ or supabase/; scoped lint on touched paths clean."
+    },
+    {
+      "step": "GJ.3 typecheck",
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Clean."
+    },
+    {
+      "step": "GJ.5 build",
+      "command": "npm.cmd run build (run twice)",
+      "exitCode": "1 then 0",
+      "result": "PASS-WITH-KNOWN-ADVISORY",
+      "notes": "First run exit 1 on the Next.js 16.4.3 known-vulnerability advisory after a successful compile; retry exit 0. Not hidden, not fixed here."
+    },
+    {
+      "step": "GJ.6 untouched areas",
+      "command": "git diff on protected paths; sha256 checks",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Old baseline sha256 da3ca2c7...877e and survey.ts sha256 1da21f7d...b2bc unchanged; no diff in migrations other than the new one, in payments or in internal routes; the new migration has no drop, alter or replace of protected functions."
+    },
+    {
+      "step": "GJ.7 documentation greps",
+      "command": "search README.md and the env example file for the previous 14-column range string and for A:Q",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "Previous range string absent from both files; A:Q present in both; README names the late-survey race (both cases) and requeue_synced_sheet_sync_for_survey. Recorded grep, not an automated test."
+    },
+    {
+      "step": "GJ.8 risk evidence pack validator",
+      "command": "node .claude/skills/vc-risk-evidence-pack/scripts/validate-risk-artifacts.mjs process/general-plans/active/ticket-order-survey_17-11-26/harness/",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "5 artifacts, no warnings, no failures; review-decision.json (approved-with-concerns) transcribed by a non-author agent."
+    },
+    {
+      "step": "GJ.9 plan, context and protocol validators",
+      "command": "validate-plan-artifact.mjs; discover-context.mjs --check-routing; validate-all-context.mjs; validate-protocol-discovery.mjs; git diff --check",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "All exit 0. validate-context-discovery, validate-skills and validate-guide-sync exit 1 at HEAD as well (verified by the tester via git archive HEAD): pre-existing harness drift, not caused by this change."
+    },
+    {
+      "step": "Loopback ingress probe",
+      "command": "node scripts/measure-ticket-order-ingress.mjs --base-url http://127.0.0.1:3001 --rate 50 --duration 10",
+      "exitCode": 0,
+      "result": "PASS",
+      "notes": "500 requests, all 403, 0 errors. Ingress handling only, not checkout capacity."
+    },
+    {
+      "step": "GJ.10 owner Sheet-copy probe (AC15, real 17-column write)",
+      "command": "owner-run per runbook REF section on the Sheet copy",
+      "exitCode": "not run",
+      "result": "PENDING",
+      "notes": "Only the owner can run it. AC15 stays CONDITIONAL until then."
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "Four screenshots of the survey dialog at 360/390/768/1280 px exist in the task folder",
+      "result": "PRESENT",
+      "notes": "Author capture; not re-captured after the L6 CSS selector change (G4.2 not re-run)."
+    },
+    {
+      "check": "AC15 real 17-column Sheet write (GJ.10)",
+      "result": "NOT-RUN",
+      "notes": "Owner-run on a Sheet copy per the runbook; CONDITIONAL."
+    },
+    {
+      "check": "Independent read-only review (vc-code-reviewer) and review-decision.json",
+      "result": "DONE",
+      "notes": "Verdict approved-with-concerns, no Blocker or High; concerns M1-M5, L1-L7 handled in the fix cycle (M3, L6 code; M1, M2, M4, M5, L1-L3 docs). risk-gate mustStopBeforeFinalize and humanApprovalRequired stay true."
+    },
+    {
+      "check": "Production state as of 2026-11-18 (owner read-only check)",
+      "result": "RECORDED",
+      "notes": "Migration 202611170001 (create_ticket_order_v5) applied to production; migration 202611170003 NOT applied to any hosted database; production runs the old 14-column app while the real Sheet is 17 columns; checkout OFF."
+    }
+  ],
+  "result": "PASS for every locally runnable gate (EVL cycle 2: HALTED_SUCCESS, no regressions), with pre-existing failures recorded. NOT proven: GJ.10 owner Sheet-copy probe (AC15 CONDITIONAL), G3.1 baseline re-capture and G4.2 browser re-run (not re-run), migration 202611170003 on a hosted database, a real 17-column Sheet write, PostgREST array argument end to end (K.2), hosted latency of the 1500 ms join (K.1), live PayOS, AC20 late-survey race detection, paid orders with no survey row (unrecoverable), scheduler/retry cap, consent/retention."
+}

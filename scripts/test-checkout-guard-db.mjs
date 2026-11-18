@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, readdir, writeFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, writeFile, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -12,7 +12,21 @@ import EmbeddedPostgres from "embedded-postgres";
 
 // Always self-create a disposable cluster. Deliberately accepts no external DB URL.
 const root = fileURLToPath(new URL("../", import.meta.url));
-const artifacts = path.join(root, "process/general-plans/active/checkout-access-guard_14-11-26");
+// Used only by --workload. CHECKOUT_GUARD_ARTIFACTS_DIR overrides the historical task folder.
+const artifacts = process.env.CHECKOUT_GUARD_ARTIFACTS_DIR
+  ? path.resolve(process.env.CHECKOUT_GUARD_ARTIFACTS_DIR)
+  : path.join(root, "process/general-plans/active/checkout-access-guard_14-11-26");
+// Tripwire: every supabase/tests/*.sql must be listed here, and each must end with
+// `do $$ begin raise notice 'SENTINEL <file>'; end $$;` so a silently skipped or
+// truncated file fails the run.
+const EXPECTED_SQL_TESTS = ["checkout-access-guard.sql", "ticket-order-survey.sql"];
+const SURVEY_MIGRATION = "202611170003_ticket_order_survey.sql";
+const SURVEY_FUNCTIONS = [
+  "public.upsert_ticket_order_survey(uuid,uuid,text[],text,text)",
+  "public.get_ticket_order_survey(uuid)",
+  "public.ticket_survey_source_valid(text[])",
+  "public.requeue_synced_sheet_sync_for_survey(uuid)",
+];
 const directory = await mkdtemp(path.join(tmpdir(), "checkout-guard-pg-"));
 const port = await new Promise((resolve, reject) => {
   const server = createServer();
@@ -80,6 +94,55 @@ async function addExpiredEvidence(admin, service, user, deadlineOffsetMs = -60_0
   if (options.transaction) await admin.query("insert into public.payment_transactions(order_id,provider,amount_vnd,currency,status,expires_at,paid_at,provider_transaction_id) values($1,'sepay',$2,'VND',$3,$4,case when $3='paid' then now() else null end,case when $3='paid' then $5 else null end)", [order.order_id, order.total_vnd, options.transaction, expiry, `tx-${randomUUID()}`]);
   if (options.event) await admin.query("insert into public.payos_payment_events(provider_event_id,transaction_reference,order_code,amount_vnd,processing_status) values($1,$2,$3,$4,$5)", [`event-${randomUUID()}`, `ref-${randomUUID()}`, evidence.rows[0].order_code, order.total_vnd, options.event]);
   return order;
+}
+async function assertSurveyPermissions(admin, service) {
+  for (const fn of SURVEY_FUNCTIONS) {
+    await assertSql(admin, `select has_function_privilege('service_role',$1::text,'execute')
+      and not has_function_privilege('anon',$1::text,'execute')
+      and not has_function_privilege('authenticated',$1::text,'execute')
+      and (select coalesce(p.proconfig,'{}') @> array['search_path=""'] from pg_proc p where p.oid=($1::text)::regprocedure) as ok,
+      'survey function grants or search_path wrong: ' || $1::text as message`, [fn]);
+  }
+  for (const fn of SURVEY_FUNCTIONS.filter(name => !name.includes("ticket_survey_source_valid"))) {
+    await assertSql(admin, "select p.prosecdef as ok, 'expected SECURITY DEFINER: ' || $1::text as message from pg_proc p where p.oid=($1::text)::regprocedure", [fn]);
+  }
+  await assertSql(admin, `select p.provolatile='i' and not p.prosecdef as ok, 'source helper must be IMMUTABLE and not SECURITY DEFINER' as message
+    from pg_proc p where p.oid='public.ticket_survey_source_valid(text[])'::regprocedure`);
+  const table = "public.ticket_order_survey";
+  for (const role of ["anon", "authenticated"]) {
+    for (const privilege of ["select", "insert", "update", "delete"]) {
+      await assertSql(admin, "select not has_table_privilege($1::text,$2::text,$3::text) as ok, $1::text || ' must not have ' || $3::text || ' on ' || $2::text as message", [role, table, privilege]);
+    }
+  }
+  for (const privilege of ["select", "insert", "update"]) {
+    await assertSql(admin, "select has_table_privilege('service_role',$1::text,$2::text) as ok, 'service_role needs ' || $2::text as message", [table, privilege]);
+  }
+  await assertSql(admin, "select relrowsecurity as ok, 'ticket_order_survey must enable row-level security' as message from pg_class where oid='public.ticket_order_survey'::regclass");
+
+  const owner = await newUser(admin);
+  const order = (await admin.query(`insert into public.orders(user_id,idempotency_key,request_fingerprint,quantity)
+    values($1,extensions.gen_random_uuid(),repeat('d',64),1) returning id`, [owner])).rows[0].id;
+  const attempts = [
+    ["select public.upsert_ticket_order_survey($1,$2,array['facebook'],'hai-chau','confirmed')", [order, owner]],
+    ["select * from public.get_ticket_order_survey($1)", [order]],
+    ["select public.requeue_synced_sheet_sync_for_survey($1)", [order]],
+    ["select * from public.ticket_order_survey", []],
+  ];
+  for (const role of ["anon", "authenticated"]) {
+    const client = await connect(role);
+    try {
+      for (const [sql, values] of attempts) {
+        await assert.rejects(() => client.query(sql, values), error => error.code === "42501", `${role} must get 42501 for: ${sql}`);
+      }
+    } finally {
+      await client.end();
+      clients.delete(client);
+    }
+  }
+  assert.equal((await service.query("select public.upsert_ticket_order_survey($1,$2,$3::text[],$4,$5) as ok", [order, owner, ["facebook", "website"], "son-tra", "unsure"])).rows[0].ok, true);
+  const stored = await service.query("select * from public.get_ticket_order_survey($1)", [order]);
+  assert.deepEqual(stored.rows, [{ source: ["facebook", "website"], area: "son-tra", attendance: "unsure" }], "service_role upsert then get must round-trip");
+  console.log("survey grants, RLS, role denials (42501) and service_role round-trip PASS");
 }
 function percentile(samples, percentileValue) {
   const sorted = [...samples].sort((a, b) => a - b);
@@ -157,12 +220,26 @@ try {
   const admin = await connect();
   await admin.query(bootstrap);
   for (const filename of (await readdir(path.join(root, "supabase/migrations"))).filter(name => name.endsWith(".sql")).sort()) {
+    if (filename === SURVEY_MIGRATION) {
+      // Hosted-like client table defaults, applied only before the survey migration so its
+      // explicit table revoke is what keeps anon/authenticated out (not a vacuous pass).
+      await admin.query("alter default privileges in schema public grant all on tables to anon, authenticated");
+    }
     await admin.query((await readFile(path.join(root, "supabase/migrations", filename), "utf8")).replace(/^\uFEFF/, ""));
     console.log(`migration PASS ${filename}`);
   }
-  await admin.query(await readFile(path.join(root, "supabase/tests/checkout-access-guard.sql"), "utf8"));
+  const sqlTests = (await readdir(path.join(root, "supabase/tests"))).filter(name => name.endsWith(".sql")).sort();
+  assert.deepEqual(sqlTests, EXPECTED_SQL_TESTS, "supabase/tests/*.sql differs from the runner's expected list (tripwire)");
+  const notices = [];
+  admin.on("notice", notice => notices.push(notice.message));
+  for (const filename of sqlTests) {
+    await admin.query((await readFile(path.join(root, "supabase/tests", filename), "utf8")).replace(/^\uFEFF/, ""));
+    assert.ok(notices.includes(`SENTINEL ${filename}`), `SQL test ${filename} did not reach its sentinel`);
+    console.log(`SQL test PASS ${filename} (SENTINEL ${filename})`);
+  }
   console.log("SQL permission/index assertions PASS");
   const service = await connect("service_role");
+  await assertSurveyPermissions(admin, service);
   await assertSql(admin, `select has_function_privilege('service_role','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
     and not has_function_privilege('anon','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
     and not has_function_privilege('authenticated','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
@@ -399,6 +476,11 @@ try {
   console.log("v5 paired database timing", JSON.stringify(await compareCombinedRpcLatency(admin, service)));
 
   if (process.argv.includes("--workload")) {
+    try {
+      await access(artifacts);
+    } catch {
+      throw new Error(`--workload artifacts directory not found: ${artifacts}. Set CHECKOUT_GUARD_ARTIFACTS_DIR to an existing folder holding payment-ui-workload_15-11-26.json.`);
+    }
     const runs = Number(process.env.CHECKOUT_WORKLOAD_SAMPLES ?? 30);
     assert.ok(Number.isInteger(runs) && runs >= 10 && runs <= 500, "CHECKOUT_WORKLOAD_SAMPLES must be an integer from 10 to 500");
     const baselineFresh = await measure(async () => {

@@ -1,0 +1,6 @@
+iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_status	loop_status	notes
+0	2026-11-18	11	0	11	0	ACTIVE	baseline	First-pass PVL Gate: CONDITIONAL (0 FAIL, 11 CONCERN: C1-C4 and C7 need plan edits; C5, C6, C8-C11 execute-agent notes; C12 observation). No contract written; assumptions a-g checked locally, none blocking.
+1	2026-11-18	0	0	0	6	ACTIVE	PVL_CYCLE	SUPPLEMENT_APPLIED 6 gap groups (C1-C4, C7, C5/C6/C8-C12 notes); plan validator 0 failures; awaiting re-validate from V1.
+2	2026-11-18	0	0	0	6	SATURATED	HALTED_SUCCESS	PVL PASS on re-validate from V1; validate-contract written; wording fixes (Red-proof A/B/C, G2.1-G2.5, runbook count) applied by validator; named residual gaps K.1 K.2 AC15 AC20 race scheduler consent.
+3	2026-11-18	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL confirmation by vc-tester: no regressions; candidate p50 +1.381ms; pending GJ.8 review-decision and GJ.10 owner probe; pre-existing validators failing (context-discovery, skills, guide-sync).
+4	2026-11-18	0	0	0	6	SATURATED	HALTED_SUCCESS	EVL run 2 after review fix cycle (M3 hash test, L6 data-invalid, docs M1 M2 M4 M5 L1-L3): all runnable gates pass, no regressions; GJ.8 exit 0; GJ.10 owner probe pending; candidate p50 -1.918ms.
