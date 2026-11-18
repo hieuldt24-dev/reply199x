@@ -9,15 +9,16 @@ feature: none
 
 **BLUF:** SIMPLE (one sequential EXECUTE, 11 steps, one package, no schema/auth/API/billing). The Navbar item "Checkin popup" becomes a group toggle "Check in". On desktop (>=1024px) it opens a dropdown (disclosure pattern: button with `aria-expanded`/`aria-controls`, Esc / outside click / focus-out / re-click / selection close it). On mobile it expands an inline list inside the mobile menu. The list has two items: "Check in không gian âm nhạc hoài niệm" (new form) and "Checkin popup" (existing form, exact label kept). Each item opens the SAME single `FormPopup` instance, which now takes the active form id and renders that form's own title, iframe and fallback link. Forms live in a typed list in `_data/formPopup.ts`, so a third form later is ONE entry. Per-form iframes are mounted lazily on first open and then kept, so typed answers survive close and switching. Whether the real forms load on the deployed site stays the owner's manual check (named residual, CONDITIONAL).
 
-Status: PLANNED (no code written; VALIDATE then explicit owner "ENTER EXECUTE MODE" required).
+Status: CODE DONE (EXECUTE 2026-11-18; EVL by vc-tester pending; AC14 owner check pending; not VERIFIED).
 Date: 18-11-26
 Complexity: SIMPLE (8 touched files: 3 source/data, 1 CSS append, 2 tests, 2 docs, plus 2 backlog notes; no schema/auth/API/billing)
 TL;DR: group "Check in" with 2 forms, one shared popup keyed by form id, data list so adding a form is one entry, CSS appended at the END of `globals.css`, tests updated (not deleted) plus dropdown tests; the known 360/390px header overflow is only recorded and parked as a backlog stub.
 
 ## Current Execution State
 - Last updated: 2026-11-18
-- Current step: PLAN written; next VALIDATE (vc-validate-agent), then owner "ENTER EXECUTE MODE".
-- Validate-contract: pending (placeholder below).
+- Current step: EXECUTE done (checklist 1-11, CODE DONE); next EVL (vc-tester re-runs G1-G11), then UPDATE PROCESS.
+- Validate-contract: written 2026-11-18, Gate: PASS (generated-by: outer-pvl).
+- EXECUTE result: G1 25/25, G2 66/66, G3 only the known route-client failure, G4 0, G5 0, G5b 461 (none in src), G6 exit 1 then 0, G8 3 lines all in formPopup.ts + merch 1, G9 0 (control 2), G10 stub absent (header overflow resolved by the ticket removal), G11 0 (control 6), probe P1/P2 pass at six widths. Report: `navbar-checkin-menu_REPORT_18-11-26.md` in this folder. The owner committed the working tree as 6085118 during EXECUTE.
 - No separate SPEC: the locked requirement is the owner's request message of 2026-11-18 (Vietnamese); AC1-AC15 below are the verified translation. Parent plan: `process/general-plans/active/navbar-google-form-popup_18-11-26/navbar-google-form-popup_PLAN_18-11-26.md` (CODE DONE; its REPORT is in the same folder).
 - Strategy (vc-agent-strategy-compare, Simple Mode): S7 (5+ files in blast radius) = 1; S1-S6 = 0; score 1/7 = LOW. Recommended: Sequential, 1 EXECUTE agent (opus), then vc-tester EVL (sonnet). No fan-out: Navbar, FormPopup, data, CSS and tests are one overlapping change.
 

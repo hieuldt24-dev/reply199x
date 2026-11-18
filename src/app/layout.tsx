@@ -1,4 +1,5 @@
 ﻿import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body className="antialiased">
         <a className="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung chính</a>
         {children}
+        <Analytics />
       </body>
     </html>
   );

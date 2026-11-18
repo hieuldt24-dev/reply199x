@@ -116,7 +116,7 @@ Compatibility note: this workspace currently has an ordinary `.agents/skills/` d
 - Manifest: Next.js ^16.4.3 App Router, React/React DOM ^19.2.0, TypeScript ^5.0.0, Tailwind CSS ^4.0.0, ESLint ^10.0.0. Exact resolutions live in package-lock.json; use npm ci.
 - Node.js >=22, .nvmrc selects 22; detected runtime Node 22.22.0 and npm 11.21.0.
 - Tailwind uses @tailwindcss/postcss and CSS configuration, not the reference's CDN config script.
-- Runtime dependencies: next, react, react-dom, @supabase/ssr, @supabase/supabase-js, googleapis. Dev: vitest ^5, jsdom, Testing Library, embedded-postgres 18.6.0-beta.19 (isolated test database), Tailwind, ESLint, TypeScript. No mail transport or analytics is installed.
+- Runtime dependencies: next, react, react-dom, @supabase/ssr, @supabase/supabase-js, googleapis, @vercel/analytics. Dev: vitest ^5, jsdom, Testing Library, embedded-postgres 18.6.0-beta.19 (isolated test database), Tailwind, ESLint, TypeScript. Vercel Web Analytics (@vercel/analytics) is installed; no mail transport.
 - Next.js resolves to 16.4.3: `npm run build` stops with a known-vulnerability advisory on the first run (exit 1 after a successful compile) and passes on retry. Upgrading is a separate user-approved dependency task; do not upgrade inside an unrelated task.
 - Vitest (`vitest.config.ts`) runs `src/**/*.{test,spec}.{ts,tsx}` with `src/test/setup.ts`; route tests mock Supabase RPCs, PayOS and Sheets.
 
