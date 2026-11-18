@@ -112,6 +112,16 @@
 .login-dialog__google:disabled { opacity:.7; cursor:wait; }
 .login-dialog__error { padding:12px; border-left:4px solid var(--color-retro-red); background:#a8322430; }
 .login-dialog__status { text-align:center; }
+.login-dialog__credentials { display:grid; gap:12px; margin-top:20px; }
+.login-dialog__credentials label { color:#183b2b; font:700 14px/1.4 "Reply Nunito",sans-serif; margin-bottom:-6px; }
+.login-dialog__credentials input { box-sizing:border-box; width:100%; min-width:0; min-height:46px; border:1px solid #cfb875; border-radius:9px; padding:10px 14px; background:#fffaf0; color:#183b2b; font:600 15px/1.4 "Reply Nunito",sans-serif; }
+.login-dialog__credentials input:focus-visible,.login-dialog__submit:focus-visible { outline:3px solid var(--color-retro-red); outline-offset:3px; }
+.login-dialog__submit { width:100%; min-height:48px; margin-top:4px; border:2px solid #183b2b; border-radius:9px; padding:10px 16px; background:#fffaf0; color:#183b2b; font:800 15px/1.4 "Reply Nunito",sans-serif; cursor:pointer; }
+.login-dialog__submit:hover { background:#183b2b0f; }
+.login-dialog__credentials .login-dialog__status { margin:0; color:#536256; font:600 14px/1.5 "Reply Nunito",sans-serif; }
+.login-dialog__divider { display:flex; align-items:center; gap:12px; margin:18px 0 0; color:#536256; font:700 13px/1 "Reply Nunito",sans-serif; }
+.login-dialog__divider::before,.login-dialog__divider::after { content:""; flex:1; height:1px; background:#cfb875; }
+.login-dialog__divider + form .login-dialog__google { margin-top:14px; }
 .login-dialog :focus-visible { outline:3px solid var(--color-retro-red); outline-offset:3px; }
 .event-header__toggle { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; flex:none; border:1px solid #578e7699; border-radius:8px; background:transparent; color:var(--color-retro-paper); }
 .event-header__toggle:hover { background:#578e762e; border-color:var(--color-retro-gold); }

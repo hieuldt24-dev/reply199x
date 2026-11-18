@@ -1,0 +1,60 @@
+{
+  "task": "username-password-login (POST /api/auth/password, public.usernames, CredentialLoginForm)",
+  "commands": [
+    {
+      "command": "npx.cmd vitest run src/app/api/auth/password src/lib/auth",
+      "exitCode": 0,
+      "result": "9 passed (route 4 tests incl. AC1/AC2/AC3/AC3b, username 5)"
+    },
+    {
+      "command": "npx.cmd vitest run src/components/auth",
+      "exitCode": 0,
+      "result": "15 passed (incl. 3 CredentialLoginForm tests)"
+    },
+    {
+      "command": "node scripts/test-checkout-guard-db.mjs",
+      "exitCode": 0,
+      "result": "migration 202611180001 applied on disposable embedded PostgreSQL; username-login.sql SENTINEL reached; usernames permission assertions PASS (RLS on, anon/authenticated no privilege and 42501 on read, service_role select/insert/update/delete)"
+    },
+    {
+      "command": "npm.cmd test",
+      "exitCode": 1,
+      "result": "404 passed, 2 failed: src/lib/supabase/route-client.test.ts (known pre-existing secure:true expectation) and src/components/FormPopup.test.tsx T12 (user's uncommitted formPopup.ts change, outside this task)"
+    },
+    {
+      "command": "npx.cmd eslint <touched paths> --max-warnings=0",
+      "exitCode": 0,
+      "result": "clean (one justified eslint-disable-next-line for the plan-mandated window.location.assign)"
+    },
+    {
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "result": "clean"
+    },
+    {
+      "command": "npm.cmd run build (run 1)",
+      "exitCode": 1,
+      "result": "compiled successfully, then known Next 16.4.3 advisory SecurityFatalError"
+    },
+    {
+      "command": "npm.cmd run build (run 2)",
+      "exitCode": 0,
+      "result": "pass; route /api/auth/password listed"
+    }
+  ],
+  "manualChecks": [
+    {
+      "check": "AC7 hosted end-to-end login (owner probe)",
+      "result": "NOT RUN - owner-run"
+    },
+    {
+      "check": "AC8 self-created account gets 401 (owner probe)",
+      "result": "NOT RUN - owner-run"
+    },
+    {
+      "check": "Runbook step 0 production verification queries",
+      "result": "NOT RUN - owner-run"
+    }
+  ],
+  "result": "code-done: automated gates green within scope; hosted behaviour unverified; independent review pending"
+}

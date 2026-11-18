@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { CredentialLoginForm } from "./CredentialLoginForm";
 import { GoogleLoginForm } from "./GoogleLoginForm";
 
 export function LoginDialog({ open, error, onClose }: { open: boolean; error?: string; onClose: () => void }) {
@@ -37,8 +38,10 @@ export function LoginDialog({ open, error, onClose }: { open: boolean; error?: s
     <button className="login-dialog__close" type="button" aria-label="Đóng cửa sổ đăng nhập" onClick={onClose}>×</button>
     <p className="login-dialog__brand">REPLY 199X</p>
     <h2 id="login-dialog-title">Đăng nhập REPLY 199X</h2>
-    <p id="login-dialog-description">Đăng nhập bằng Google để tiếp tục.</p>
+    <p id="login-dialog-description">Đăng nhập để tiếp tục.</p>
     {error && <p className="login-dialog__error" role="alert">{error}</p>}
+    <CredentialLoginForm />
+    <p className="login-dialog__divider"><span>hoặc</span></p>
     <GoogleLoginForm />
   </dialog>;
 }

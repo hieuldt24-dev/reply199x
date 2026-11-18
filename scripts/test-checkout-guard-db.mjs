@@ -19,7 +19,7 @@ const artifacts = process.env.CHECKOUT_GUARD_ARTIFACTS_DIR
 // Tripwire: every supabase/tests/*.sql must be listed here, and each must end with
 // `do $$ begin raise notice 'SENTINEL <file>'; end $$;` so a silently skipped or
 // truncated file fails the run.
-const EXPECTED_SQL_TESTS = ["checkout-access-guard.sql", "ticket-order-survey.sql"];
+const EXPECTED_SQL_TESTS = ["checkout-access-guard.sql", "ticket-order-survey.sql", "username-login.sql"];
 const SURVEY_MIGRATION = "202611170003_ticket_order_survey.sql";
 const SURVEY_FUNCTIONS = [
   "public.upsert_ticket_order_survey(uuid,uuid,text[],text,text)",
@@ -94,6 +94,31 @@ async function addExpiredEvidence(admin, service, user, deadlineOffsetMs = -60_0
   if (options.transaction) await admin.query("insert into public.payment_transactions(order_id,provider,amount_vnd,currency,status,expires_at,paid_at,provider_transaction_id) values($1,'sepay',$2,'VND',$3,$4,case when $3='paid' then now() else null end,case when $3='paid' then $5 else null end)", [order.order_id, order.total_vnd, options.transaction, expiry, `tx-${randomUUID()}`]);
   if (options.event) await admin.query("insert into public.payos_payment_events(provider_event_id,transaction_reference,order_code,amount_vnd,processing_status) values($1,$2,$3,$4,$5)", [`event-${randomUUID()}`, `ref-${randomUUID()}`, evidence.rows[0].order_code, order.total_vnd, options.event]);
   return order;
+}
+async function assertUsernamePermissions(admin, service) {
+  const table = "public.usernames";
+  await assertSql(admin, "select relrowsecurity as ok, 'usernames must enable row-level security' as message from pg_class where oid='public.usernames'::regclass");
+  for (const role of ["anon", "authenticated"]) {
+    for (const privilege of ["select", "insert", "update", "delete"]) {
+      await assertSql(admin, "select not has_table_privilege($1::text,$2::text,$3::text) as ok, $1::text || ' must not have ' || $3::text || ' on ' || $2::text as message", [role, table, privilege]);
+    }
+    const client = await connect(role);
+    try {
+      await assert.rejects(() => client.query("select * from public.usernames"), error => error.code === "42501", `${role} must get 42501 reading usernames`);
+    } finally {
+      await client.end();
+      clients.delete(client);
+    }
+  }
+  for (const privilege of ["select", "insert", "update", "delete"]) {
+    await assertSql(admin, "select has_table_privilege('service_role',$1::text,$2::text) as ok, 'service_role needs ' || $2::text || ' on usernames' as message", [table, privilege]);
+  }
+  const user = await newUser(admin);
+  await service.query("insert into public.usernames(username,user_id) values($1,$2)", [`svc_${user.slice(0, 8)}`, user]);
+  const read = await service.query("select user_id from public.usernames where user_id=$1", [user]);
+  assert.equal(read.rows.length, 1, "service_role must be able to insert and select usernames");
+  await service.query("delete from public.usernames where user_id=$1", [user]);
+  console.log("usernames permission assertions PASS");
 }
 async function assertSurveyPermissions(admin, service) {
   for (const fn of SURVEY_FUNCTIONS) {
@@ -240,6 +265,7 @@ try {
   console.log("SQL permission/index assertions PASS");
   const service = await connect("service_role");
   await assertSurveyPermissions(admin, service);
+  await assertUsernamePermissions(admin, service);
   await assertSql(admin, `select has_function_privilege('service_role','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
     and not has_function_privilege('anon','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')
     and not has_function_privilege('authenticated','public.create_ticket_order_v4(uuid,uuid,text,text,text,text,integer,integer,text)','execute')

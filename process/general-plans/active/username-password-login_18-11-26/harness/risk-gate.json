@@ -1,0 +1,14 @@
+{
+  "task": "username-password-login (POST /api/auth/password, public.usernames, CredentialLoginForm)",
+  "planPath": "process/general-plans/active/username-password-login_18-11-26/username-password-login_PLAN_18-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": [
+    "auth or identity",
+    "schema/data migration",
+    "public API contract (new endpoint)",
+    "permission, secret, or trust-boundary logic (service-role key use)"
+  ],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": true,
+  "why": "New password sign-in endpoint issues Supabase session cookies and uses the service-role key for a username->user lookup; new table public.usernames (already applied to production by the owner, owner-reported). Independent reviewer decision and owner probes AC7/AC8 required before VERIFIED."
+}

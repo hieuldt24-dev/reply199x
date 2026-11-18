@@ -1,0 +1,11 @@
+ M .claude/hooks/.logs/hook-log.jsonl
+ M src/app/(routes)/_components/EventsSection.tsx
+ M src/app/(routes)/_data/formPopup.ts
+ M src/app/(routes)/page.tsx
+ M src/components/FormPopup.test.tsx
+ M src/components/auth/LoginDialog.tsx
+ M src/styles/globals.css
+?? process/general-plans/active/username-password-login_18-11-26/
+?? process/general-plans/backlog/username-login-rate-limit_NOTE_18-11-26.md
+?? public/images/partners/
+?? src/components/auth/CredentialLoginForm.tsx

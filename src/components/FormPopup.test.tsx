@@ -178,8 +178,13 @@ describe("FormPopup", () => {
 
   it("T12 keeps the form list shape intact", () => {
     expect(CHECKIN_GROUP_LABEL).toBe("Check in");
-    expect(checkinForms.map((form) => form.id)).toEqual(["check-in-hoai-niem", "checkin-popup"]);
+    expect(checkinForms.map((form) => form.id)).toEqual(["check-in-hoai-niem", "checkin-popup", "check-out-khong-gian"]);
     expect(formB.menuLabel).toBe("Checkin popup");
+    const formC = checkinForms[2];
+    expect(formC.menuLabel).toBe("Check out không gian sự kiện");
+    expect(formC.embedUrl).toBe(
+      "https://docs.google.com/forms/d/e/1FAIpQLSfBcnaXHMXkyA_FhLzZkOAp33AkUO9THOO-PkYCbyOmzzvJuA/viewform?embedded=true",
+    );
     expect(new Set(checkinForms.map((form) => form.id)).size).toBe(checkinForms.length);
     expect(new Set(checkinForms.map((form) => form.menuLabel)).size).toBe(checkinForms.length);
     for (const form of checkinForms) {

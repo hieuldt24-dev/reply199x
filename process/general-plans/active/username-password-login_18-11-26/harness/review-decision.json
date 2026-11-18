@@ -1,0 +1,42 @@
+{
+  "task": "username-password-login (POST /api/auth/password, public.usernames, CredentialLoginForm)",
+  "decision": "approved-with-concerns",
+  "reviewer": "vc-code-reviewer (independent, sonnet)",
+  "date": "2026-11-18",
+  "blockingFindings": [],
+  "nonBlockingFindings": [
+    {
+      "severity": "medium",
+      "location": "src/app/api/auth/password/route.ts:35-39",
+      "finding": "isCredentialRejection maps every non-429 status 400/401 to the generic 401. A hosted misconfiguration such as an invalid publishable/API key (401 invalid_api_key) or a malformed request (400 validation_failed/bad_json) would show every user 'wrong username or password' instead of 503, hiding an outage. Matches the plan's '400/401-class' wording, so not a plan deviation.",
+      "suggestedFix": "Map 400/401 to 401 only for code invalid_credentials or email_not_confirmed (or an unset code on 400); send other codes to 503. Follow-up, not blocking."
+    },
+    {
+      "severity": "low",
+      "location": "src/app/api/auth/password/route.ts:81-98",
+      "finding": "No timeout on the admin lookup or sign-in calls; a hung upstream ends as a platform function timeout instead of the fixed 503. Also a banned account (GoTrue user_banned, 403) returns 503 while an unknown username returns 401, a negligible enumeration signal for admin-banned accounts only."
+    },
+    {
+      "severity": "low",
+      "location": "src/app/api/auth/password/route.ts:42-50",
+      "finding": "getSiteOrigin() defaults to http://localhost:3000 when SITE_URL is unset, so a missing production SITE_URL yields 403 for every browser login rather than the 503 path. Same behaviour as google/logout routes; confirm SITE_URL is set in production."
+    },
+    {
+      "severity": "low",
+      "location": "src/app/api/auth/password/route.test.ts:110,144,197,204,212,220",
+      "finding": "Mid-test vi.clearAllMocks() also clears the console spies' recorded calls, so the afterEach no-sensitive-value-in-console check only covers calls made after the last clear in tests 2 and 4. The 503 log path is covered in test 3, and the code logs only fixed {reason} strings (single console.warn at route.ts:25), so risk is nil today but the guard is weaker than it reads. Also the createRouteClient mock sets the cookie itself, so cookie tests prove route wiring (the same response object is returned on 200, a fresh one on error), not real @supabase/ssr cookie writing (covered only by owner probe AC7)."
+    },
+    {
+      "severity": "info",
+      "location": "src/components/auth/CredentialLoginForm.tsx:42-43",
+      "finding": "eslint-disable-next-line @next/next/no-location-assign-relative-destination is a real rule in the installed @next/eslint-plugin-next and is justified: a relative '/' is a same-origin constant and a full navigation is needed so server components re-read the new cookie. Lint run on touched files is clean with --max-warnings=0."
+    }
+  ],
+  "notes": "Independent review 2026-11-18. Migration 202611180001 is byte-equivalent to the plan SQL (4 statements, if not exists kept, RLS on, revoke from public/anon/authenticated, service_role-only grants). Route: origin check mirrors google/logout, getSiteOrigin throw -> 503, every response (200/400/401/403/503) carries Cache-Control private, no-store; 403 has empty body; no set-cookie on any non-200 because errors return a fresh response; dummy sign-in uses a plain cookie-less supabase-js client (persistSession/autoRefreshToken false) and can never write cookies; unknown user and wrong password share one constant 401 body; unmapped path makes exactly one getUserById and one sign-in (E10); error table matches the plan (429/over_request_rate_limit/>=500/network/thrown -> 503, invalid_credentials/email_not_confirmed -> 401); validation is lowercase username regex plus 8-72 UTF-8 bytes via TextEncoder, shared pure module with no env access. Only console call in new code is console.warn with a fixed reason code (no username, password, email or user id). Service-role key is read only inside the app/api route (no client import path; the form imports only username.ts); the repo has no server-only package usage anywhere, so this matches the existing pattern, and the sb_secret_ guard matches ticket-orders. Cookie flags (HttpOnly, SameSite=Lax, Secure in production, path /) are enforced by the unchanged createRouteClient/cookie-policy. Form: password only in React state (cleared on 401), no storage, pending/disabled state, role=alert error, generic messages, window.location.assign('/') on 200. Google login and checkout: no shared files changed; LoginDialog only adds the credential form and a divider above the unchanged GoogleLoginForm; route-client/cookie-policy/config untouched. Scoped tests re-run by reviewer: 5 files, 24 tests passed. Pre-existing unrelated failure observed: src/lib/supabase/route-client.test.ts 'requires secure cookies in production' (NODE_ENV=test, file untouched by this task). Not proven by any automated test: real GoTrue behaviour, real Set-Cookie writing by @supabase/ssr, hosted getUserById with an sb_secret_ key, real timing, real rate-limit behaviour. adversarial-validation.json is present. Approval is for code readiness only; the plan remains CODE DONE, not VERIFIED, until owner probes AC7/AC8 are recorded.",
+  "residuals": [
+    "RL1: shared egress-IP rate-limit bucket; Supabase per-IP sign-in limit is one bucket for all users, so exhausting it locks out all password logins (429 -> 503); unknown-username attempts also consume it via the dummy sign-in. Owner-accepted; backlog stub exists.",
+    "Small residual timing difference after equalization (nil-UUID getUserById and dummy sign-in vs real lookup and real bcrypt compare); best effort, unproven. Owner-accepted.",
+    "Supabase sign-ups remain ON: a self-created email/password account has no usernames row (service_role-only writes) so it cannot use username login; accepted, keep Confirm email ON.",
+    "AC7 (hosted end-to-end login) and AC8 (self-created account gets 401) owner probes not yet run; plan cannot be VERIFIED until recorded."
+  ]
+}

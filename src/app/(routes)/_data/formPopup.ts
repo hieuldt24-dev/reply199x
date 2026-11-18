@@ -31,4 +31,11 @@ export const checkinForms: readonly CheckinForm[] = Object.freeze([
     dialogTitle: "Check in pop-up REPLY 199X",
     googleFormId: "1FAIpQLSfkPApNK9sU_GIXVe5Mh4t2HYTEfwQwYHaHJCMmDjx9iETRtw",
   }),
+  // Owner short link: https://forms.gle/uQoNdXsmXFrWPA3j7
+  googleForm({
+    id: "check-out-khong-gian",
+    menuLabel: "Check out không gian âm nhạc hoài niệm",
+    dialogTitle: "Check out không gian âm nhạc hoài niệm",
+    googleFormId: "1FAIpQLSfBcnaXHMXkyA_FhLzZkOAp33AkUO9THOO-PkYCbyOmzzvJuA",
+  }),
 ]);

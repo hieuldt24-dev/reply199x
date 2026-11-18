@@ -1,0 +1,40 @@
+{
+  "task": "username-password-login (POST /api/auth/password, public.usernames, CredentialLoginForm)",
+  "scenarios": [
+    {
+      "scenario": "User enumeration via response body/status",
+      "ruled_out": true,
+      "rationale": "Unknown username, unmapped user, user without email, getUserById 404 and wrong password all return a byte-identical 401 (asserted in route.test)."
+    },
+    {
+      "scenario": "Timing oracle between unknown username and wrong password",
+      "ruled_out": false,
+      "rationale": "Mitigated: both paths do one getUserById and one signInWithPassword. Residual difference (different GoTrue paths) accepted known-gap; not measured."
+    },
+    {
+      "scenario": "Self-signup email account logs in via username route",
+      "ruled_out": true,
+      "rationale": "No public.usernames row (writes are service_role only), so it takes the unmapped path -> 401. Hosted confirmation is AC8 (owner)."
+    },
+    {
+      "scenario": "CSRF / cross-site login",
+      "ruled_out": true,
+      "rationale": "Origin header must equal getSiteOrigin() else 403 (no-store, no cookie); missing Origin also 403."
+    },
+    {
+      "scenario": "Service-role or publishable key exposure / secret logging",
+      "ruled_out": true,
+      "rationale": "Service key read only server-side and never returned or logged; dummy client uses publishable key only; logs contain only fixed reason codes; tests assert no username/password/email/user_id in console calls."
+    },
+    {
+      "scenario": "Session cookie leak on failure or via dummy client",
+      "ruled_out": true,
+      "rationale": "Dummy client is plain supabase-js with persistSession false (never createRouteClient); on sign-in error a fresh response is returned; tests assert no set-cookie on 400/401/403/503. Cookie flags come from the existing enforceHttpOnlyCookieOptions policy (HttpOnly)."
+    },
+    {
+      "scenario": "Brute force / shared egress rate bucket lockout",
+      "ruled_out": false,
+      "rationale": "Accepted known-gap RL1; 429 maps to 503. Backlog: process/general-plans/backlog/username-login-rate-limit_NOTE_18-11-26.md"
+    }
+  ]
+}

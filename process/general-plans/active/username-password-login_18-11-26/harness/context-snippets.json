@@ -1,0 +1,45 @@
+{
+  "task": "username-password-login (POST /api/auth/password, public.usernames, CredentialLoginForm)",
+  "snippets": [
+    {
+      "file": "supabase/migrations/202611180001_username_login.sql",
+      "lines": "1-9",
+      "description": "Table with format CHECK, unique user_id FK cascade, RLS on, revoke from public/anon/authenticated, grant to service_role only; text identical to the plan SQL block the owner applied"
+    },
+    {
+      "file": "src/app/api/auth/password/route.ts",
+      "lines": "42-50",
+      "description": "getSiteOrigin wrapped (throw -> 503); Origin mismatch -> 403 with Cache-Control private, no-store"
+    },
+    {
+      "file": "src/app/api/auth/password/route.ts",
+      "lines": "61-62",
+      "description": "Service-role key guard (must start with sb_secret_) -> 503"
+    },
+    {
+      "file": "src/app/api/auth/password/route.ts",
+      "lines": "84-96",
+      "description": "Unmapped path: nil-UUID getUserById only if no lookup happened, then dummy signInWithPassword on a plain supabase-js client (publishable key, persistSession false), results discarded, generic 401"
+    },
+    {
+      "file": "src/app/api/auth/password/route.ts",
+      "lines": "98-104",
+      "description": "Real sign-in via createRouteClient on the returned response; any error returns a fresh response (no cookies)"
+    },
+    {
+      "file": "src/app/api/auth/password/route.ts",
+      "lines": "23-26",
+      "description": "Logging limited to a fixed reason code"
+    },
+    {
+      "file": "src/lib/auth/username.ts",
+      "lines": "1-18",
+      "description": "Pure parseCredentials: lowercase username regex, 8-72 UTF-8 bytes via TextEncoder"
+    },
+    {
+      "file": "src/components/auth/CredentialLoginForm.tsx",
+      "lines": "19-56",
+      "description": "Client validation, JSON POST, pending state, generic 401 message with password cleared, window.location.assign('/') on 200"
+    }
+  ]
+}

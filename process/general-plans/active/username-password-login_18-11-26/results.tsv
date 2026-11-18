@@ -1,0 +1,5 @@
+iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_status	loop_status	notes
+0	2026-11-18	9	0	9	0	none	baseline	First-pass outer-pvl Gate: CONDITIONAL; 9 CONCERN gaps (route dummy client, timing, error mapping, shared egress rate limit, origin throw/no-store, header fallback fact, evidence-pack step+gate, runner list/runbook constraints/password length, form navigation/TextEncoder/rollback)
+1	2026-11-18	9	0	9	9	none	continuing	SUPPLEMENT_APPLIED 9/9; report username-password-login-pvl-iteration-001_REPORT_18-11-26.md; re-validate from V1
+2	2026-11-18	0	0	0	0	none	HALTED_SUCCESS	Re-validate outer-pvl Gate: PASS after 1 supplement cycle; residuals RL1, timing, sign-ups ON, AC7/AC8 owner probes
+evl-0	2026-11-18	0	0	0	0	none	HALTED_SUCCESS	EVL vc-tester: AC1-AC6 scoped + HR1 green; full npm test 2 out-of-scope failures (route-client pre-existing, FormPopup T12 label drift); AC7/AC8 owner-pending

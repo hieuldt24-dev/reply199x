@@ -58,7 +58,7 @@ export function EventsSection() {
 <span className="retro-icon text-xl" aria-hidden="true">◇</span>
 </div>
 <div>
-<span className="font-space text-xs uppercase tracking-wider text-retro-ink-muted font-bold block">Trải nghiệm bao gồm</span><span className="text-sm text-retro-ink-muted">01 Thức uống xưa tự chọn + 01 Postcard tem thư kỷ niệm + Thưởng thức trọn vẹn set diễn acoustic</span>
+<span className="font-space text-xs uppercase tracking-wider text-retro-ink-muted font-bold block">Trải nghiệm bao gồm</span><span className="text-sm text-retro-ink-muted font-bold">01 Thức uống xưa tự chọn + 01 Phần bánh xưa + Thưởng thức trọn vẹn chương trình KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X</span>
 </div>
 
 </div>
