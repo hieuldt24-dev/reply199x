@@ -23,7 +23,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <section className="w-full max-w-md border-2 border-current p-8 shadow-[6px_6px_0_currentColor]" aria-labelledby="sign-in-title">
         <p className="mb-3 text-sm tracking-widest">REPLY 199X</p>
         <h1 id="sign-in-title" className="text-3xl font-bold mb-4">{email ? "Bạn đã đăng nhập" : "Hẹn gặp bạn tại REPLY"}</h1>
-        <p className="mb-6">{email || "Đăng nhập bằng Google để chuẩn bị cho hành trình đặt vé."}</p>
+        <p className="mb-6">{email || "Đăng nhập bằng Google để chuẩn bị cho hành trình đặt phiếu nước."}</p>
         {message && <p role="alert" className="mb-6">{message}</p>}
         {email ? <form action="/api/auth/logout" method="post"><button type="submit">Đăng xuất</button></form> : <GoogleLoginForm />}
         <Link href="/" className="mt-6 inline-block underline">Về trang chủ</Link>

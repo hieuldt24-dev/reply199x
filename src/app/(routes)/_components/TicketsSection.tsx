@@ -7,14 +7,14 @@ export function TicketsSection() {
   return (
     <section className="reply-tickets max-w-6xl mx-auto pt-6" id="ve" aria-labelledby="ticket-section-title">
       <header className="reply-tickets__heading mb-6">
-        <span className="font-space text-xs font-bold uppercase tracking-widest text-retro-red">CUỐNG VÉ ĐIỆN TỬ · ADMISSION PASS</span>
-        <h3 id="ticket-section-title" className="font-epilogue font-bold text-2xl sm:text-3xl text-retro-dark uppercase tracking-tight mt-1">Khu vực vé tham gia đêm nhạc</h3>
+        <span className="font-space text-xs font-bold uppercase tracking-widest text-retro-red">CUỐNG PHIẾU NƯỚC ĐIỆN TỬ · ADMISSION PASS</span>
+        <h3 id="ticket-section-title" className="font-epilogue font-bold text-2xl sm:text-3xl text-retro-dark uppercase tracking-tight mt-1">Khu vực phiếu nước tham gia đêm nhạc</h3>
       </header>
 
       <article className="reply-ticket reply-ticket--compact">
         <div className="reply-ticket__info">
           <div className="reply-ticket__header">
-            <span>VÉ CHÍNH THỨC · REPLY 199X</span>
+            <span>PHIẾU NƯỚC CHÍNH THỨC · REPLY 199X</span>
             <span>SERIES: #RP-2026-LIVE</span>
           </div>
 
@@ -34,10 +34,10 @@ export function TicketsSection() {
             </div>
           </dl>
 
-          <p className="reply-ticket__perk">Vé kèm phiếu gồm 1 phần nước và 1 phần bánh xưa.</p>
+          <p className="reply-ticket__perk">Phiếu nước gồm 1 phần nước và 1 phần bánh xưa.</p>
 
           <div className="reply-ticket__actions">
-            <TicketRequestDialog className="reply-ticket__contact">Liên hệ về vé</TicketRequestDialog>
+            <TicketRequestDialog className="reply-ticket__contact">Liên hệ về phiếu nước</TicketRequestDialog>
           </div>
         </div>
 

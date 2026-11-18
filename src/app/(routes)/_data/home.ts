@@ -70,7 +70,7 @@ export const attendanceSteps = [
     "label": "BƯỚC 01",
     "symbol": "✓",
     "title": "Check-in Vào Cửa",
-    "description": "Xuất trình mã cuống vé điện tử tại bàn lễ tân để nhận vòng tay hoài niệm, tem bưu chính cá nhân hóa và phiếu đổi đồ uống.",
+    "description": "Xuất trình mã cuống phiếu nước điện tử tại bàn lễ tân để nhận vòng tay hoài niệm, tem bưu chính cá nhân hóa và phiếu đổi đồ uống.",
     "note": "* Dự kiến mở bàn check-in lúc 14:30"
   },
   {

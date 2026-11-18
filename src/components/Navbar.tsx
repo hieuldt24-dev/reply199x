@@ -94,7 +94,7 @@ export function Navbar({ auth }: { auth: AuthView }) {
           ))}
         </nav>
         <div className="event-header__actions">
-          <TicketRequestDialog className="event-header__ticket">Đặt vé ngay <span aria-hidden="true">↗</span></TicketRequestDialog>
+          <TicketRequestDialog className="event-header__ticket">Đặt phiếu nước ngay <span aria-hidden="true">↗</span></TicketRequestDialog>
           <div onClick={() => setOpen(false)}><HeaderAuth auth={auth} /></div>
           <button ref={menuButton} type="button" className="event-header__toggle" aria-label={open ? "Đóng menu điều hướng" : "Mở menu điều hướng"} aria-expanded={open} aria-controls="mobile-navigation" onClick={() => setOpen(!open)}>
             <span className="event-header__hamburger" aria-hidden="true">{open ? "×" : "☰"}</span>

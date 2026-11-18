@@ -46,7 +46,7 @@ export function ContactForm() {
           <span aria-hidden="true" className="retro-icon text-retro-red text-2xl">✎</span>
         </div>
         <p className="font-vietnam text-sm text-retro-ink-muted mb-3 leading-relaxed">
-          Để lại một câu chuyện thời niên thiếu, gửi tặng một ca khúc xưa hay đăng ký nhận thông báo vé trực tiếp từ Ban tổ chức:
+          Để lại một câu chuyện thời niên thiếu, gửi tặng một ca khúc xưa hay đăng ký nhận thông báo phiếu nước trực tiếp từ Ban tổ chức:
         </p>
         <p id="letter-note" className="font-vietnam text-sm text-retro-forest mb-5 leading-relaxed">
           Bạn có thể soạn và xem trước thư tại đây. Trang web không gửi hoặc lưu nội dung; để liên hệ Ban tổ chức, hãy mở email và tự gửi thư.
@@ -61,7 +61,7 @@ export function ContactForm() {
             <input ref={nameInput} id="letter-name" name="name" autoComplete="name" className={fieldClass} placeholder="Ví dụ: Người yêu băng cassette" required type="text" maxLength={160} />
           </div>
           <div>
-            <label htmlFor="letter-email" className="block font-space text-xs text-retro-dark font-bold uppercase mb-1">Hòm thư điện tử (Email nhận thông báo vé):</label>
+            <label htmlFor="letter-email" className="block font-space text-xs text-retro-dark font-bold uppercase mb-1">Hòm thư điện tử (Email nhận thông báo phiếu nước):</label>
             <input id="letter-email" name="email" autoComplete="email" className={fieldClass} placeholder="email@cuaban.vn" required type="email" maxLength={254} />
           </div>
           <div>

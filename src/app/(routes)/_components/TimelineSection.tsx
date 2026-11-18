@@ -84,7 +84,7 @@ export function TimelineSection() {
                 <div className="reply-stop__actions">
                   <a className="reply-text-link" href="#su-kien">Tìm hiểu sự kiện ↗</a>
                   <TicketRequestDialog className="reply-stop__ticket inline-flex items-center gap-2 bg-retro-gold hover:bg-retro-gold-light text-retro-dark font-bold px-4 py-2 rounded">
-                    <span>Đặt vé ngay</span><span aria-hidden="true">✦</span>
+                    <span>Đặt phiếu nước ngay</span><span aria-hidden="true">✦</span>
                   </TicketRequestDialog>
                 </div>
               </footer>

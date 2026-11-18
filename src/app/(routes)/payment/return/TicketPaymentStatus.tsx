@@ -13,7 +13,7 @@ const terminalStatuses = new Set(["paid", "expired", "failed", "reconciliation",
 const paidRedirectDelayMs = 3000;
 const statusMessages: Record<string, string> = {
   pending_payment: "Đơn đang chờ PayOS xác nhận thanh toán.",
-  paid: "Đã nhận thanh toán. Ban tổ chức sẽ gửi thông tin vé theo hướng dẫn sự kiện.",
+  paid: "Đã nhận thanh toán. Ban tổ chức sẽ gửi thông tin phiếu nước theo hướng dẫn sự kiện.",
   expired: "Thời hạn thanh toán của đơn đã hết.",
   failed: "Giao dịch không hoàn tất. Liên hệ ban tổ chức nếu bạn đã bị trừ tiền.",
   reconciliation: "Giao dịch cần được ban tổ chức đối soát. Vui lòng chưa thanh toán lại.",
