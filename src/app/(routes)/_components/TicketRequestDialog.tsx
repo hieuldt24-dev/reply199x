@@ -1,9 +1,13 @@
 "use client";
 
-import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { merchCombos } from "../_data/home";
-import { MERCH_OPTIONS, TICKET_UNIT_PRICE_VND, type MerchOption } from "@/lib/ticket-orders/validation";
-import { RemoteImage } from "./RemoteImage";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+import type { MerchOption } from "@/lib/ticket-orders/validation";
+import { TicketAttendeeFields, attendeeFieldId, firstAttendeeError, validateAttendeeStep, type AttendeeErrors } from "./TicketAttendeeFields";
+import { TicketOrderReview, readReviewDetails, type ReviewDetails } from "./TicketOrderReview";
+import { ORDER_STEP_TITLES, TicketOrderSteps, type OrderStep } from "./TicketOrderSteps";
+import { TicketOrderSummary } from "./TicketOrderSummary";
+import { TicketStub } from "./TicketStub";
 import { TicketSurveyFields, useTicketSurvey } from "./TicketSurveyFields";
 
 type TicketRequestDialogProps = Readonly<{
@@ -28,19 +32,42 @@ function navigateToCheckout(checkoutUrl: CheckoutResponse) {
 
 export function TicketRequestDialog({ className, children }: TicketRequestDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const focusStepHeading = useRef(false);
   const submittingRef = useRef(false);
   const fieldId = useId();
   const idempotencyKey = useRef<string | null>(null);
   const idempotencyPayload = useRef<string | null>(null);
   const [status, setStatus] = useState<SubmissionStatus | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const [step, setStep] = useState<OrderStep>(1);
+  const [attendeeErrors, setAttendeeErrors] = useState<AttendeeErrors>({});
+  const [review, setReview] = useState<ReviewDetails | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [merchOption, setMerchOption] = useState<MerchOption>("none");
   const survey = useTicketSurvey(fieldId);
+  const stepTitleId = (target: OrderStep) => `${fieldId}-step-${target}-title`;
+  const busy = status?.kind === "pending";
+
+  useEffect(() => {
+    if (!focusStepHeading.current) return;
+    focusStepHeading.current = false;
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    document.getElementById(`${fieldId}-step-${step}-title`)?.focus();
+  }, [fieldId, step]);
+
+  function goToStep(target: OrderStep) {
+    focusStepHeading.current = true;
+    setStep(target);
+  }
 
   function resetSuccessfulSubmission() {
     setFormKey((key) => key + 1);
     setStatus(null);
+    setStep(1);
+    setAttendeeErrors({});
+    setReview(null);
     setQuantity(1);
     setMerchOption("none");
     survey.reset();
@@ -48,15 +75,45 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
     idempotencyPayload.current = null;
   }
 
+  /** Shows step-1 errors; when any exist, returns to step 1, focuses the first invalid field and returns true. */
+  function showAttendeeErrors(form: HTMLFormElement) {
+    const errors = validateAttendeeStep(new FormData(form));
+    const first = firstAttendeeError(errors);
+    flushSync(() => {
+      setAttendeeErrors(errors);
+      if (first) setStep(1);
+    });
+    if (first) document.getElementById(attendeeFieldId(fieldId, first))?.focus();
+    return Boolean(first);
+  }
+
+  function handleNext() {
+    const form = formRef.current;
+    if (!form) return;
+    if (step === 1) {
+      if (!showAttendeeErrors(form)) goToStep(2);
+      return;
+    }
+    if (!survey.validate()) return;
+    setReview(readReviewDetails(new FormData(form)));
+    goToStep(3);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submittingRef.current) return;
+    const form = event.currentTarget;
+    if (showAttendeeErrors(form)) return;
     const surveyAnswers = survey.validate();
-    if (!surveyAnswers) return;
+    if (!surveyAnswers) {
+      flushSync(() => setStep(2));
+      form.querySelector<HTMLElement>('[data-invalid="true"] :is(input, select)')?.focus();
+      return;
+    }
 
     submittingRef.current = true;
     setStatus({ kind: "pending", message: "Đang gửi yêu cầu của bạn…" });
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const selectedQuantity = Number(formData.get("quantity") ?? "1");
     const selectedMerch = String(formData.get("merch") ?? "none") as MerchOption;
     const birthYearInput = String(formData.get("birthYear") ?? "").trim();
@@ -139,13 +196,7 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
 
   return (
     <>
-      <button
-        type="button"
-        className={className}
-        aria-haspopup="dialog"
-        aria-controls={`${fieldId}-dialog`}
-        onClick={() => dialogRef.current?.showModal()}
-      >
+      <button type="button" className={className} aria-haspopup="dialog" aria-controls={`${fieldId}-dialog`} onClick={() => dialogRef.current?.showModal()}>
         {children}
       </button>
       <dialog
@@ -154,114 +205,66 @@ export function TicketRequestDialog({ className, children }: TicketRequestDialog
         className="ticket-request-dialog"
         aria-labelledby={`${fieldId}-title`}
         aria-describedby={`${fieldId}-notice`}
-        onClose={() => {
-          if (status?.kind !== "success") return;
-          resetSuccessfulSubmission();
-        }}
-        onClick={(event) => {
-          if (event.target === dialogRef.current) dialogRef.current.close();
-        }}
+        onClose={() => status?.kind === "success" && resetSuccessfulSubmission()}
+        onClick={(event) => event.target === dialogRef.current && dialogRef.current.close()}
       >
         <div className="ticket-request-dialog__layout">
-          <button className="ticket-request-dialog__close" type="button" aria-label="Đóng biểu mẫu" onClick={() => dialogRef.current?.close()}>
-            ×
-          </button>
-          <form key={formKey} className="ticket-request-dialog__form" onSubmit={handleSubmit}>
-            <div className="ticket-request-dialog__masthead">
-              <span className="ticket-request-dialog__brand">Reply 199x</span>
-              <span className="ticket-request-dialog__edition">ĐĂNG KÝ QUAN TÂM</span>
+          <form key={formKey} ref={formRef} className="ticket-request-dialog__form" noValidate onSubmit={handleSubmit}>
+            <TicketOrderSteps step={step} onBack={() => goToStep((step - 1) as OrderStep)} onClose={() => dialogRef.current?.close()} />
+            <div ref={bodyRef} className="ticket-request-dialog__body">
+              <header className="ticket-request-dialog__intro">
+                <span className="ticket-request-dialog__eyebrow">KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X · 22.11.2026</span>
+                <h2 id={`${fieldId}-title`}>Một phiếu nước về <em>thanh xuân.</em></h2>
+              </header>
+              {ORDER_STEP_TITLES.map((title, index) => {
+                const position = (index + 1) as OrderStep;
+                return (
+                  <section key={title} className="ticket-request-dialog__step" aria-labelledby={stepTitleId(position)} hidden={step !== position}>
+                    <h3 id={stepTitleId(position)} className="ticket-request-dialog__step-title" tabIndex={-1}>{title}</h3>
+                    {position === 1 && <TicketOrderSummary quantity={quantity} merch={merchOption} variant="bar" label="Tóm tắt đơn" />}
+                    {position === 1 && (
+                      <TicketAttendeeFields
+                        idPrefix={fieldId}
+                        errors={attendeeErrors}
+                        onEdit={(field) => setAttendeeErrors((current) => (current[field] ? { ...current, [field]: undefined } : current))}
+                        quantity={quantity} onQuantityChange={setQuantity} merch={merchOption} onMerchChange={setMerchOption}
+                      />
+                    )}
+                    {position === 2 && <TicketSurveyFields idPrefix={fieldId} survey={survey} />}
+                    {position === 3 && <TicketOrderReview details={review} quantity={quantity} merch={merchOption} survey={survey.answers} />}
+                  </section>
+                );
+              })}
             </div>
-            <header className="ticket-request-dialog__intro">
-              <span className="ticket-request-dialog__eyebrow">KHÔNG GIAN ÂM NHẠC HOÀI NIỆM REPLY 199X · 22.11.2026</span>
-              <h2 id={`${fieldId}-title`}>Một phiếu nước về<br /><em>thanh xuân.</em></h2>
-            </header>
-
-            <div className="ticket-request-dialog__fields">
-              <label htmlFor={`${fieldId}-name`}>
-                <span className="ticket-request-dialog__label">Họ và tên <small>Bắt buộc</small></span>
-                <input id={`${fieldId}-name`} name="name" type="text" autoComplete="name" maxLength={120} placeholder="Tên trên phiếu nước" required />
-              </label>
-              <label htmlFor={`${fieldId}-email`}>
-                <span className="ticket-request-dialog__label">Email <small>Bắt buộc</small></span>
-                <input id={`${fieldId}-email`} name="email" type="email" autoComplete="email" inputMode="email" maxLength={254} placeholder="ban@example.com" required />
-              </label>
-              <label htmlFor={`${fieldId}-phone`}>
-                <span className="ticket-request-dialog__label">Số điện thoại <small>Tùy chọn</small></span>
-                <input id={`${fieldId}-phone`} name="phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={40} placeholder="09xx xxx xxx" />
-              </label>
-              <label htmlFor={`${fieldId}-gender`}>
-                <span className="ticket-request-dialog__label">Giới tính <small>Tùy chọn</small></span>
-                <select id={`${fieldId}-gender`} name="gender" defaultValue="">
-                  <option value="">Không cung cấp</option>
-                  <option value="female">Nữ</option>
-                  <option value="male">Nam</option>
-                  <option value="other">Khác</option>
-                  <option value="undisclosed">Không muốn tiết lộ</option>
-                </select>
-              </label>
-              <label htmlFor={`${fieldId}-birth-year`}>
-                <span className="ticket-request-dialog__label">Năm sinh <small>Tùy chọn</small></span>
-                <input id={`${fieldId}-birth-year`} name="birthYear" type="number" inputMode="numeric" min={1900} max={new Date().getFullYear()} step={1} placeholder="2000" />
-              </label>
-              <label htmlFor={`${fieldId}-quantity`}>
-                <span className="ticket-request-dialog__label">Số lượng phiếu nước · 169.000đ/phiếu</span>
-                <select id={`${fieldId}-quantity`} name="quantity" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))}>
-                  {[1, 2, 3, 4].map((quantity) => <option key={quantity} value={quantity}>{quantity} phiếu</option>)}
-                </select>
-              </label>
-              <label className="ticket-request-dialog__merch" htmlFor={`${fieldId}-merch`}>
-                <span className="ticket-request-dialog__label">Merch · chọn một gói cho đơn</span>
-                <select id={`${fieldId}-merch`} name="merch" value={merchOption} onChange={(event) => setMerchOption(event.target.value as MerchOption)}>
-                  <option value="none">Không kèm merch · 0đ</option>
-                  {merchCombos.map((combo) => <option key={combo.id} value={combo.id}>{combo.title} · {combo.price}đ</option>)}
-                </select>
-              </label>
-            </div>
-
-            <TicketSurveyFields idPrefix={fieldId} survey={survey} />
-
-            <p className="ticket-request-dialog__notice">
-              Tạm tính: <strong>{(quantity * TICKET_UNIT_PRICE_VND + MERCH_OPTIONS[merchOption].priceVnd).toLocaleString("vi-VN")}đ</strong>. Đơn sẽ chờ thanh toán; chưa có QR hoặc xác nhận phiếu nước.
-            </p>
-            <p className="ticket-request-dialog__privacy">Email nhập trên biểu mẫu sẽ được lưu cùng đơn hàng, kể cả khi khác email Google.</p>
-
-            <button className="ticket-request-dialog__submit" type="submit" disabled={status?.kind === "pending" || status?.kind === "success"}>
-              {status?.kind === "pending" ? "Đang tạo đơn…" : status?.kind === "success" ? "Đơn đã được tạo" : "Tiếp tục đặt phiếu nước"}
-              <span aria-hidden="true">→</span>
-            </button>
-            <p
-              className="ticket-request-dialog__notice"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              data-status={status?.kind ?? "idle"}
-            >
-              {status?.message ?? ""}
-              {status?.kind === "unauthorized" && <> <a href="/auth/sign-in" className="underline">Đăng nhập bằng Google</a></>}
-              {status?.kind === "success" && status.orderId && status.totalVnd !== undefined && (
-                <span className="mt-2 block">Mã đơn: {status.orderId} · Tổng cộng: {status.totalVnd.toLocaleString("vi-VN")}đ</span>
-              )}
-            </p>
-            <div className="ticket-request-dialog__stub" aria-hidden="true">
-              <span>HẸN GẶP BẠN<br /><strong>Ở MỘT THỜI THƯƠNG NHỚ.</strong></span>
-              <span className="ticket-request-dialog__barcode" />
+            <div className="ticket-request-dialog__footer" role="group" aria-label="Thanh đặt phiếu nước">
+              <TicketOrderSummary quantity={quantity} merch={merchOption} variant="total" label="Tổng tạm tính" />
+              <p id={`${fieldId}-notice`} className="ticket-request-dialog__status" role="status" aria-live="polite" aria-atomic="true" data-status={status?.kind ?? "idle"}>
+                {status?.message ?? ""}
+                {status?.kind === "unauthorized" && <> <a href="/auth/sign-in" className="underline">Đăng nhập bằng Google</a></>}
+                {status?.kind === "success" && status.orderId && status.totalVnd !== undefined && (
+                  <span className="mt-2 block">Mã đơn: {status.orderId} · Tổng cộng: {status.totalVnd.toLocaleString("vi-VN")}đ</span>
+                )}
+              </p>
+              <div className="ticket-request-dialog__actions">
+                {step > 1 && (
+                  <button className="ticket-request-dialog__secondary" type="button" disabled={busy} onClick={() => goToStep((step - 1) as OrderStep)}>
+                    <span aria-hidden="true">←</span> Quay lại
+                  </button>
+                )}
+                {step < 3 ? (
+                  <button key="next" className="ticket-request-dialog__primary" type="button" onClick={handleNext}>
+                    Tiếp tục <span aria-hidden="true">→</span>
+                  </button>
+                ) : (
+                  <button key="submit" className="ticket-request-dialog__primary" type="submit" disabled={busy || status?.kind === "success"}>
+                    {busy ? "Đang tạo đơn…" : status?.kind === "success" ? "Đơn đã được tạo" : "Tiếp tục đặt phiếu nước"}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                )}
+              </div>
             </div>
           </form>
-          <figure className="ticket-request-dialog__poster">
-            <div className="ticket-request-dialog__poster-heading"><span>REPLY 199X</span><span>KHÔNG GIAN ÂM NHẠC HOÀI NIỆM</span></div>
-            <RemoteImage
-              src="/images/1794567834681_48355094629491256_48355094629491256_d855c0c2ea10cd6a6d411ae92785f5d2.jpg"
-              alt="Poster REPLY 199X · Không gian âm nhạc hoài niệm · 22.11.2026"
-              width={2478}
-              height={1770}
-              className="ticket-request-dialog__poster-image"
-              fallback="REPLY 199X · 22.11.2026"
-            />
-            <figcaption>
-              <div className="ticket-request-dialog__date"><strong>22</strong><span>THÁNG 11<br />2026</span></div>
-              <div className="ticket-request-dialog__venue"><strong>On The Radio</strong><span>15:00 · 19:00 · Đà Nẵng</span></div>
-            </figcaption>
-          </figure>
+          <TicketStub quantity={quantity} merch={merchOption} />
         </div>
       </dialog>
     </>

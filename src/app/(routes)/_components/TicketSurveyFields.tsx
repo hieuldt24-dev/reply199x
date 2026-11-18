@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   SURVEY_AREA_OPTIONS,
   SURVEY_ATTENDANCE_OPTIONS,
@@ -40,7 +40,7 @@ export function useTicketSurvey(idPrefix: string) {
     setErrors(found);
     const firstInvalid = fieldOrder.find((field) => found[field]);
     if (firstInvalid) {
-      document.getElementById(groupId(idPrefix, firstInvalid))?.querySelector("input")?.focus();
+      document.getElementById(groupId(idPrefix, firstInvalid))?.querySelector<HTMLElement>("input, select")?.focus();
       return null;
     }
     return { source: normalizeSurveySource(answers.source), area: answers.area, attendance: answers.attendance };
@@ -63,13 +63,11 @@ type GroupProps = Readonly<{
   field: SurveyField;
   idPrefix: string;
   survey: ReturnType<typeof useTicketSurvey>;
-  type: "checkbox" | "radio";
-  options: readonly { id: string; label: string }[];
-  isChecked: (id: string) => boolean;
-  onToggle: (id: string, checked: boolean) => void;
+  children: ReactNode;
 }>;
 
-function SurveyGroup({ field, idPrefix, survey, type, options, isChecked, onToggle }: GroupProps) {
+/** One question: a real fieldset/legend, the error linked by aria-describedby and data-invalid (not aria-invalid). */
+function SurveyGroup({ field, idPrefix, survey, children }: GroupProps) {
   const error = survey.errors[field];
   const errorId = `${groupId(idPrefix, field)}-error`;
   return (
@@ -80,23 +78,39 @@ function SurveyGroup({ field, idPrefix, survey, type, options, isChecked, onTogg
       data-invalid={error ? "true" : undefined}
       data-field={field}
     >
-      <legend className="ticket-request-dialog__survey-question">{SURVEY_QUESTIONS[field]}</legend>
-      <div className="ticket-request-dialog__survey-options">
-        {options.map((option) => (
-          <label key={option.id} className="ticket-request-dialog__survey-option">
-            <input
-              type={type}
-              name={`survey-${field}`}
-              value={option.id}
-              checked={isChecked(option.id)}
-              onChange={(event) => onToggle(option.id, event.target.checked)}
-            />
-            <span>{option.label}</span>
-          </label>
-        ))}
-      </div>
+      <legend id={`${groupId(idPrefix, field)}-legend`} className="ticket-request-dialog__survey-question">{SURVEY_QUESTIONS[field]}</legend>
+      {children}
       {error && <p id={errorId} className="ticket-request-dialog__survey-error" role="alert">{error}</p>}
     </fieldset>
+  );
+}
+
+type ChoiceProps = Readonly<{
+  field: SurveyField;
+  type: "checkbox" | "radio";
+  variant: "chips" | "segmented";
+  options: readonly { id: string; label: string }[];
+  isChecked: (id: string) => boolean;
+  onToggle: (id: string, checked: boolean) => void;
+}>;
+
+function ChoiceOptions({ field, type, variant, options, isChecked, onToggle }: ChoiceProps) {
+  const optionClass = variant === "chips" ? "ticket-request-dialog__chip" : "ticket-request-dialog__segment";
+  return (
+    <div className={`ticket-request-dialog__${variant}`}>
+      {options.map((option) => (
+        <label key={option.id} className={optionClass}>
+          <input
+            type={type}
+            name={`survey-${field}`}
+            value={option.id}
+            checked={isChecked(option.id)}
+            onChange={(event) => onToggle(option.id, event.target.checked)}
+          />
+          <span>{option.label}</span>
+        </label>
+      ))}
+    </div>
   );
 }
 
@@ -104,35 +118,40 @@ export function TicketSurveyFields({ idPrefix, survey }: TicketSurveyFieldsProps
   const { answers, update } = survey;
   return (
     <div className="ticket-request-dialog__survey">
-      <SurveyGroup
-        field="source"
-        idPrefix={idPrefix}
-        survey={survey}
-        type="checkbox"
-        options={SURVEY_SOURCE_OPTIONS}
-        isChecked={(id) => answers.source.includes(id)}
-        onToggle={(id, checked) => update("source", {
-          source: checked ? [...answers.source.filter((value) => value !== id), id] : answers.source.filter((value) => value !== id),
-        })}
-      />
-      <SurveyGroup
-        field="area"
-        idPrefix={idPrefix}
-        survey={survey}
-        type="radio"
-        options={SURVEY_AREA_OPTIONS}
-        isChecked={(id) => answers.area === id}
-        onToggle={(id) => update("area", { area: id })}
-      />
-      <SurveyGroup
-        field="attendance"
-        idPrefix={idPrefix}
-        survey={survey}
-        type="radio"
-        options={SURVEY_ATTENDANCE_OPTIONS}
-        isChecked={(id) => answers.attendance === id}
-        onToggle={(id) => update("attendance", { attendance: id })}
-      />
+      <SurveyGroup field="source" idPrefix={idPrefix} survey={survey}>
+        <ChoiceOptions
+          field="source"
+          type="checkbox"
+          variant="chips"
+          options={SURVEY_SOURCE_OPTIONS}
+          isChecked={(id) => answers.source.includes(id)}
+          onToggle={(id, checked) => update("source", {
+            source: checked ? [...answers.source.filter((value) => value !== id), id] : answers.source.filter((value) => value !== id),
+          })}
+        />
+      </SurveyGroup>
+      <SurveyGroup field="area" idPrefix={idPrefix} survey={survey}>
+        <select
+          className="ticket-request-dialog__survey-select"
+          name="survey-area"
+          aria-labelledby={`${groupId(idPrefix, "area")}-legend`}
+          value={answers.area}
+          onChange={(event) => update("area", { area: event.target.value })}
+        >
+          <option value="">Chọn khu vực</option>
+          {SURVEY_AREA_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+        </select>
+      </SurveyGroup>
+      <SurveyGroup field="attendance" idPrefix={idPrefix} survey={survey}>
+        <ChoiceOptions
+          field="attendance"
+          type="radio"
+          variant="segmented"
+          options={SURVEY_ATTENDANCE_OPTIONS}
+          isChecked={(id) => answers.attendance === id}
+          onToggle={(id) => update("attendance", { attendance: id })}
+        />
+      </SurveyGroup>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { TicketRequestDialog } from "./TicketRequestDialog";
@@ -11,6 +11,7 @@ import {
   SURVEY_SOURCE_OPTIONS,
   surveyFieldErrors,
 } from "@/lib/ticket-orders/survey";
+import { TICKET_ORDER_LIMIT } from "@/lib/ticket-orders/validation";
 
 vi.mock("./RemoteImage", () => ({ RemoteImage: () => <span aria-hidden="true" /> }));
 
@@ -31,25 +32,33 @@ async function fillContact(user: ReturnType<typeof userEvent.setup>, email = "mi
 
 type User = ReturnType<typeof userEvent.setup>;
 const sourceLabel = (id: string) => SURVEY_SOURCE_OPTIONS.find((option) => option.id === id)?.label ?? id;
-const areaLabel = (id: string) => SURVEY_AREA_OPTIONS.find((option) => option.id === id)?.label ?? id;
 const attendanceLabel = (id: string) => SURVEY_ATTENDANCE_OPTIONS.find((option) => option.id === id)?.label ?? id;
 const messages = surveyFieldErrors({ source: [], area: "", attendance: "" });
 const questions = [SURVEY_QUESTIONS.source, SURVEY_QUESTIONS.area, SURVEY_QUESTIONS.attendance];
+const areaSelect = (options?: { hidden: boolean }) => screen.getByRole("combobox", { name: SURVEY_QUESTIONS.area, ...options });
 
 async function fillSurvey(user: User, source = ["facebook"], area = "hai-chau", attendance = "confirmed") {
   for (const id of source) await user.click(screen.getByRole("checkbox", { name: sourceLabel(id) }));
-  await user.click(screen.getByRole("radio", { name: areaLabel(area) }));
+  await user.selectOptions(areaSelect(), area);
   await user.click(screen.getByRole("radio", { name: attendanceLabel(attendance) }));
 }
 
+const nextButton = () => screen.getByRole("button", { name: "Tiếp tục" });
+const backButton = () => screen.getByRole("button", { name: "Quay lại" });
+const submitButton = () => screen.getByRole("button", { name: /Tiếp tục đặt phiếu nước/u });
+const groupFor = (question: string) => screen.getByRole("group", { name: question });
+const alertTexts = () => screen.queryAllByRole("alert").map((alert) => alert.textContent);
+const progressItems = () => within(screen.getByRole("list", { name: "Tiến độ đặt phiếu nước" })).getAllByRole("listitem");
+const currentStep = () => progressItems().findIndex((item) => item.getAttribute("aria-current") === "step") + 1;
+const totalIn = (regionName: string) => within(screen.getByLabelText(regionName)).getByText("Tạm tính").parentElement;
+
+/** Step 1 contact → step 2 survey → step 3 review. */
 async function fillAll(user: User, email?: string) {
   await fillContact(user, email);
+  await user.click(nextButton());
   await fillSurvey(user);
+  await user.click(nextButton());
 }
-
-const groupFor = (question: string) => screen.getByRole("group", { name: question });
-const submitButton = () => screen.getByRole("button", { name: /Tiếp tục đặt phiếu nước/u });
-const alertTexts = () => screen.queryAllByRole("alert").map((alert) => alert.textContent);
 
 function orderResponse(id = "order-123", totalVnd = 169000) {
   return { ok: true, status: 201, json: async () => ({
@@ -114,12 +123,15 @@ describe("TicketRequestDialog purchase flow", () => {
     const fetchMock = vi.fn<typeof fetch>(async () => orderResponse("order-123", 437000));
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
-    await fillAll(user);
+    await fillContact(user);
 
     expect(screen.getByText(/chọn một gói cho đơn/u)).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText(/Số lượng phiếu nước/u), "2");
+    await user.click(screen.getByRole("button", { name: "Tăng số phiếu nước" }));
     await user.selectOptions(screen.getByLabelText(/Merch/u), "tuoi-xi-tin");
-    expect(screen.getByText(/Tạm tính:/u).parentElement).toHaveTextContent("437.000đ");
+    expect(totalIn("Cuống phiếu nước")).toHaveTextContent("437.000đ");
+    await user.click(nextButton());
+    await fillSurvey(user);
+    await user.click(nextButton());
     await user.click(screen.getByRole("button", { name: /Tiếp tục đặt phiếu nước/u }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(/chuyển bạn đến PayOS/u);
@@ -155,8 +167,12 @@ describe("TicketRequestDialog purchase flow", () => {
     await submit();
     await screen.findByRole("status");
     await submit();
+    await user.click(backButton());
+    await user.click(backButton());
     await user.clear(screen.getByLabelText(/^Email/u));
     await user.type(screen.getByLabelText(/^Email/u), "minh.anh+2@example.com");
+    await user.click(nextButton());
+    await user.click(nextButton());
     await submit();
 
     const firstPayload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
@@ -183,8 +199,8 @@ describe("TicketRequestDialog purchase flow", () => {
     const fetchMock = vi.fn<typeof fetch>(() => new Promise<Response>((resolve) => { resolveFetch = resolve; }));
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
-    await fillSurvey(user);
-    const form = screen.getByLabelText(/Số lượng phiếu nước/u).closest("form");
+    await fillAll(user);
+    const form = submitButton().closest("form");
     if (!form) throw new Error("Ticket order form was not rendered");
     fireEvent.submit(form);
     fireEvent.submit(form);
@@ -194,17 +210,23 @@ describe("TicketRequestDialog purchase flow", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveAttribute("data-status", "success"));
   });
   it("renders the three survey questions verbatim in canonical order without required or optional markers", async () => {
-    await openDialog();
-    const optionSets = [SURVEY_SOURCE_OPTIONS, SURVEY_AREA_OPTIONS, SURVEY_ATTENDANCE_OPTIONS];
-    questions.forEach((question, index) => {
+    const user = await openDialog();
+    await fillContact(user);
+    await user.click(nextButton());
+    questions.forEach((question) => {
       const group = groupFor(question);
       expect(group.querySelector("legend")?.textContent).toBe(question);
       expect(group.textContent).not.toMatch(/\*|Bắt buộc|Tùy chọn/u);
-      expect(Array.from(group.querySelectorAll("label")).map((label) => label.textContent)).toEqual(optionSets[index]?.map((option) => option.label));
-      group.querySelectorAll("input").forEach((input) => expect(input).not.toBeRequired());
+      group.querySelectorAll("input, select").forEach((control) => expect(control).not.toBeRequired());
+      expect(group).not.toHaveAttribute("aria-invalid");
     });
+    const labelTexts = (question: string) => Array.from(groupFor(question).querySelectorAll("label")).map((label) => label.textContent);
+    expect(labelTexts(SURVEY_QUESTIONS.source)).toEqual(SURVEY_SOURCE_OPTIONS.map((option) => option.label));
+    expect(labelTexts(SURVEY_QUESTIONS.attendance)).toEqual(SURVEY_ATTENDANCE_OPTIONS.map((option) => option.label));
+    const areaOptions = Array.from(areaSelect().querySelectorAll("option")).filter((option) => option.value !== "");
+    expect(areaOptions.map((option) => [option.value, option.textContent])).toEqual(SURVEY_AREA_OPTIONS.map((option) => [option.id, option.label]));
     expect(groupFor(SURVEY_QUESTIONS.source).querySelectorAll('input[type="checkbox"]')).toHaveLength(8);
-    expect(groupFor(SURVEY_QUESTIONS.area).querySelectorAll('input[type="radio"]')).toHaveLength(8);
+    expect(areaOptions).toHaveLength(8);
     expect(groupFor(SURVEY_QUESTIONS.attendance).querySelectorAll('input[type="radio"]')).toHaveLength(2);
     expect(SURVEY_QUESTIONS.attendance).toContain("Anh/ chị");
   });
@@ -214,7 +236,8 @@ describe("TicketRequestDialog purchase flow", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
     await fillContact(user);
-    await user.click(submitButton());
+    await user.click(nextButton());
+    await user.click(nextButton());
     expect(alertTexts()).toEqual([messages.source, messages.area, messages.attendance]);
     for (const question of questions) {
       const describedBy = groupFor(question).getAttribute("aria-describedby");
@@ -223,6 +246,7 @@ describe("TicketRequestDialog purchase flow", () => {
     }
     expect(screen.getByRole("checkbox", { name: sourceLabel("facebook") })).toHaveFocus();
     expect(screen.getByRole("status")).toHaveAttribute("data-status", "idle");
+    expect(currentStep()).toBe(2);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -231,12 +255,14 @@ describe("TicketRequestDialog purchase flow", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
     await fillContact(user);
+    await user.click(nextButton());
     if (missing !== "source") await user.click(screen.getByRole("checkbox", { name: sourceLabel("zalo") }));
-    if (missing !== "area") await user.click(screen.getByRole("radio", { name: areaLabel("son-tra") }));
+    if (missing !== "area") await user.selectOptions(areaSelect(), "son-tra");
     if (missing !== "attendance") await user.click(screen.getByRole("radio", { name: attendanceLabel("unsure") }));
-    await user.click(submitButton());
+    await user.click(nextButton());
     expect(alertTexts()).toEqual([messages[missing]]);
-    expect(groupFor(SURVEY_QUESTIONS[missing]).querySelector("input")).toHaveFocus();
+    expect(groupFor(SURVEY_QUESTIONS[missing]).querySelector("input, select")).toHaveFocus();
+    expect(currentStep()).toBe(2);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -245,6 +271,7 @@ describe("TicketRequestDialog purchase flow", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
     await fillContact(user);
+    await user.click(nextButton());
     const facebook = screen.getByRole("checkbox", { name: sourceLabel("facebook") });
     const tiktok = screen.getByRole("checkbox", { name: sourceLabel("tiktok") });
     await user.click(facebook);
@@ -255,9 +282,9 @@ describe("TicketRequestDialog purchase flow", () => {
     await user.click(tiktok);
     expect(facebook).not.toBeChecked();
     expect(tiktok).not.toBeChecked();
-    await user.click(screen.getByRole("radio", { name: areaLabel("hai-chau") }));
+    await user.selectOptions(areaSelect(), "hai-chau");
     await user.click(screen.getByRole("radio", { name: attendanceLabel("confirmed") }));
-    await user.click(submitButton());
+    await user.click(nextButton());
     expect(alertTexts()).toEqual([messages.source]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -267,18 +294,24 @@ describe("TicketRequestDialog purchase flow", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = await openDialog();
     await fillContact(user);
+    await user.click(nextButton());
     await fillSurvey(user, ["website", "facebook"]);
+    await user.click(nextButton());
     await user.click(submitButton());
     await waitFor(() => expect(screen.getByRole("status")).toHaveAttribute("data-status", "error"));
+    await user.click(backButton());
     const website = screen.getByRole("checkbox", { name: sourceLabel("website") });
     const facebook = screen.getByRole("checkbox", { name: sourceLabel("facebook") });
     await user.click(website);
     await user.click(facebook);
     await user.click(facebook);
     await user.click(website);
+    await user.click(nextButton());
     await user.click(submitButton());
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    await user.click(screen.getByRole("radio", { name: areaLabel("cam-le") }));
+    await user.click(backButton());
+    await user.selectOptions(areaSelect(), "cam-le");
+    await user.click(nextButton());
     await user.click(submitButton());
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     const payloads = fetchMock.mock.calls.map((call) => JSON.parse(String(call[1]?.body)));
@@ -293,17 +326,171 @@ describe("TicketRequestDialog purchase flow", () => {
     vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => orderResponse()));
     const user = await openDialog();
     await fillContact(user);
-    await user.click(submitButton());
+    await user.click(nextButton());
+    await user.click(nextButton());
     expect(alertTexts()).toHaveLength(3);
     await fillSurvey(user);
     expect(alertTexts()).toHaveLength(0);
+    await user.click(nextButton());
     await user.click(submitButton());
     await waitFor(() => expect(screen.getByRole("status")).toHaveAttribute("data-status", "success"));
     await user.click(screen.getByRole("button", { name: "Đóng biểu mẫu" }));
     await user.click(screen.getByRole("button", { name: "Request tickets" }));
-    expect(screen.getByRole("checkbox", { name: sourceLabel("facebook") })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: areaLabel("hai-chau") })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: attendanceLabel("confirmed") })).not.toBeChecked();
-    expect(alertTexts()).toHaveLength(0);
+    expect(screen.getByRole("checkbox", { name: sourceLabel("facebook"), hidden: true })).not.toBeChecked();
+    expect(areaSelect({ hidden: true })).toHaveValue("");
+    expect(screen.getByRole("radio", { name: attendanceLabel("confirmed"), hidden: true })).not.toBeChecked();
+    expect(screen.queryAllByRole("alert", { hidden: true })).toHaveLength(0);
+  });
+
+  it("should not advance from step 1 with empty name or invalid email and should show inline Vietnamese errors", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = await openDialog();
+    await user.click(nextButton());
+    expect(currentStep()).toBe(1);
+    expect(alertTexts()).toEqual(["Vui lòng nhập họ và tên.", "Vui lòng nhập email."]);
+    const name = screen.getByLabelText(/Họ và tên/u);
+    expect(name).toHaveFocus();
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(document.getElementById(String(name.getAttribute("aria-describedby")))).toHaveTextContent("Vui lòng nhập họ và tên.");
+    await user.type(name, "Minh Anh");
+    await user.type(screen.getByLabelText(/^Email/u), "minh.anh@example");
+    await user.click(nextButton());
+    expect(currentStep()).toBe(1);
+    expect(name).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByLabelText(/^Email/u)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/^Email/u)).toHaveFocus();
+    expect(alertTexts()).toEqual(["Email chưa đúng định dạng, ví dụ ban@example.com."]);
+    expect(screen.queryByRole("group", { name: SURVEY_QUESTIONS.source })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("should move between steps with Tiếp tục / Quay lại and update progress (aria-current)", async () => {
+    const user = await openDialog();
+    expect(progressItems()).toHaveLength(3);
+    expect(currentStep()).toBe(1);
+    expect(screen.getByText(/Bước 1\/3/u)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Quay lại" })).not.toBeInTheDocument();
+    await fillContact(user);
+    await user.click(nextButton());
+    expect(currentStep()).toBe(2);
+    expect(screen.getByText(/Bước 2\/3/u)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Khảo sát nhanh" })).toHaveFocus();
+    expect(screen.queryByLabelText(/Họ và tên/u)).not.toBeVisible();
+    await fillSurvey(user);
+    await user.click(nextButton());
+    expect(currentStep()).toBe(3);
+    expect(progressItems()[0]).toHaveAttribute("data-state", "done");
+    expect(submitButton()).toHaveAttribute("type", "submit");
+    await user.click(backButton());
+    expect(currentStep()).toBe(2);
+    await user.click(screen.getByRole("button", { name: "Về bước trước" }));
+    expect(currentStep()).toBe(1);
+    expect(screen.getByLabelText(/Họ và tên/u)).toHaveValue("Minh Anh Nguyễn");
+  });
+
+  it("should update Tạm tính live in stub and sticky bar when quantity or merch changes", async () => {
+    const user = await openDialog();
+    for (const region of ["Cuống phiếu nước", "Thanh đặt phiếu nước", "Tóm tắt đơn"]) expect(totalIn(region)).toHaveTextContent("169.000đ");
+    await user.click(screen.getByRole("button", { name: "Tăng số phiếu nước" }));
+    await user.selectOptions(screen.getByLabelText(/Merch/u), "tuoi-xi-lay");
+    for (const region of ["Cuống phiếu nước", "Thanh đặt phiếu nước", "Tóm tắt đơn"]) expect(totalIn(region)).toHaveTextContent("507.000đ");
+    const stub = screen.getByLabelText("Cuống phiếu nước");
+    expect(stub).toHaveTextContent("Phiếu nước × 2");
+    expect(stub).toHaveTextContent('Combo "Tuổi Xì Lây"');
+  });
+
+  it("should cap the stepper at TICKET_ORDER_LIMIT and min 1", async () => {
+    const user = await openDialog();
+    const decrease = screen.getByRole("button", { name: "Giảm số phiếu nước" });
+    const increase = screen.getByRole("button", { name: "Tăng số phiếu nước" });
+    expect(decrease).toBeDisabled();
+    for (let index = 0; index < TICKET_ORDER_LIMIT + 2; index += 1) await user.click(increase);
+    expect(increase).toBeDisabled();
+    expect(screen.getByLabelText("Số phiếu nước đã chọn")).toHaveTextContent(String(TICKET_ORDER_LIMIT));
+    const form = orderForm();
+    expect(new FormData(form).get("quantity")).toBe(String(TICKET_ORDER_LIMIT));
+    await user.click(decrease);
+    expect(new FormData(form).get("quantity")).toBe(String(TICKET_ORDER_LIMIT - 1));
+  });
+
+  it("should reveal birth year and gender via the collapse button", async () => {
+    const user = await openDialog();
+    const toggle = screen.getByRole("button", { name: /năm sinh và giới tính/u });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const region = document.getElementById(String(toggle.getAttribute("aria-controls")));
+    expect(region).toHaveAttribute("data-expanded", "false");
+    expect(region).toContainElement(screen.getByLabelText(/Năm sinh/u));
+    expect(region).toContainElement(screen.getByLabelText(/Giới tính/u));
+    expect(Array.from(screen.getByLabelText(/Giới tính/u).querySelectorAll("option")).map((option) => option.getAttribute("value"))).toEqual(["", "male", "female", "other", "undisclosed"]);
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(region).toHaveAttribute("data-expanded", "true");
+  });
+
+  it("should show review values on step 3 and submit the unchanged request body", async () => {
+    vi.stubGlobal("location", { assign: vi.fn() });
+    const fetchMock = vi.fn<typeof fetch>(async () => orderResponse());
+    vi.stubGlobal("fetch", fetchMock);
+    const user = await openDialog();
+    await fillAll(user);
+    const review = screen.getByRole("region", { name: "Xác nhận" });
+    for (const text of ["Minh Anh Nguyễn", "minh.anh@example.com", "+84 912 345 678", "Nữ", "2000", "Phiếu nước × 1", "Không kèm merch", sourceLabel("facebook"), "Hải Châu", attendanceLabel("confirmed")]) {
+      expect(review).toHaveTextContent(text);
+    }
+    await user.click(submitButton());
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(Object.keys(body)).toEqual(["idempotencyKey", "name", "email", "phone", "gender", "birthYear", "quantity", "merch", "survey"]);
+    expect(body).toEqual({
+      idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/iu),
+      name: "Minh Anh Nguyễn",
+      email: "minh.anh@example.com",
+      phone: "+84 912 345 678",
+      gender: "female",
+      birthYear: 2000,
+      quantity: 1,
+      merch: "none",
+      survey: { source: ["facebook"], area: "hai-chau", attendance: "confirmed" },
+    });
+  });
+
+  it("should return to the first invalid step on submit and never fetch", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = await openDialog();
+    const form = orderForm();
+    fireEvent.submit(form);
+    expect(currentStep()).toBe(1);
+    expect(screen.getByLabelText(/Họ và tên/u)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/Họ và tên/u)).toHaveFocus();
+    await fillContact(user);
+    fireEvent.submit(form);
+    await waitFor(() => expect(currentStep()).toBe(2));
+    expect(alertTexts()).toEqual([messages.source, messages.area, messages.attendance]);
+    expect(screen.getByRole("checkbox", { name: sourceLabel("facebook") })).toHaveFocus();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("should reset to step 1 after a successful order is closed", async () => {
+    vi.stubGlobal("location", { assign: vi.fn() });
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => orderResponse()));
+    const user = await openDialog();
+    await user.click(screen.getByRole("button", { name: "Tăng số phiếu nước" }));
+    await fillAll(user);
+    await user.click(submitButton());
+    await waitFor(() => expect(screen.getByRole("status")).toHaveAttribute("data-status", "success"));
+    await user.click(screen.getByRole("button", { name: "Đóng biểu mẫu" }));
+    await user.click(screen.getByRole("button", { name: "Request tickets" }));
+    expect(currentStep()).toBe(1);
+    expect(screen.getByLabelText(/Họ và tên/u)).toHaveValue("");
+    expect(screen.getByLabelText("Số phiếu nước đã chọn")).toHaveTextContent("1");
+    expect(screen.getByRole("status")).toHaveAttribute("data-status", "idle");
   });
 });
+
+/** The order form, found independently of the current step. */
+function orderForm() {
+  const form = document.querySelector<HTMLFormElement>("form.ticket-request-dialog__form");
+  if (!form) throw new Error("Ticket order form was not rendered");
+  return form;
+}

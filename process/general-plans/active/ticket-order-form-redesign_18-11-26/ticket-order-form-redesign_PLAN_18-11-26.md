@@ -9,8 +9,17 @@ feature: none
 
 **BLUF:** Một kế hoạch SIMPLE-COMPLEX gồm 4 bước thực thi trong 1 lần EXECUTE tuần tự (opus). Chỉ chạm thư mục `_components/`, `globals.css`, `layout.tsx` (font Playfair). Mọi bước luôn render (ẩn bằng `hidden`) nên `FormData`, fingerprint idempotency và handler submit giữ nguyên.
 
-Status: PLANNED (validate-contract CONDITIONAL, chờ duyệt)
+Status: CODE DONE 2026-11-18 (EXECUTE xong; chờ EVL vc-tester, duyệt trực quan của chủ repo, chủ repo commit)
 Complexity: COMPLEX
+
+## Current Execution State
+- Last updated: 2026-11-18
+- Bước: EXECUTE xong → kế tiếp EVL (vc-tester chạy lại gate 1–7)
+- Checklist: 1–9 xong; 10 = gate + trực quan xong, cập nhật `component-contracts.md` để dành UPDATE PROCESS
+- Gate: G1 26/26 exit 0; G2 357/358 (1 fail baseline `route-client` secure cookies); G3 exit 0; G4 461 problems baseline (0 trong `src`), lint scoped exit 0; G5 build exit 1 (advisory) → retry exit 0, Playfair tải được; G6 hash khớp; G7 không đổi file đóng băng
+- Report: `ticket-order-form-redesign_REPORT_18-11-26.md` (cùng thư mục); ảnh `redesign-shot-w*.png`
+- Deviations: `TicketRequestDialog.tsx` 272 dòng (> 220, do giữ nguyên khối fetch); selector focus khảo sát `input, select` (Q8 select)
+- Chưa làm: EVL, duyệt trực quan, commit (chủ repo)
 
 ## Overview
 Context: `process/context/all-context.md` → `uxui/all-uxui.md`, `uxui/component-contracts.md`, `tests/all-tests.md`. Hộp thoại đặt phiếu nước hiện là 1 trang dài; user muốn giao diện 3 bước theo brief retro.
