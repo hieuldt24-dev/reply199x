@@ -1,0 +1,3 @@
+iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_status	loop_status	notes
+0	2026-11-18	0	0	0	0	SATURATED	HALTED_SUCCESS	PVL PASS on first validate; contract written with E1-E11 (G8/G9 vacuous pipe fixed by validator).
+1	2026-11-18	0	0	0	0	SATURATED	HALTED_SUCCESS	EVL confirmation by vc-tester: all gates pass, no regressions; only known route-client failure and dialog timeout flake under load; dialog title not confirmed in browser; deployed embed is owner residual.

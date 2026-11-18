@@ -256,7 +256,156 @@ No new dependency; no `package.json` change. Environment: Node 22, `npm.cmd`/`np
 
 ## Validate Contract
 
-(placeholder — vc-validate-agent writes this section before EXECUTE)
+Status: PASS
+Date: 18-11-26
+date: 2026-11-18
+generated-by: outer-pvl
+
+Parallel strategy: sequential
+Rationale: score 1/7 (LOW; only S7, 5+ files in blast radius). Navbar, FormPopup, data, CSS and tests are one overlapping change, so no fan-out. One vc-execute-agent (opus, EXECUTE) runs checklist 1-11 in order, then one vc-tester (sonnet) re-runs G1-G11 independently (EVL). Total 2 agents (1 x 1 + 1 x 1); cost guard not triggered. VALIDATE itself ran inline and sequentially (SIMPLE plan, read-only checks only). Execution has NOT started; the owner's explicit "ENTER EXECUTE MODE" is still required.
+
+Baseline note (scope change received during VALIDATE): the owner removed the header ticket trigger ("Đặt phiếu nước ngay", TicketRequestDialog) from the Navbar after the plan was written. Verified on disk at VALIDATE: `Navbar.tsx` is now 114 lines with no `TicketRequestDialog` import or button; `Navbar.test.tsx` no longer mocks it; `globals.css` is 961 lines with no `.event-header__ticket` rules and still ends with the closed `@media(max-width:639px)` form-popup block; the header action row holds only `HeaderAuth` and the hamburger. This plan must NOT reintroduce any of it (see AC16, G11, E14, E15). Because the 385px action row from the plan's D10/AC15 was ticket button + login + hamburger, AC15 and G10 are AMENDED below.
+
+Test gates (C3 5-column table):
+
+| criterion id | behavior | strategy | proving test | gap-resolution |
+|---|---|---|---|---|
+| AC1 | "Check in" group toggle in desktop and mobile navs; five NAV_LINKS unchanged; no stand-alone "Checkin popup" top-level button | Fully-Automated | `npx.cmd vitest run src/components/FormPopup.test.tsx src/components/Navbar.test.tsx` (N1) | B |
+| AC1 | Real breakpoint layout of the group on `/` and `/payment/return` | Agent-Probe | G7 probe P1 (`agent-browser`, port 3217 or 3218, 360/390/768/1024/1280/1440) | B |
+| AC2 | Desktop disclosure: `aria-expanded`/`aria-controls`; closes on Esc (focus to toggle), outside pointerdown, focus-out to an outside element, second toggle click, item selection; focus-out with null relatedTarget does NOT close | Fully-Automated | G1 (Navbar N2, N4, N5, N6, N7) | B |
+| AC3 | Each item opens the ONE popup with its own title, iframe src, fallback href (data-driven over `checkinForms`) | Fully-Automated | G1 (FormPopup T2, T3, T9; Navbar N2, N2b) | B |
+| AC4 | Per-form lazy iframes kept after first open; inactive iframe has `hidden`; no iframe before first open; B not mounted when only A opened | Fully-Automated | G1 (FormPopup T1, T7, T10, T11) | B |
+| AC4 | Inactive iframe computed `display:none` (`.form-popup__frame[hidden]` rule beats `display:block`) | Agent-Probe | G7 probe P1 (computed style of both iframes) | B |
+| AC5 | Focus into close button on open; returns to group toggle (desktop) or hamburger (mobile) | Fully-Automated | G1 (FormPopup T5, T5b; Navbar N2, N3) | B |
+| AC6 | Mobile: toggle expands inline list in the hamburger panel; item selection closes the menu and opens the popup | Fully-Automated | G1 (Navbar N3, N3b) | B |
+| AC7 | Typed `checkinForms`: unique ids and labels, URL shapes, group label constant, form 2 label exactly "Checkin popup", order, unknown/null activeId closed | Fully-Automated | G1 (FormPopup T12, T13) | B |
+| AC8 | Form URLs/ids only in `_data/formPopup.ts` (non-test); merch link intact (1 match) | Fully-Automated | G8 (PowerShell, minimum-match rule in E6) | B |
+| AC9 | No banned accented word in any new string | Fully-Automated | G1 (FormPopup T8, with positive control) | B |
+| AC10 | No horizontal page scroll at six widths with group, dropdown and popup; dropdown within the viewport; mobile panel `scrollWidth <= clientWidth` | Agent-Probe | G7 probe P1 | B |
+| AC11 | Real Esc, outside click, backdrop click, focus return, scroll lock, for BOTH forms | Agent-Probe | G7 probe P2 | B |
+| AC12 | No regression: neighbours green, only the known full-suite failure, typecheck, scoped lint, lint baseline 461, build | Fully-Automated | G2 `npx.cmd vitest run src/components "src/app/(routes)/_components/TicketRequestDialog.test.tsx"`, G3 `npm.cmd test`, G4 `npm.cmd run typecheck`, G5/G5b lint, G6 `npm.cmd run build` | B |
+| AC13 | No CSP/X-Frame-Options/frame-src/frame-ancestors in `next.config.ts` or `src/proxy.ts` | Fully-Automated | G9 (0 matches; positive control 2 matches) | B |
+| AC14 | Both real forms load in the iframe on the deployed site (login-restricted or cookie-blocked browsers) | Agent-Probe | local observation only in G7 (not PASS evidence); owner manual check on the deployed site | D |
+| AC15 (AMENDED) | Header action row at 360/390 re-measured WITHOUT the ticket button: page `scrollWidth <= clientWidth` and the hamburger's bounding box right edge `<= innerWidth`. If both hold the old overflow is resolved by the owner's ticket removal: record the numbers in the REPORT, write NO backlog stub. If either fails, write the stub with the measured numbers | Agent-Probe | G7 probe P1 step (h) numbers, plus amended G10 (below) | B |
+| AC16 (added at VALIDATE) | The header ticket trigger stays removed: Navbar, its test and `globals.css` contain no `TicketRequestDialog` / `.event-header__ticket`; Navbar N1 also asserts no header control named like "Đặt phiếu nước" | Fully-Automated | G11 (0 matches, control at least 2) plus G1 (N1 extra assertion, E15) | B |
+
+Amended G10 (replaces the plan's G10, which assumed the 385px row still existed): after the P1 re-measure at 360 and 390, (a) if no overflow: `Test-Path process/general-plans/backlog/navbar-mobile-header-overflow_NOTE_18-11-26.md` must be `False` and the REPORT states "resolved by header ticket removal" with the measured numbers; (b) if overflow remains: the stub must exist (`True`) and `Select-String -Pattern "<measured width>" <stub>` must match, with the REPORT numbers. Either branch is a pass; a stub that claims 385px while the probe shows no overflow is a failure.
+
+New G11 (PowerShell, verified at VALIDATE: 0 matches, control 6): `Select-String -Pattern "TicketRequestDialog","event-header__ticket" src/components/Navbar.tsx, src/components/Navbar.test.tsx, src/styles/globals.css` expects 0 matches; control `Select-String -Pattern "HeaderAuth","event-header__toggle" src/components/Navbar.tsx, src/styles/globals.css` expects at least 2 matches (if fewer the gate is meaningless: fix the command first). Array `-Pattern` form, no pipe character. Do not run it against `src/app` (TicketRequestDialog is legitimately used by Hero, Tickets and Timeline sections).
+
+gap-resolution legend:
+- A — proven now (gate passes in this cycle)
+- B — fixed in this plan (gate added by this plan's checklist)
+- C — deferred to a named later phase/plan
+- D — backlog test-building stub (named residual; keep-active; continue)
+
+C-4 reconciliation: the `strategy:` column carries ONLY the 3 proving strategies (Fully-Automated / Hybrid / Agent-Probe). Known-Gap is NEVER a `strategy:` value; AC14 is a named residual row carried via gap-resolution D, never claimed as proven. Every developed behavior has at least one Fully-Automated gate (AC14 is an external third-party condition, not behavior developed here), so the vacuous-green ban does not apply.
+
+Legacy line form (retained so existing validate-contract consumers still parse):
+- Navbar group + FormPopup logic: [Fully-automated: `npx.cmd vitest run src/components/FormPopup.test.tsx src/components/Navbar.test.tsx`]
+- Regression: [Fully-automated: G2 `npx.cmd vitest run src/components "src/app/(routes)/_components/TicketRequestDialog.test.tsx"`] | [Fully-automated: `npm.cmd test` (only `src/lib/supabase/route-client.test.ts` red)] | [Fully-automated: `npm.cmd run typecheck`] | [Fully-automated: G5 scoped `npx.cmd eslint` + G5b `npm.cmd run lint` baseline 461] | [Fully-automated: `npm.cmd run build` (retry rule)]
+- Static greps: [Fully-automated: G8, G9, G11 (PowerShell, verified valid at VALIDATE), amended G10]
+- Layout, native dialog, computed style, header action row re-measure: [agent-probe: G7 P1/P2 on port 3217 or 3218]
+- Both real forms inside the iframe on the deployed site: [known-gap: documented — residual R1-R5, backlog note `form-popup-deployed-embed-check_NOTE_18-11-26.md` extended in step 10, owner checks by hand]
+
+Failing stubs (Fully-Automated rows; red-first starting point for execute-agent; NOT written to disk at VALIDATE; copied from the plan's Test Coverage Plan plus AC16):
+
+Failing stub (AC3 / T9, N2, N2b):
+```
+test("should open each form with its own title, iframe src and fallback href", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: per-form wiring")
+})
+```
+Failing stub (AC4 / T10, T11):
+```
+test("should keep both iframes mounted with the inactive one hidden", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: per-form retention")
+})
+```
+Failing stub (AC2 / N2):
+```
+test("should open the dropdown and expose both form items", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: dropdown items")
+})
+```
+Failing stub (AC2 / N4):
+```
+test("should close the dropdown on Escape and focus the toggle", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: Esc close")
+})
+```
+Failing stub (AC5 / N2, T5):
+```
+test("should return focus to the toggle after the popup closes", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: focus return")
+})
+```
+Failing stub (AC9 / T8):
+```
+test("should not contain the banned accented word in any new string", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: no-ve wording with positive control")
+})
+```
+Failing stub (AC16 / N1):
+```
+test("should not render a header ticket trigger in the Navbar", () => {
+  throw new Error("NOT IMPLEMENTED — TDD stub for: header ticket trigger stays removed")
+})
+```
+
+Dimension findings:
+- Infra fit: PASS — verified read-only against the code on disk (HEAD f3b06c3 plus the owner's in-flight ticket-trigger removal, which is already applied in the working tree): `Navbar.tsx` is 114 lines with `open/activeId/formOpen`, refs `menuButton/header/formReturn`, one desktop and one mobile form button, `<FormPopup open onClose returnFocus />` before `</header>`, actions row = `HeaderAuth` + hamburger; `FormPopup.tsx` is 85 lines (single iframe armed by render-phase `if (open && !armed)`); `_data/formPopup.ts` is 10 lines. Importer grep over `src` confirms only `Navbar.tsx`, `FormPopup.tsx` and their two tests use `FORM_POPUP_*`/`formPopupLinks`/`FormPopup` (Finding 1 true); `process/context` mentions them in prose only (component-contracts.md row 77, all-context.md structure lines 88-89 and open question at about line 165, all located). `next.config.ts` has only `reactStrictMode` and `poweredByHeader`; `src/proxy.ts` has no CSP/XFO. Port 3217 had a listener at VALIDATE time (PID 14848, another run): the plan's 3218 fallback applies.
+- Test coverage: PASS — the dialog polyfill pattern (`HTMLDialogElement.prototype.showModal/close` in `beforeEach`, `cancel` event for Esc) already exists in `HeaderAuth.test.tsx`, `LoginDialog.test.tsx`, `TicketRequestDialog.test.tsx` and both current test files; `vi.stubGlobal("matchMedia")` and the `HeaderAuth`/`RemoteImage` mocks are in `Navbar.test.tsx` (the `TicketRequestDialog` mock was removed with the trigger and must not return, E14). Testing Library name matching is exact-string, so the toggle "Check in" does not collide with the item "Check in không gian âm nhạc hoài niệm"; both navs contain identical item names, so scoped `within(nav)` (planned) is mandatory. jsdom 29.1.1: `fireEvent.focusOut` bubbles (reaches a native `focusout` listener on the group); `pointerDown`/`keyDown` reach `document`/`window` listeners. Every developed behavior has a Fully-Automated gate; computed `display:none`, real Esc/backdrop, layout and the header re-measure are Agent-Probe rows; AC14 is the named residual.
+- Breaking changes: PASS — internal API change only (`FormPopup` props; `FORM_POPUP_*` and `formPopupLinks` replaced) and the importer grep proves no other consumer; `Navbar({ auth })`, `NAV_LINKS` (5), `projectLinks.merch` (`https://forms.gle/tW1VU8vpASc53CJa8`, 1 match in `brief.ts`) unchanged. Scope exclusions confirmed against Touchpoints: `src/lib`, `src/app/api`, `supabase`, `scripts`, `.env*`, `layout.tsx`, `brief.ts`, `Footer*`, `Channels*`, `Radio*`, ticket-order dialog files, `LoginDialog*`, `HeaderAuth*`, `package*.json` appear nowhere in Touchpoints. The plan contains no instruction that touches `TicketRequestDialog` or the header ticket trigger, but its prose (Context read, Test Coverage Plan mocks line, D10, AC15, G10, step 10 stub, probe step (h)) still describes the pre-removal state; the amendments above and E14/E15 govern.
+- Security surface: PASS — no auth, billing, schema, secret or API surface. Static third-party URLs in one file; second Google embed is lazy per form (zero calls before first open), explicit `referrerPolicy`, no `sandbox` (justified: Google Forms needs script/same-origin), no `allow`, fallback link `rel="noopener noreferrer"`. Consent/cookie notice for two embeds is owner decision O8/R4, not a blocker. No high-risk class, so no evidence pack.
+- Section 1 (`_data/formPopup.ts` + `FormPopup.tsx`): PASS — both Google form ids in the plan match the owner's resolved URLs and the id already in `formPopup.ts` (grep: `1FAIpQLSdTYWn8MFgQyPY67ixOfxkykYNBtL1Y-gTNRqBvVcs5SYcuog` new, `1FAIpQLSfkPApNK9sU_GIXVe5Mh4t2HYTEfwQwYHaHJCMmDjx9iETRtw` old). The D4 shape (one object state `{ shownId, armed }`, guarded render-phase `setState`, dialog effect keyed on `[open, returnFocus]`) and the D5 effect (window `keydown`, document `pointerdown`, `focusout` on the group with an `instanceof Node` guard) were linted read-only as a piped snippet with the repo ESLint config: 0 problems with `--max-warnings=0`. Highest-risk edit: the render-phase state update; mitigation: guarded `if` plus T10/T11/T13.
+- Section 2 (`Navbar.tsx`): PASS — incremental Edit on the current file; the Safari null-relatedTarget guard (D5) is logically correct (outside clicks go through `pointerdown`, in-group focus moves stay inside); `formReturn.current` is read only in handlers/effects; mobile `mobileGroupOpen` is independent of `open`. Highest-risk edit: the focus-out listener closing the list before an item click in Safari; mitigation D5 plus N6. The header is now narrower than the plan assumed (no ticket button), so the desktop nav and the action row cannot get wider because of this change.
+- Section 3 (`globals.css` append): PASS — traps verified on disk by selector: `.form-popup__frame { display:block }` beats the UA `hidden`, so the planned `.form-popup__frame[hidden]` (0,2,0) is required and wins; `.event-header__link { white-space:nowrap }` (0,1,0) and `.event-header__desktop .event-header__link--button { width:auto }` (0,2,0) are real, and the planned `.event-header__desktop .event-header__submenu .event-header__link--button` and `.event-header__mobile .event-header__sublist .event-header__link--button` (both 0,3,0) beat them and `.event-header__mobile .event-header__link` (0,2,0). The file is now 961 lines (the ticket CSS lines were removed), LF, and still ends with the closed `@media(max-width:639px)` form-popup block. `var(--reply-deep)` exists. One specificity detail is recorded as E4.
+- Section 4 (tests + docs + backlog + gates): PASS — the regex `new RegExp("(?<![\\p{L}\\p{N}])v\\u00e9(?![\\p{L}\\p{N}])", "iu")` was run from a file in node: matches "mua vé ngay", "vé", "Mua VÉ ngay"; does not match "vẻ", "nghề", "véc-tơ", "ve" or any new plan string. Running it through inline `node -e` in Git Bash strips one backslash level and silently breaks it (observed), which confirms the plan's Write-tool rule. G8 (1 match now, only the old id line in `formPopup.ts`), G9 (0, control 2), the merch check (1) and the new G11 (0, control 6) were run as real PowerShell at VALIDATE: valid syntax, expected values. `validate-plan-artifact.mjs`: 0 failures, 0 warnings; `discover-context.mjs --check-routing` in sync; `validate-all-context.mjs` 0 failures.
+
+Open gaps:
+- AC14 / R1-R5 (both real forms inside the iframe on the deployed site, hosting headers, login-restricted/one-response/cookie-blocked form, privacy notice for two embeds, keyboard and screen reader across the iframe, iOS Safari): known-gap: documented as NEW PLAN REQUIRED — see backlog/form-popup-deployed-embed-check_NOTE_18-11-26.md (extended at checklist step 10; owner checks by hand). Not PASS evidence.
+- Owner decisions O1-O8: defaults chosen, none blocks EXECUTE. O7 (fix the hamburger overflow next) is likely moot after the owner's ticket removal; the probe decides.
+- The pre-existing 360/390px header overflow (385px) is most likely RESOLVED by the owner's removal of the header ticket button (the row is now login + hamburger only). This is a prediction, not a measurement: AC15 (amended) measures it at EXECUTE; no backlog stub unless the probe still shows overflow.
+
+What this coverage does NOT prove:
+- G1 (Navbar N1-N7, FormPopup T1-T13, jsdom): does NOT prove breakpoint visibility (no CSS in jsdom), real Esc `cancel`, real `::backdrop` click, real Tab order across the iframe, real Safari no-focus-on-click behaviour (only the null-relatedTarget logic), computed `display:none`, real network load of either form, or the content of Google's page.
+- G2/G3 regression: does not prove behavior of untested lib/api code; G3 has the known red `route-client.test.ts` (secure cookie) and the rare 5s `TicketRequestDialog.test.tsx` flake under load.
+- G4/G5/G5b/G6 (typecheck, lint, build): do not prove interaction or visuals; G5b is the 461-problem baseline under `.agents/ .claude/ .codex/` (none under `src/`); the first build may exit 1 on the Next 16.4.3 advisory.
+- G8/G9/G10/G11 (greps and file checks): repo scope only; hosting-added headers (R2) are not proven absent; amended G10 proves the stub state matches the probe numbers, not that layout is good; G11 proves the ticket trigger text is absent from three files, not that the header looks right.
+- G7 probe: does not prove iframe content (Google), iOS Safari, or deployed-site behaviour; local observation on port 3217/3218 after build only. No gate proves a response can be submitted to Google.
+
+Gate: PASS
+Accepted by: not required for Gate: PASS. No CONCERN remains open; the E-instructions below are execution guidance, not unresolved concerns. AC14/R1-R5 is a named known-gap (gap-resolution D), not claimed as proven. The AC15/G10 amendment and the new AC16/G11 follow the owner's ticket-trigger removal received during VALIDATE and apply to EXECUTE and to the vc-tester EVL run.
+
+### Plan updates applied at VALIDATE
+The plan body was NOT edited (VALIDATE may write only the contract section; the structural validator passes). Instead this contract amends it, and where the contract and the plan text disagree the contract wins: (1) AC15 and G10 as amended above (no stub unless the re-measure still overflows); (2) new AC16 and G11; (3) checklist step 10's "write the NEW flat note navbar-mobile-header-overflow" becomes conditional on the re-measure; (4) G7 probe step (h) records numbers only and expects NO overflow; (5) the plan's statements about uncommitted edits in `Navbar.tsx`, `globals.css`, `all-context.md`, `component-contracts.md` are stale (the owner committed f3b06c3) but the Edit-only, own-lines-only rule stays; (6) the Test Coverage Plan line that lists a `TicketRequestDialog` mock for `Navbar.test.tsx` is obsolete. The Current Execution State and Resume sections still say validate pending; the orchestrator or update-process should refresh them.
+
+### Execute-Agent Instructions
+| # | Instruction | Trigger condition |
+|---|---|---|
+| E1 | Pre-flight: HEAD is f3b06c3; expected local changes are only the owner's ticket-trigger removal in `Navbar.tsx`, `Navbar.test.tsx`, `globals.css` (and the hook log and the previous task's EVL files). Report any other surprise. Re-read `Navbar.tsx` and the last 25 lines of `globals.css` fresh (the baseline is 114 and 961 lines). Edit `globals.css`, `all-context.md`, `component-contracts.md` with the Edit tool only (append / replace own lines), never a whole-file write. | Checklist step 1 |
+| E2 | Port 3217 had a listener at VALIDATE time (PID 14848, another run). Re-check at step 9: if busy use 3218. Never stop a PID you did not start. Never use or kill port 3000. | Step 9, gate G7 |
+| E3 | Write both test files with the Write tool only. Banned-word regex source must be exactly `(?<![\p{L}\p{N}])vé(?![\p{L}\p{N}])` (TypeScript literal: `new RegExp("(?<![\\p{L}\\p{N}])v\\u00e9(?![\\p{L}\\p{N}])", "iu")`). To sanity-check a regex in node write a small `.mjs` file; do NOT use inline `node -e` from Git Bash (it drops one backslash level). Positive controls built with `String.fromCharCode(0xe9)`; Grep each test file for `\\p{L}` (present) and the literal accented word (0). | Steps 3, 5 |
+| E4 | CSS specificity: the existing `.event-header__mobile .event-header__link { justify-content:flex-start }` (0,2,0) beats a bare `.event-header__group-toggle`. Write the mobile toggle row rule as `.event-header__mobile .event-header__group-toggle { justify-content:space-between; }` appended AFTER it (same or higher specificity, later wins). Keep the `[hidden]` rules for submenu, sublist and `.form-popup__frame`. | Step 7 |
+| E5 | In tests always scope with `within(nav)`: both navs hold identical item names, and the dropdown/sublist are `hidden` until opened (use `hidden: true` for closed-state lookups). Toggle name "Check in" does not collide with the longer item name (exact match). N5 uses `fireEvent.pointerDown(document.body)`; N6 uses `fireEvent.focusOut(el, { relatedTarget })`; handlers must not rely on PointerEvent-only properties. | Steps 3, 5 |
+| E6 | G8 must be read with a minimum: after EXECUTE it must list at least 3 match lines (the base `docs.google.com/forms` line and both form ids) and ALL of them in `src/app/(routes)/_data/formPopup.ts`; zero matches is vacuous and a failure. Merch check stays exactly 1. G9 stays 0 with control 2. Run G8/G9/G10/G11 from a `.ps1` file or PowerShell directly, not through Git Bash quoting. | Steps 9, 11 |
+| E7 | Lint-proven shape: keep the D4 state object updated by a guarded render-phase `setState` and the D5 listeners registered inside an effect that only calls `setGroupOpen` from event handlers (passed ESLint 0 problems at VALIDATE). Do not read `ref.current` while rendering and never call `setState` in an effect body. | Steps 4, 6, 8 |
+| E8 | Server cleanup: `Start-Process -PassThru npx.cmd` returns a wrapper process; stop the whole tree of the PID you recorded (for example `taskkill /PID <pid> /T /F` from PowerShell), then confirm with `Get-NetTCPConnection -LocalPort <port> -State Listen` that the port is free. Press Esc first at each width (anonymous visitors get a login dialog on load). | Step 9 |
+| E9 | Dropdown placement: start with `top:calc(100% + 14px); left:0`; tune the offset only within 8-20px and switch to `right:0; left:auto` only if the box crosses the viewport edge at 1024px (record it). Do nothing else visually. | Step 7, probe |
+| E10 | Docs: replace only `component-contracts.md` row 77 and only `all-context.md` lines 88-89 (structure) and the open-question line about the Checkin popup; update both to say two forms, group, per-form iframes, owner checks for BOTH forms. Do NOT mention or restore the header ticket button, and do not edit the unrelated radio lines. Then run `node .claude/skills/vc-context-discovery/scripts/discover-context.mjs --check-routing` and `node .claude/skills/vc-generate-context/scripts/validate-all-context.mjs` (both pass now). | Step 10 |
+| E11 | Known pre-existing failures that are NOT this task's: `src/lib/supabase/route-client.test.ts` secure-cookie, 461 lint problems under `.agents/.claude/.codex`, `validate-context-discovery`, `validate-skills`, `validate-guide-sync`, rare 5s timeout in `TicketRequestDialog.test.tsx` under load (re-run that file alone once and record both results). Any other failure is NEW. | Steps 8, 11 |
+| E12 | Scope check at the end: `git status --short` must list only Touchpoints (the five source/test files, `globals.css`, two docs, the extended backlog note, the REPORT, screenshots inside the task folder) plus, only if the re-measure still overflows, the new overflow stub. Anything under the scope-out list (`src/lib`, `src/app/api`, `supabase`, `scripts`, `.env*`, `package*.json`, `layout.tsx`, `brief.ts`, `Footer*`, `Channels*`, `Radio*`, ticket-order dialog files, `LoginDialog*`, `HeaderAuth*`) is a violation to revert only if YOU changed it. Do not commit. | Step 11 |
+| E13 | AC14 and what each iframe shows (form, error page, blank) are observations in the REPORT, never PASS. Record the real heading of the new form (screenshot) and report a mismatch with `dialogTitle` rather than auto-applying it. | Steps 9, 10 |
+| E14 | Do NOT reintroduce the header ticket trigger: no `TicketRequestDialog` import, no "Đặt phiếu nước ngay" button in `.event-header__actions`, no `TicketRequestDialog` `vi.mock` in `Navbar.test.tsx`, no `.event-header__ticket` CSS (including inside the `max-width:639px` block). When rewriting `Navbar.test.tsx` start from the CURRENT file's mocks (`HeaderAuth`, `RemoteImage` only); the plan's older text listing a `TicketRequestDialog` mock is obsolete. `TicketRequestDialog.test.tsx` stays in G2 (the component is still used by Hero/Tickets/Timeline). | Steps 5, 6, 7 |
+| E15 | Add to Navbar N1 one assertion that no header control matches /Đặt phiếu nước/ (desktop, mobile or actions row); run G11 at steps 8 and 11. | Step 5 |
+| E16 | Header action row re-measure (amended AC15/G10): at 360 and 390 record `documentElement.scrollWidth` vs `clientWidth` and the hamburger's `getBoundingClientRect().right` vs `innerWidth`, with everything closed. No overflow: no stub, `Test-Path` of the stub path is `False`, REPORT says "resolved by header ticket removal" with numbers. Overflow: write the flat stub with the measured numbers (it must contain the measured width) and report it as a pre-existing observation, not a failure of this task. | Steps 9, 10 |
+
+### Backlog Artifacts
+| Artifact | Location | What it tracks |
+|---|---|---|
+| form-popup-deployed-embed-check_NOTE_18-11-26.md (EXTEND: one bullet for the second form) | process/general-plans/backlog/ | Owner manual check that BOTH real forms load on the deployed site (AC14, R1-R5) |
+| navbar-mobile-header-overflow_NOTE_18-11-26.md (CONDITIONAL: only if the EXECUTE re-measure still shows overflow at 360/390) | process/general-plans/backlog/ | Header action row overflow, expected resolved by the ticket-button removal; written only with measured numbers |
 
 ## Autonomous Goal Block (for the orchestrator after VALIDATE; plain English, under 4000 characters)
 ```

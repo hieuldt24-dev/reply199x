@@ -1,23 +1,35 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
-import { FORM_POPUP_TITLE, formPopupLinks } from "@/app/(routes)/_data/formPopup";
+import { checkinForms } from "@/app/(routes)/_data/formPopup";
 
 export const FORM_POPUP_DIALOG_ID = "form-popup-dialog";
 
 type FormPopupProps = {
-  open: boolean;
+  /** Id of the check-in form to show; `null` or an unknown id keeps the popup closed. */
+  activeId: string | null;
   onClose: () => void;
   /** Element that receives focus after the popup closes. */
   returnFocus: RefObject<HTMLElement | null>;
 };
 
-export function FormPopup({ open, onClose, returnFocus }: FormPopupProps) {
+type FrameState = { shownId: string | null; armed: readonly string[] };
+
+export function FormPopup({ activeId, onClose, returnFocus }: FormPopupProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  // The iframe is created on first open and then kept, so typed answers survive a close.
-  const [armed, setArmed] = useState(false);
-  if (open && !armed) setArmed(true);
+  const active = checkinForms.find((form) => form.id === activeId);
+  const open = active !== undefined;
+  // Each form's iframe is created on its first open and then kept, so typed answers survive
+  // a close or a switch to another form. The last shown form stays titled while closed.
+  const [frames, setFrames] = useState<FrameState>({ shownId: null, armed: [] });
+  if (active && (frames.shownId !== active.id || !frames.armed.includes(active.id))) {
+    setFrames({
+      shownId: active.id,
+      armed: frames.armed.includes(active.id) ? frames.armed : [...frames.armed, active.id],
+    });
+  }
+  const shown = checkinForms.find((form) => form.id === frames.shownId);
 
   useEffect(() => {
     if (!open) return;
@@ -59,26 +71,30 @@ export function FormPopup({ open, onClose, returnFocus }: FormPopupProps) {
     >
       <div className="form-popup__layout">
         <header className="form-popup__bar">
-          <h2 id={titleId} className="form-popup__title">{FORM_POPUP_TITLE}</h2>
+          <h2 id={titleId} className="form-popup__title">{shown?.dialogTitle}</h2>
           <button type="button" className="form-popup__close" aria-label="Đóng biểu mẫu" onClick={onClose}>
             <span aria-hidden="true">×</span>
           </button>
         </header>
         <div className="form-popup__body">
-          {armed && (
+          {checkinForms.filter((form) => frames.armed.includes(form.id)).map((form) => (
             <iframe
+              key={form.id}
               className="form-popup__frame"
-              src={formPopupLinks.embed}
-              title={FORM_POPUP_TITLE}
+              src={form.embedUrl}
+              title={form.dialogTitle}
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
+              hidden={form.id !== frames.shownId}
             />
-          )}
+          ))}
         </div>
-        <p className="form-popup__fallback">
-          Không thấy biểu mẫu?{" "}
-          <a href={formPopupLinks.fallback} target="_blank" rel="noopener noreferrer">Mở trong tab mới ↗</a>
-        </p>
+        {shown && (
+          <p className="form-popup__fallback">
+            Không thấy biểu mẫu?{" "}
+            <a href={shown.fallbackUrl} target="_blank" rel="noopener noreferrer">Mở trong tab mới ↗</a>
+          </p>
+        )}
       </div>
     </dialog>
   );

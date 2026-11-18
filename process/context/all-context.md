@@ -85,8 +85,9 @@ src/
     error.tsx, loading.tsx, not-found.tsx
     robots.ts, sitemap.ts, icon.svg
   proxy.ts                     Supabase session refresh and no-store headers
-  components/                  Button, Card, Navbar, Footer, FormPopup (Navbar Google Form dialog;
-                               URLs/labels in (routes)/_data/formPopup.ts)
+  components/                  Button, Card, Navbar, Footer, FormPopup (one dialog for the Navbar
+                               "Check in" group's Google Forms; typed checkinForms list in
+                               (routes)/_data/formPopup.ts)
   lib/                         constants.ts, utils.ts, supabase/, payments/{payos,sepay}/,
                                ticket-orders/ (incl. survey.ts shared survey contract),
                                ticket-registration/ (Sheets A:Q + outbox worker)
@@ -162,7 +163,7 @@ No feature folders. All current work is under `process/general-plans/active/` ta
 - Survey feature, unverified or open: migration `202611170003` not applied to any hosted DB; real 17-column Sheet write (owner probe on a Sheet copy, AC15 CONDITIONAL); PostgREST passing a JS array to a `text[]` argument end to end (route tests mock the RPC); the 1500 ms join bound on hosted infrastructure and serverless behavior after the response; no automatic detection of the late-survey race; a paid order created after the cutover can have NO survey row (save failed or timed out) and its answers are unrecoverable (read-only detection query in the runbook, section 4a); consent and retention for survey data in the third-party Sheet undecided; no "Other" option and no backfill of old orders. Checkout stays OFF. Backlog: `process/general-plans/backlog/ticket-order-survey-followups_17-11-26/ticket-order-survey-followups_NOTE_17-11-26.md`.
 - Known operational gaps: no scheduler in the repo calls `/api/internal/sheets-sync` (Vercel Hobby cron is daily only); the PayOS webhook awaits Sheets before replying to PayOS (consider `after()`); no outbox retry cap or alerting; no SQL test covers migration `202611170002`; the Next.js 16.4.3 advisory needs a user-approved upgrade.
 - Contact delivery/storage, asset rights and production hosting remain unselected.
-- Navbar "Checkin popup" embeds a third-party Google Form in an iframe (`src/components/FormPopup.tsx`); whether it renders on the deployed site (login-restricted form, blocked third-party cookies, hosting headers) and the privacy/cookie consent decision are unverified owner checks. Backlog: `process/general-plans/backlog/form-popup-deployed-embed-check_NOTE_18-11-26.md`.
+- Navbar "Check in" group embeds two third-party Google Forms ("Check in không gian âm nhạc hoài niệm" and "Checkin popup") in iframes (`src/components/FormPopup.tsx`); whether BOTH render on the deployed site (login-restricted form, blocked third-party cookies, hosting headers) and the privacy/cookie consent decision are unverified owner checks. Backlog: `process/general-plans/backlog/form-popup-deployed-embed-check_NOTE_18-11-26.md`.
 - Channels radio and Footer links: the href strings are test-proven, but whether the TikTok, Facebook, Instagram and Zalo destinations are live and correct is unverified (owner checks by hand after deploy); visual fidelity awaits owner review of the G7 screenshots in the task folder.
 - Remote logo and poster load in current browser checks but still depend on third-party hosting. The provided merch form destination has not been independently checked for order fulfillment.
 

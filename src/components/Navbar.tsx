@@ -1,22 +1,25 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { NAV_LINKS } from "@/lib/constants";
 import { assets } from "@/app/(routes)/_data/home";
 import { RemoteImage } from "@/app/(routes)/_components/RemoteImage";
 import { HeaderAuth } from "@/components/auth/HeaderAuth";
-import { TicketRequestDialog } from "@/app/(routes)/_components/TicketRequestDialog";
 import type { AuthView } from "@/lib/supabase/session";
 import { FormPopup, FORM_POPUP_DIALOG_ID } from "@/components/FormPopup";
-import { FORM_POPUP_LABEL } from "@/app/(routes)/_data/formPopup";
+import { CHECKIN_GROUP_LABEL, checkinForms } from "@/app/(routes)/_data/formPopup";
 
 export function Navbar({ auth }: { auth: AuthView }) {
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
+  const [formId, setFormId] = useState<string | null>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [mobileGroupOpen, setMobileGroupOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
   const formReturn = useRef<HTMLElement | null>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const groupButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let frame = 0;
@@ -72,6 +75,48 @@ export function Navbar({ auth }: { auth: AuthView }) {
     };
   }, [open]);
 
+  // Desktop "Check in" disclosure: Esc, outside pointerdown or focus moving out closes it.
+  useEffect(() => {
+    if (!groupOpen) return;
+    const group = groupRef.current;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setGroupOpen(false);
+        groupButton.current?.focus();
+      }
+    }
+    function closeOutside(event: PointerEvent) {
+      if (event.target instanceof Node && !group?.contains(event.target)) setGroupOpen(false);
+    }
+    // A null relatedTarget (e.g. Safari not focusing clicked buttons) is ignored: outside clicks use pointerdown.
+    function closeOnFocusOut(event: FocusEvent) {
+      if (event.relatedTarget instanceof Node && !group?.contains(event.relatedTarget)) setGroupOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOutside);
+    group?.addEventListener("focusout", closeOnFocusOut);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOutside);
+      group?.removeEventListener("focusout", closeOnFocusOut);
+    };
+  }, [groupOpen]);
+
+  // The item is hidden once chosen, so focus returns to the group toggle (desktop) or the hamburger (mobile).
+  function openForm(id: string, returnTo: RefObject<HTMLElement | null>) {
+    formReturn.current = returnTo.current;
+    setGroupOpen(false);
+    setOpen(false);
+    setFormId(id);
+  }
+
+  const formItems = (returnTo: RefObject<HTMLElement | null>) => checkinForms.map((form) => (
+    <li key={form.id}>
+      <button type="button" className="event-header__link event-header__link--button" aria-haspopup="dialog" aria-controls={FORM_POPUP_DIALOG_ID} onClick={() => openForm(form.id, returnTo)}>{form.menuLabel}</button>
+    </li>
+  ));
+  const caret = <span className="event-header__caret" aria-hidden="true">▾</span>;
+
   function navigate(id: string) {
     setOpen(false);
     setActiveId(id === "main-content" ? "" : id);
@@ -96,10 +141,12 @@ export function Navbar({ auth }: { auth: AuthView }) {
           {NAV_LINKS.map((link) => (
             <a key={link.id} className="event-header__link" aria-current={activeId === link.id ? "location" : undefined} href={`#${link.id}`} onClick={() => navigate(link.id)}>{link.label}</a>
           ))}
-          <button type="button" className="event-header__link event-header__link--button" aria-haspopup="dialog" aria-controls={FORM_POPUP_DIALOG_ID} onClick={(event) => { formReturn.current = event.currentTarget; setFormOpen(true); }}>{FORM_POPUP_LABEL}</button>
+          <div ref={groupRef} className="event-header__group">
+            <button ref={groupButton} type="button" className="event-header__link event-header__link--button event-header__group-toggle" aria-expanded={groupOpen} aria-controls="checkin-menu" onClick={() => setGroupOpen(!groupOpen)}>{CHECKIN_GROUP_LABEL}{caret}</button>
+            <ul id="checkin-menu" className="event-header__submenu" hidden={!groupOpen}>{formItems(groupButton)}</ul>
+          </div>
         </nav>
         <div className="event-header__actions">
-          <TicketRequestDialog className="event-header__ticket">Đặt phiếu nước ngay <span aria-hidden="true">↗</span></TicketRequestDialog>
           <div onClick={() => setOpen(false)}><HeaderAuth auth={auth} /></div>
           <button ref={menuButton} type="button" className="event-header__toggle" aria-label={open ? "Đóng menu điều hướng" : "Mở menu điều hướng"} aria-expanded={open} aria-controls="mobile-navigation" onClick={() => setOpen(!open)}>
             <span className="event-header__hamburger" aria-hidden="true">{open ? "×" : "☰"}</span>
@@ -108,9 +155,12 @@ export function Navbar({ auth }: { auth: AuthView }) {
       </div>
       <nav id="mobile-navigation" className="event-header__mobile" aria-label="Điều hướng trên điện thoại" hidden={!open}>
         {NAV_LINKS.map((link) => <a key={link.id} href={`#${link.id}`} onClick={() => navigate(link.id)} aria-current={activeId === link.id ? "location" : undefined} className="event-header__link">{link.label}</a>)}
-        <button type="button" className="event-header__link event-header__link--button" aria-haspopup="dialog" aria-controls={FORM_POPUP_DIALOG_ID} onClick={() => { formReturn.current = menuButton.current; setOpen(false); setFormOpen(true); }}>{FORM_POPUP_LABEL}</button>
+        <div className="event-header__group">
+          <button type="button" className="event-header__link event-header__link--button event-header__group-toggle" aria-expanded={mobileGroupOpen} aria-controls="mobile-checkin-list" onClick={() => setMobileGroupOpen(!mobileGroupOpen)}>{CHECKIN_GROUP_LABEL}{caret}</button>
+          <ul id="mobile-checkin-list" className="event-header__sublist" hidden={!mobileGroupOpen}>{formItems(menuButton)}</ul>
+        </div>
       </nav>
-      <FormPopup open={formOpen} onClose={() => setFormOpen(false)} returnFocus={formReturn} />
+      <FormPopup activeId={formId} onClose={() => setFormId(null)} returnFocus={formReturn} />
     </header>
   );
 }
