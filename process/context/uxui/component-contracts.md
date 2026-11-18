@@ -20,7 +20,8 @@ Keep the source order, Vietnamese text and existing fragment destinations. The h
 | Fixed header and navigation | `src/components/Navbar.tsx` | Shared shell; client state only for mobile navigation |
 | Hero, no source ID | `_components/HeroSection.tsx` | Server; main heading and two section links |
 | `gioi-thieu` | `_components/AboutSection.tsx` | Server; project introduction and three memory tracks |
-| `kenh-truyen-thong` | `_components/ChannelsSection.tsx` | Server; TikTok link and upcoming Facebook state |
+| `kenh-truyen-thong` | `_components/ChannelsSection.tsx` | Server shell (`<section class="radio-section">`, header copy from `_data/channels.ts`); renders the `ChannelsRadio` client leaf |
+| Channels radio | `_components/ChannelsRadio.tsx` (+ pure `Radio*` parts) | Client; the only `"use client"` file of the section; holds the active channel only |
 | `timeline` | `_components/TimelineSection.tsx` | Server; 20–21/11/2026 pop-up and 22/11/2026 event |
 | `su-kien` | `_components/EventsSection.tsx` | Server; main event and poster; contains TicketsSection |
 | `ve`, nested in `su-kien` | `_components/TicketsSection.tsx` | Server; sales unavailable and notification link |
@@ -28,7 +29,7 @@ Keep the source order, Vietnamese text and existing fragment destinations. The h
 | `quy-trinh` | `_components/ProcessSection.tsx` | Server; participation/order steps |
 | `lien-he` | `_components/ContactSection.tsx` | Server; contact details and ContactForm leaf |
 | Contact interaction | `_components/ContactForm.tsx` | Client; validation and local preview only |
-| Footer | `src/components/Footer.tsx` | Server; shared shell and real source links |
+| Footer | `src/components/Footer.tsx` | Server; shared shell (every `(routes)` page, incl. `/payment/return`); links in order TikTok, Facebook (omitted when `projectLinks.facebook` is null), Instagram, Zalo, Merch, all from `projectLinks`, new tab with `rel="noopener noreferrer"`; the link row wraps at every width |
 
 All `_components`, `_data` and `_types` paths above are relative to `src/app/(routes)/`. `src/app/(routes)/page.tsx` composes sections and owns the single `<main id="main-content">`. `src/app/(routes)/layout.tsx` is the only owner of Navbar and Footer. Do not put duplicate shell markup in the page or section components. Root `src/app/layout.tsx` owns `lang="vi"`, metadata and the skip link.
 
@@ -56,6 +57,7 @@ Migrate the reference's Tailwind CDN configuration into the installed Tailwind v
 | retro-solid / retro-solid-lg | `4px 4px 0 #13240d` / `8px 8px 0 #13240d` |
 | retro-solid-red / retro-solid-gold | `4px 4px 0 #600b00` / `4px 4px 0 #b87a14` |
 | retro-border | `0 0 0 2px #1E1C10` |
+| radio (CSS vars on `.radio-section`) | `--radio-bg #E8DFC9`, `--radio-wood #6B4428`, `--radio-face #1E3A26`, `--radio-deep #12251A`, `--radio-trim #0E1F14`, `--radio-gold #E3B25A`, `--radio-red #A6362B`, `--radio-cream #F4ECDA`, `--radio-glass #F2E3B6`, `--radio-muted #CBBF9F`, `--radio-ink #4A554E` |
 
 Preserve Epilogue display headings, Be Vietnam Pro body text and Space Grotesk labels from the source, with robust fallbacks if remote fonts cannot load. Preserve paper dots, dark halftone, cassette/radio motifs, ticket edges, layered title shadows and hard offset shadows. Accessibility fixes may soften effects where they obscure text.
 
@@ -71,7 +73,10 @@ The source has two Google-hosted bitmap assets: the logo and event poster. Prese
 | Merchandise order CTA | Preserve `https://forms.gle/tW1VU8vpASc53CJa8`; this opens an external form, not an in-app checkout |
 | Tickets | Preserve the sales-not-open state; the request dialog submits details for organizer review and confirms only a recorded request, never a reservation or purchase |
 | Ticket dialog survey | `_components/TicketSurveyFields.tsx` (Client leaf) renders three mandatory groups after the merch block: Q6 source (checkboxes, at least one), Q8 area and Q9 attendance (radios); verbatim Vietnamese question text from `src/lib/ticket-orders/survey.ts`, no question number, asterisk or required badge; per-group `role="alert"` errors, focus on the first invalid group, no `fetch` while any group is empty; answers reset after a successful submit. Known existing issue outside this task: the dialog shows a mobile horizontal scroll from the poster notch `::after` (`right:-12px`) |
-| Facebook | Upcoming/unavailable state; do not invent an official page URL |
+| Channels radio (`kenh-truyen-thong`) | Data in `_data/channels.ts` (`radioChannels`, `ZALO_GROUP_NAME`, header copy), types in `_types/channels.ts`; hrefs come from `projectLinks` (`tiktok`, `facebook`, `instagram`, `zalo`), never hardcoded. Four preset keys are `<button aria-pressed>` inside one `role="group"` (TikTok active by default); ArrowLeft/ArrowRight move and wrap, Home/End jump, focus follows; keys with Ctrl/Alt/Meta are ignored. The "now playing" panel shows frequency, name, handle, description and one CTA: an external new-tab link, or a disabled `<button>` with the same label when the href is null. Dial, speaker and knobs are decorative (`aria-hidden`). CSS is the `.radio-*` block at the end of `globals.css`, scoped under `.radio-section` / `.reply-site>.radio-section` (needed to beat `.reply-site>section` and `.reply-site h2`); all motion sits in `@media(prefers-reduced-motion:no-preference)`. Fonts: local "Reply Lobster" (title, channel name) and "Reply Nunito". The old `brief.channels/tiktok/facebook` strings are kept but no longer rendered |
+| Form popup (Navbar) | Navbar item "Checkin popup" (`FORM_POPUP_LABEL`) after "Liên hệ" in both the desktop and mobile navs; both buttons open ONE prop-controlled native `<dialog>` in `src/components/FormPopup.tsx` rendered inside `<header>` but outside the hidden mobile nav (a dialog inside a `display:none` nav never shows). Title "Biểu mẫu REPLY 199X", `aria-modal`, close by button, Esc (`cancel`) or backdrop; focus returns to the desktop button or, from the mobile menu, to the hamburger. The Google Form iframe (`viewform?embedded=true`, no `sandbox`, `referrerPolicy="strict-origin-when-cross-origin"`, `loading="lazy"`) is created on first open and kept mounted so typed answers survive a close. Footer link "Mở trong tab mới" opens the plain `viewform` URL in a new tab. URLs and labels live only in `_data/formPopup.ts`. CSS is the `.form-popup*` block at the end of `globals.css`. Third-party residual: whether the form renders inside the iframe on the deployed site (login-restricted forms, blocked third-party cookies, hosting headers) is checked manually by the owner |
+| Facebook | Uses `projectLinks.facebook`; when it is null the radio CTA becomes a disabled button and the Footer omits the link; do not invent an official page URL |
+| Zalo | Community group `https://zalo.me/g/fhjd7fuvlccje1jwxyvu` (`projectLinks.zalo`), group name "HỘI ĐỒNG NIÊN REPLY 199X TẠI ĐÀ NẴNG" (`ZALO_GROUP_NAME`); the long name must wrap without horizontal scroll |
 | Email | Preserve `loihoidap199x@gmail.com`; a `mailto:` link may open the user's mail client |
 | Contact form | Clearly explain it is a local preview before interaction. Validate inputs and allow preview/edit without resetting user text. Announce feedback accessibly. Do not display the source's fabricated saved-success message |
 

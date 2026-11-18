@@ -30,12 +30,13 @@ export const brief = {
   "contact": "Hành trình hoài niệm chưa dừng lại ở những trải nghiệm đã qua. Hãy tiếp tục đồng hành cùng REPLY 199X để những câu chuyện thân thuộc được kể lại, những ký ức được sẻ chia và những kết nối mới tiếp tục hình thành."
 } as const;
 
-export const projectLinks: Readonly<{ facebook: string | null; tickets: string | null; tiktok: string; instagram: string; merch: string }> = {
+export const projectLinks: Readonly<{ facebook: string | null; tickets: string | null; tiktok: string; instagram: string; merch: string; zalo: string }> = {
   facebook: "https://www.facebook.com/loihoidap199x",
   tickets: null,
   tiktok: "https://www.tiktok.com/@loihoidap199x",
   instagram: "https://www.instagram.com/loihoidap199x/",
   merch: "https://forms.gle/tW1VU8vpASc53CJa8",
+  zalo: "https://zalo.me/g/fhjd7fuvlccje1jwxyvu",
 };
 
 export const ticketDetails = { price: "Sắp công bố" } as const;

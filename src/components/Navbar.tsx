@@ -7,12 +7,16 @@ import { RemoteImage } from "@/app/(routes)/_components/RemoteImage";
 import { HeaderAuth } from "@/components/auth/HeaderAuth";
 import { TicketRequestDialog } from "@/app/(routes)/_components/TicketRequestDialog";
 import type { AuthView } from "@/lib/supabase/session";
+import { FormPopup, FORM_POPUP_DIALOG_ID } from "@/components/FormPopup";
+import { FORM_POPUP_LABEL } from "@/app/(routes)/_data/formPopup";
 
 export function Navbar({ auth }: { auth: AuthView }) {
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
+  const formReturn = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let frame = 0;
@@ -92,6 +96,7 @@ export function Navbar({ auth }: { auth: AuthView }) {
           {NAV_LINKS.map((link) => (
             <a key={link.id} className="event-header__link" aria-current={activeId === link.id ? "location" : undefined} href={`#${link.id}`} onClick={() => navigate(link.id)}>{link.label}</a>
           ))}
+          <button type="button" className="event-header__link event-header__link--button" aria-haspopup="dialog" aria-controls={FORM_POPUP_DIALOG_ID} onClick={(event) => { formReturn.current = event.currentTarget; setFormOpen(true); }}>{FORM_POPUP_LABEL}</button>
         </nav>
         <div className="event-header__actions">
           <TicketRequestDialog className="event-header__ticket">Đặt phiếu nước ngay <span aria-hidden="true">↗</span></TicketRequestDialog>
@@ -103,7 +108,9 @@ export function Navbar({ auth }: { auth: AuthView }) {
       </div>
       <nav id="mobile-navigation" className="event-header__mobile" aria-label="Điều hướng trên điện thoại" hidden={!open}>
         {NAV_LINKS.map((link) => <a key={link.id} href={`#${link.id}`} onClick={() => navigate(link.id)} aria-current={activeId === link.id ? "location" : undefined} className="event-header__link">{link.label}</a>)}
+        <button type="button" className="event-header__link event-header__link--button" aria-haspopup="dialog" aria-controls={FORM_POPUP_DIALOG_ID} onClick={() => { formReturn.current = menuButton.current; setOpen(false); setFormOpen(true); }}>{FORM_POPUP_LABEL}</button>
       </nav>
+      <FormPopup open={formOpen} onClose={() => setFormOpen(false)} returnFocus={formReturn} />
     </header>
   );
 }

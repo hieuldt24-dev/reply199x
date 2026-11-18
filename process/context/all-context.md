@@ -12,7 +12,7 @@ Last updated: 2026-11-18
 
 User intent: read the supplied REPLY 199X HTML, define maintainable components that AI agents can follow, and standardize the project harness. The approved direction preserves the Vietnamese retro event identity and documents events, tickets, merchandise and contact areas.
 
-The REPLY 199X homepage conversion is implemented in the Next.js source and was checked locally against the preserved HTML at five viewport widths. The contact form still prepares a local preview and email link only. Merch links to the source's Google Form. The component contract describes current ownership. The reference remains at `process/general-plans/completed/harness-bootstrap_09-11-26/reply-199x.reference.html`.
+The REPLY 199X homepage conversion is implemented in the Next.js source and was checked locally against the preserved HTML at five viewport widths. The "Bắt sóng ký ức" section (`#kenh-truyen-thong`) is now a 90s desk radio with four channels (TikTok, Facebook, Instagram, Zalo community group) driven by one client leaf, and the shared Footer links TikTok, Facebook (omitted when null), Instagram, Zalo and Merch (implemented 2026-11-18, uncommitted, CODE DONE; EVL and owner visual review pending; task folder `process/general-plans/active/channels-radio-section_18-11-26/`). The contact form still prepares a local preview and email link only. Merch links to the source's Google Form. The component contract describes current ownership. The reference remains at `process/general-plans/completed/harness-bootstrap_09-11-26/reply-199x.reference.html`.
 
 Backend now present in source (verified from `src/`, `supabase/migrations/` and `package.json`, 2026-11-17):
 
@@ -68,9 +68,12 @@ src/
     layout.tsx                 root document, metadata, global styles
     (routes)/layout.tsx         shared Navbar and Footer
     (routes)/page.tsx           REPLY 199X home page
-    (routes)/_components/       route-private sections and contact/image client leaves
+    (routes)/_components/       route-private sections and contact/image/radio client leaves
+                                (ChannelsRadio + pure Radio* parts for #kenh-truyen-thong)
     (routes)/_data/home.ts      typed REPLY 199X content and source assets
-    (routes)/_types/home.ts     home route content contracts
+    (routes)/_data/brief.ts     brief copy and projectLinks (tiktok, facebook, instagram, zalo, merch)
+    (routes)/_data/channels.ts  radio channels, ZALO_GROUP_NAME, radio header copy
+    (routes)/_types/            home.ts and channels.ts content contracts
     (routes)/payment/return/    browser return page after PayOS (not payment confirmation)
     auth/sign-in/page.tsx       Google sign-in page
     api/hello/route.ts          example GET endpoint
@@ -82,7 +85,8 @@ src/
     error.tsx, loading.tsx, not-found.tsx
     robots.ts, sitemap.ts, icon.svg
   proxy.ts                     Supabase session refresh and no-store headers
-  components/                  Button, Card, Navbar, Footer
+  components/                  Button, Card, Navbar, Footer, FormPopup (Navbar Google Form dialog;
+                               URLs/labels in (routes)/_data/formPopup.ts)
   lib/                         constants.ts, utils.ts, supabase/, payments/{payos,sepay}/,
                                ticket-orders/ (incl. survey.ts shared survey contract),
                                ticket-registration/ (Sheets A:Q + outbox worker)
@@ -157,7 +161,9 @@ No feature folders. All current work is under `process/general-plans/active/` ta
 - Unverified: hosted migration `202611170003` (not applied), and non-production latency, live PayOS behavior and the live rail, authenticated production capacity, reverse-proxy Origin preservation, and production edge rate limiting/monitoring.
 - Survey feature, unverified or open: migration `202611170003` not applied to any hosted DB; real 17-column Sheet write (owner probe on a Sheet copy, AC15 CONDITIONAL); PostgREST passing a JS array to a `text[]` argument end to end (route tests mock the RPC); the 1500 ms join bound on hosted infrastructure and serverless behavior after the response; no automatic detection of the late-survey race; a paid order created after the cutover can have NO survey row (save failed or timed out) and its answers are unrecoverable (read-only detection query in the runbook, section 4a); consent and retention for survey data in the third-party Sheet undecided; no "Other" option and no backfill of old orders. Checkout stays OFF. Backlog: `process/general-plans/backlog/ticket-order-survey-followups_17-11-26/ticket-order-survey-followups_NOTE_17-11-26.md`.
 - Known operational gaps: no scheduler in the repo calls `/api/internal/sheets-sync` (Vercel Hobby cron is daily only); the PayOS webhook awaits Sheets before replying to PayOS (consider `after()`); no outbox retry cap or alerting; no SQL test covers migration `202611170002`; the Next.js 16.4.3 advisory needs a user-approved upgrade.
-- Contact delivery/storage, asset rights, production hosting and an official Facebook URL remain unselected.
+- Contact delivery/storage, asset rights and production hosting remain unselected.
+- Navbar "Checkin popup" embeds a third-party Google Form in an iframe (`src/components/FormPopup.tsx`); whether it renders on the deployed site (login-restricted form, blocked third-party cookies, hosting headers) and the privacy/cookie consent decision are unverified owner checks. Backlog: `process/general-plans/backlog/form-popup-deployed-embed-check_NOTE_18-11-26.md`.
+- Channels radio and Footer links: the href strings are test-proven, but whether the TikTok, Facebook, Instagram and Zalo destinations are live and correct is unverified (owner checks by hand after deploy); visual fidelity awaits owner review of the G7 screenshots in the task folder.
 - Remote logo and poster load in current browser checks but still depend on third-party hosting. The provided merch form destination has not been independently checked for order fulfillment.
 
 ## References
