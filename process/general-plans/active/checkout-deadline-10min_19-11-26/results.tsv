@@ -1,0 +1,5 @@
+iteration	timestamp	gaps_found	fail_count	concern_count	applied	saturation_status	loop_status	notes
+0	2026-11-19	6	0	6	0	n/a	baseline	PVL first pass Gate: CONDITIONAL (G1-G6)
+1	2026-11-19	6	0	6	6	n/a	CONTINUE	supplement applied G1-G6; re-validate from V1
+2	2026-11-19	0	0	0	0	n/a	HALTED_SUCCESS	re-validate from V1: Gate: PASS
+evl-1	2026-11-19	0	0	0	0	n/a	HALTED_SUCCESS	EVL confirmation by vc-tester: all contract gates green; npm test 2 known pre-existing failures only; review approved-with-concerns; pack validator 0/0

@@ -86,7 +86,7 @@ export function validatePayOsLinkResponse(value: unknown, expected: { amount: nu
   let url: URL;
   try { url = new URL(data.checkoutUrl); } catch { return null; }
   if (url.protocol !== "https:" || !CHECKOUT_HOSTS.has(url.hostname) || url.username || url.password) return null;
-  const expiresAt = Math.floor(Date.now() / 1000) + 300;
+  const expiresAt = Math.floor(Date.now() / 1000) + 600;
   return { checkoutUrl: url.toString(), paymentLinkId: data.paymentLinkId, amount: expected.amount, orderCode: expected.orderCode, expiresAt };
 }
 
@@ -118,7 +118,7 @@ export async function lookupPayOsPaymentLink(input: { amountVnd: number; orderCo
     throw new PayOsProviderError("lookup", response.status, providerCode(root));
   }
   // GET returns its signed id rather than the POST checkoutUrl/paymentLinkId.
-  return { paymentLinkId: data.id, checkoutUrl: `https://pay.payos.vn/web/${data.id}`, amount: input.amountVnd, orderCode: input.orderCode, expiresAt: Math.floor(Date.now() / 1000) + 300 };
+  return { paymentLinkId: data.id, checkoutUrl: `https://pay.payos.vn/web/${data.id}`, amount: input.amountVnd, orderCode: input.orderCode, expiresAt: Math.floor(Date.now() / 1000) + 600 };
 }
 
 export async function createPayOsPaymentLink(input: { orderId: string; orderCode: number; amountVnd: number; config: PayOsConfig; siteOrigin?: string; fetchImpl?: typeof fetch; now?: number; expiresAt?: string; observer?: PayOsOperationObserver }): Promise<PayOsLink> {
@@ -135,7 +135,7 @@ export async function createPayOsPaymentLink(input: { orderId: string; orderCode
   const orderCode = input.orderCode;
   const createSignature = signPayOsCreateLink({ amount, cancelUrl: cancelUrl.toString(), description, orderCode, returnUrl: returnUrl.toString() }, input.config.checksumKey);
   const nowMs = input.now ?? Date.now();
-  const expiresAtMs = input.expiresAt ? Date.parse(input.expiresAt) : nowMs + 300_000;
+  const expiresAtMs = input.expiresAt ? Date.parse(input.expiresAt) : nowMs + 600_000;
   if (!Number.isFinite(expiresAtMs) || expiresAtMs <= nowMs) throw new Error("PayOS payment expiry is invalid.");
   const expiredAt = Math.floor(expiresAtMs / 1000);
   // Only called for the DB's one-time can_create claim. Subsequent attempts

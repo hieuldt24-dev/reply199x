@@ -125,4 +125,26 @@ describe("PayOS payment-link contract", () => {
     const noCodeSignature = sign(Object.fromEntries(Object.entries(missingCode).filter(([, value]) => value !== undefined)));
     expect(parsePayOsWebhook({ ...payload, data: missingCode, signature: noCodeSignature }, "checksum")).toBeNull();
   });
+  describe("payment deadline sent to PayOS", () => {
+    const data = { amount: 169000, orderCode: 77, currency: "VND", paymentLinkId: "plink-77", checkoutUrl: "https://pay.payos.vn/web/plink-77" };
+    const signed = "amount=169000&checkoutUrl=https://pay.payos.vn/web/plink-77&currency=VND&orderCode=77&paymentLinkId=plink-77";
+    const base = { orderId: "7d444840-9dc0-4e22-a132-5a1ae8a4f1d0", orderCode: 77, amountVnd: 169000, config: { clientId: "id", apiKey: "key", checksumKey: "checksum" }, siteOrigin: "https://reply.test" };
+    const sentExpiredAt = (fetchMock: ReturnType<typeof vi.fn<typeof fetch>>) => JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).expiredAt as number;
+    const okFetch = () => vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code: "00", data, signature: createHmac("sha256", "checksum").update(signed).digest("hex") }));
+
+    it("defaults PayOS expiredAt to now plus 600 seconds when no expiresAt is given", async () => {
+      const now = Date.parse("2026-11-19T10:00:00.000Z");
+      const fetchMock = okFetch();
+      await createPayOsPaymentLink({ ...base, fetchImpl: fetchMock, now });
+      expect(sentExpiredAt(fetchMock)).toBe(Math.floor(now / 1000) + 600);
+    });
+
+    it("passes an explicit expiresAt through unchanged as expiredAt", async () => {
+      const now = Date.parse("2026-11-19T10:00:00.000Z");
+      const expiresAt = "2026-11-19T10:07:30.000Z";
+      const fetchMock = okFetch();
+      await createPayOsPaymentLink({ ...base, fetchImpl: fetchMock, now, expiresAt });
+      expect(sentExpiredAt(fetchMock)).toBe(Math.floor(Date.parse(expiresAt) / 1000));
+    });
+  });
 });

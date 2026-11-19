@@ -32,7 +32,7 @@ export function TimelineSection() {
                 </div>
               </header>
               <div className="reply-stop__intro">
-                <p className="reply-stop__venue">Địa điểm: Quán &quot;Cơm Bưng Nước Rót&quot;</p>
+                <p className="reply-stop__venue">Địa điểm: Nhà hàng Cơm Bưng Nước Rót, 29 Mỹ Khê 6, Đà Nẵng</p>
                 <h3 id="popup-title">POP-UP REPLY 199X: Hẹn nhau giữa miền ký ức</h3>
               </div>
               <div className="reply-stop__copy">

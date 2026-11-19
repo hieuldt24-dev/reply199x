@@ -1,0 +1,9 @@
+{
+  "task": "checkout-deadline-10min",
+  "scenarios": [
+    {"scenario": "PUBLIC grant regression: create or replace leaves the function executable by public/anon/authenticated.", "ruled_out": true, "rationale": "Migration restates revoke from public,anon,authenticated and grant to service_role; runner check 5e asserts service_role true, anon false, authenticated false after all migrations."},
+    {"scenario": "search_path hijack: redefinition drops SET search_path so unqualified names resolve to attacker objects.", "ruled_out": true, "rationale": "Function copied verbatim with security definer set search_path = ''; checkout-access-guard.sql asserts prosecdef and proconfig contains search_path=\"\"."},
+    {"scenario": "Late payment bypass: longer window lets a payment after link expiry be marked paid.", "ruled_out": true, "rationale": "process_payos_webhook unchanged; check 5d forces link expiry into the past and asserts reconciliation with failure_code late_or_terminal_payment."},
+    {"scenario": "Strike-window evasion via longer link: 10-minute links push strike evidence outside the 1-hour lookback.", "ruled_out": true, "rationale": "Strike logic reads stored least(link, order) expiry with a 1-hour lower bound; a 10-minute link moves a strike 5 minutes later, well inside the window. Existing runner strike cases pass unchanged."}
+  ]
+}

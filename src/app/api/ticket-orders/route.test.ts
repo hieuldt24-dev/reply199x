@@ -56,7 +56,7 @@ function responseRow(overrides: Record<string, unknown> = {}) { return { data: [
 function request(body: unknown, headers: Record<string, string> = {}) {
   return new NextRequest("http://localhost:3000/api/ticket-orders", { method: "POST", headers: { origin: "http://localhost:3000", "content-type": "application/json", ...headers }, body: typeof body === "string" ? body : JSON.stringify(body) });
 }
-const link = { paymentLinkId: "benchmark-link", checkoutUrl: "https://pay.payos.vn/web/benchmark-link", amount: 169000, orderCode: 112233, expiresAt: Math.floor(Date.now() / 1000) + 300 };
+const link = { paymentLinkId: "benchmark-link", checkoutUrl: "https://pay.payos.vn/web/benchmark-link", amount: 169000, orderCode: 112233, expiresAt: Math.floor(Date.now() / 1000) + 600 };
 function setPayOsEnabled() {
   vi.stubEnv("PAYOS_CHECKOUT_ENABLED", "true");
 }

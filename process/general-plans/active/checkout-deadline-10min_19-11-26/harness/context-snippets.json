@@ -1,0 +1,11 @@
+{
+  "task": "checkout-deadline-10min",
+  "snippets": [
+    {"file": "supabase/migrations/202611130001_ticket_sales.sql", "lines": "55", "description": "Original orders.payment_expires_at default (5 minutes); now overridden by 202611190001 statement 1.", "content": "payment_expires_at timestamptz not null default (now() + interval '5 minutes')"},
+    {"file": "supabase/migrations/202611150001_checkout_access_guard.sql", "lines": "108-157", "description": "Previous prepare_payos_checkout definition and grants; copied verbatim into 202611190001 except line 151.", "content": "least(v_order.payment_expires_at,v_now+interval '5 minutes')"},
+    {"file": "supabase/migrations/202611190001_checkout_deadline_10min.sql", "lines": "13", "description": "New order default.", "content": "alter table public.orders alter column payment_expires_at set default (now() + interval '10 minutes');"},
+    {"file": "supabase/migrations/202611190001_checkout_deadline_10min.sql", "lines": "15-64", "description": "prepare_payos_checkout redefined; only the link-expiry literal differs from 150001; 60 s lease, SECURITY DEFINER, empty search_path, revoke/grant kept.", "content": "least(v_order.payment_expires_at,v_now+interval '10 minutes')"},
+    {"file": "supabase/migrations/202611140009_fix_payos_webhook_outbox_conflict.sql", "lines": "29", "description": "Late-payment rule (unchanged): payment after link expiry goes to reconciliation.", "content": "v_link.expires_at <= now()"},
+    {"file": "src/lib/payments/payos/checkout.ts", "lines": "89,121,138", "description": "Fallback expiries 300 s -> 600 s; the route always passes the DB expiry so these are fallbacks only.", "content": "nowMs + 600_000"}
+  ]
+}

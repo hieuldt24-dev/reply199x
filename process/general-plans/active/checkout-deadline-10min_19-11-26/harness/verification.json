@@ -1,0 +1,19 @@
+{
+  "task": "checkout-deadline-10min",
+  "commands": [
+    {"command": "npm.cmd test (baseline, before edits)", "result": "EXIT 1: 3 failed / 403 passed (406). Visible failure: TicketRequestDialog timeout (flaky, not in blast radius); the other two match the known pre-existing set by count."},
+    {"command": "node scripts/test-checkout-guard-db.mjs", "result": "PASS (EXIT 0): all migrations incl. 202611190001, checkout-access-guard.sql structural assertions with sentinel, checks 5a-5e."},
+    {"command": "npx.cmd vitest run src/lib/payments/payos src/app/api/ticket-orders", "result": "PASS: 4 files, 71 tests."},
+    {"command": "npx.cmd eslint src/lib/payments/payos --max-warnings=0", "result": "PASS (EXIT 0)."},
+    {"command": "npm.cmd run typecheck", "result": "PASS (EXIT 0)."},
+    {"command": "npm.cmd run build", "result": "First run EXIT 1 (known Next 16.4.3 advisory stop); retry EXIT 0."},
+    {"command": "npm.cmd test (after)", "result": "EXIT 1: 2 failed / 406 passed (408). Failures: FormPopup T12 and route-client secure cookies, both known pre-existing. No new failures."},
+    {"command": "diff 150001:108-157 vs new migration function+grants", "result": "Exactly one line differs: interval '5 minutes' -> '10 minutes'."}
+  ],
+  "manualChecks": [
+    "PENDING owner: step 0 pre-check in production SQL Editor (function body still matches 150001).",
+    "PENDING owner AC8: read-only queries for column default, function literal and grants after apply.",
+    "PENDING owner AC7: one real PayOS payment at minute 6-9 lands as paid."
+  ],
+  "result": "CODE DONE: all locally runnable automated gates green; hosted application and live PayOS behavior unverified (owner-run)."
+}

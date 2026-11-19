@@ -11,7 +11,7 @@ export function EventsSection() {
 <div className="inline-flex items-center gap-2 bg-retro-red text-retro-paper font-space text-xs uppercase font-extrabold tracking-widest px-3 py-1 rounded shadow-retro-solid mb-3">
  GIỮ CHỖ CHO CUỘC HẸN THANH XUÂN 
 </div>
-<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-dark retro-gold-shadow"> Làn sóng xưa đang chờ bạn! </h2><p className="font-vietnam text-retro-ink-muted text-base sm:text-lg mt-3"> {brief.tickets[0]} </p><p className="reply-body-copy">{brief.tickets[1]}</p>
+<h2 className="font-epilogue font-black text-3xl sm:text-5xl uppercase tracking-tight text-retro-dark retro-gold-shadow"> REPLY 199X đang chờ bạn! </h2><p className="font-vietnam text-retro-ink-muted text-base sm:text-lg mt-3"> {brief.tickets[0]} </p><p className="reply-body-copy">{brief.tickets[1]}</p>
 </div>
 <div className="reply-events__grid grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16">
 <div className="lg:col-span-6 flex justify-center">

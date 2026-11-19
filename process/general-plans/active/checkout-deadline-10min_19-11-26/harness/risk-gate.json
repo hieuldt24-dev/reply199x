@@ -1,0 +1,9 @@
+{
+  "task": "checkout-deadline-10min",
+  "planPath": "process/general-plans/active/checkout-deadline-10min_19-11-26/checkout-deadline-10min_PLAN_19-11-26.md",
+  "riskLevel": "high",
+  "riskClasses": ["billing-or-credits", "schema-data-migration"],
+  "mustStopBeforeFinalize": true,
+  "humanApprovalRequired": true,
+  "why": "Changes the ticket payment deadline (order default and PayOS link expiry) through a new forward-only migration that redefines the SECURITY DEFINER function prepare_payos_checkout. The owner applies the SQL to production and deploys; agents never do. An independent reviewer decision is required before finalize."
+}

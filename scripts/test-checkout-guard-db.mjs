@@ -498,6 +498,61 @@ try {
     console.log("v5 concurrent same-key exactly-one-creator PASS (12 requests, 1 can_create=true)");
   } finally { await Promise.all(concurrentReplays.map((client) => client.end())); }
 
+  // 202611190001: 10-minute checkout deadline (checks 5a-5e). Every check uses a fresh user.
+  // 5a: a new order gets payment_expires_at = created_at + 10 minutes (one transaction now()).
+  const windowUser = await newUser(admin);
+  const windowOrder = (await call(service, windowUser, randomUUID())).rows[0];
+  const orderWindow = (await admin.query("select extract(epoch from payment_expires_at - created_at)::float8 as s from public.orders where id=$1", [windowOrder.order_id])).rows[0].s;
+  assert.ok(orderWindow >= 599 && orderWindow <= 601, `5a order window must be about 10 minutes (got ${orderWindow}s)`);
+  console.log("5a order deadline is created + 10 minutes PASS");
+  // 5b: the prepare lease creates a link expiring about 10 minutes later, never after the order deadline.
+  const linkUser = await newUser(admin);
+  const linkOrder = (await call(service, linkUser, randomUUID())).rows[0];
+  const beforePrepare = Date.now();
+  const linkLease = (await service.query("select * from public.prepare_payos_checkout($1,$2,null,null)", [linkOrder.order_id, linkUser])).rows[0];
+  const afterPrepare = Date.now();
+  const linkExpiresMs = new Date(linkLease.expires_at).getTime();
+  const linkOrderDeadline = new Date((await admin.query("select payment_expires_at from public.orders where id=$1", [linkOrder.order_id])).rows[0].payment_expires_at).getTime();
+  assert.equal(linkLease.can_create, true);
+  assert.ok(linkExpiresMs - beforePrepare > 540_000, "5b link expiry must be more than 9 minutes after prepare (a 5-minute regression fails)");
+  assert.ok(linkExpiresMs <= afterPrepare + 600_000 + 5_000, "5b link expiry must be about 10 minutes after prepare");
+  assert.ok(linkExpiresMs <= linkOrderDeadline, "5b link expiry must never exceed the order deadline");
+  console.log("5b link expiry is about 10 minutes and capped by the order deadline PASS");
+  // 5c: least() rule kept: an order deadline shorter than 10 minutes caps the link expiry.
+  const capUser = await newUser(admin);
+  const capOrder = (await call(service, capUser, randomUUID())).rows[0];
+  await admin.query("update public.orders set payment_expires_at=now()+interval '3 minutes' where id=$1", [capOrder.order_id]);
+  const capLease = (await service.query("select * from public.prepare_payos_checkout($1,$2,null,null)", [capOrder.order_id, capUser])).rows[0];
+  const capDeadline = (await admin.query("select payment_expires_at from public.orders where id=$1", [capOrder.order_id])).rows[0].payment_expires_at;
+  assert.equal(new Date(capLease.expires_at).getTime(), new Date(capDeadline).getTime(), "5c link expiry must equal a shorter order deadline");
+  console.log("5c link expiry equals a 3-minute order deadline (least rule kept) PASS");
+  // 5d: a paid webhook inside the 10-minute link window lands as paid; after link expiry it still goes to reconciliation.
+  const inTimeUser = await newUser(admin);
+  const inTimeOrder = (await call(service, inTimeUser, randomUUID())).rows[0];
+  const inTimeLinkId = `in-time-${randomUUID()}`;
+  const inTimeLease = (await service.query("select * from public.prepare_payos_checkout($1,$2,$3,$4)", [inTimeOrder.order_id, inTimeUser, inTimeLinkId, "https://pay.payos.vn/web/in-time"])).rows[0];
+  const inTimeRemaining = (await admin.query("select extract(epoch from expires_at - now())::float8 as s from public.payos_payment_links where order_id=$1", [inTimeOrder.order_id])).rows[0].s;
+  assert.ok(inTimeRemaining > 540, `5d link must have more than 9 minutes left (got ${inTimeRemaining}s)`);
+  const inTimePaid = await service.query("select * from public.process_payos_webhook($1,$2,$3,$4,$5,'VND',true)", [`paid-${randomUUID()}`, inTimeLease.order_code, inTimeLinkId, `tx-${randomUUID()}`, inTimeOrder.total_vnd]);
+  assert.equal(inTimePaid.rows[0].result, "paid", "5d a payment inside the link window must land as paid");
+  const lateUser = await newUser(admin);
+  const lateOrder = (await call(service, lateUser, randomUUID())).rows[0];
+  const lateLinkId = `late-${randomUUID()}`;
+  const lateLease = (await service.query("select * from public.prepare_payos_checkout($1,$2,$3,$4)", [lateOrder.order_id, lateUser, lateLinkId, "https://pay.payos.vn/web/late-rule"])).rows[0];
+  await admin.query("update public.payos_payment_links set expires_at=now()-interval '1 second' where order_id=$1", [lateOrder.order_id]);
+  const lateEventId = `paid-${randomUUID()}`;
+  const latePaid = await service.query("select * from public.process_payos_webhook($1,$2,$3,$4,$5,'VND',true)", [lateEventId, lateLease.order_code, lateLinkId, `tx-${randomUUID()}`, lateOrder.total_vnd]);
+  assert.equal(latePaid.rows[0].result, "reconciliation", "5d a payment after link expiry must still go to reconciliation");
+  assert.equal((await admin.query("select failure_code from public.payos_payment_events where provider_event_id=$1", [lateEventId])).rows[0].failure_code, "late_or_terminal_payment");
+  console.log("5d in-window payment paid, late payment reconciliation (late_or_terminal_payment) PASS");
+  // 5e: prepare_payos_checkout stays service_role-only.
+  const prepareGrants = (await admin.query(`select
+    has_function_privilege('service_role','public.prepare_payos_checkout(uuid,uuid,text,text)','execute') as svc,
+    has_function_privilege('anon','public.prepare_payos_checkout(uuid,uuid,text,text)','execute') as anon,
+    has_function_privilege('authenticated','public.prepare_payos_checkout(uuid,uuid,text,text)','execute') as auth`)).rows[0];
+  assert.deepEqual({ ...prepareGrants }, { svc: true, anon: false, auth: false }, "5e prepare_payos_checkout grants must be service_role only");
+  console.log("5e prepare_payos_checkout grants service_role-only PASS");
+
   console.log("real PostgreSQL G2 migration, permissions, policy and concurrency checks PASS");
   console.log("v5 paired database timing", JSON.stringify(await compareCombinedRpcLatency(admin, service)));
 
