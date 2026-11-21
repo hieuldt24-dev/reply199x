@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe("Navbar check-in group", () => {
-  it("N1 renders one collapsed group toggle in both navs, keeps the five NAV_LINKS and no header ticket trigger", () => {
+  it("N1 renders one collapsed group toggle in both navs, keeps the four NAV_LINKS and no header ticket trigger", () => {
     renderNavbar();
     for (const nav of [desktopNav(), mobileNav()]) {
       const toggle = groupToggle(nav);

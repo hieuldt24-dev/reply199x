@@ -94,13 +94,13 @@ export const attendanceSteps = [
 ] as const satisfies readonly AttendanceStep[];
 
 export const assets = {
-  "logo": "/images/reply-199x-logo.png",
-  cassette: "/images/reply-199x-cassette.png",
-  "poster": "/images/reply-199x-event-poster.png",
-  popupPoster: "/images/reply-199x-popup.jpg",
-  merchCollection: "/images/reply-199x-merch-collection.png",
-  merchXiTin: "/images/reply-199x-merch-xi-tin.png",
-  merchXiLay: "/images/reply-199x-merch-xi-lay.png"
+  "logo": "/images/reply-199x-logo.webp",
+  cassette: "/images/reply-199x-cassette.webp",
+  "poster": "/images/reply-199x-event-poster.webp",
+  popupPoster: "/images/reply-199x-popup.webp",
+  merchCollection: "/images/reply-199x-merch-collection.webp",
+  merchXiTin: "/images/reply-199x-merch-xi-tin.webp",
+  merchXiLay: "/images/reply-199x-merch-xi-lay.webp"
 } as const;
 export const events = [
  { id:"pop-up", date:"20–21.11.2026", venue:"Cơm Bưng Nước Rót", time:"Vào cửa tự do" },

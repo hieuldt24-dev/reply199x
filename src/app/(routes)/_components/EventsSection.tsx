@@ -20,7 +20,7 @@ export function EventsSection() {
 <span className="font-space text-xs font-bold text-retro-red tracking-wider uppercase">POSTER CHÍNH THỨC</span><span className="font-space text-[10px] text-retro-forest font-bold">22.11.2026 • ĐÀ NẴNG</span>
 </div>
 <div className="overflow-hidden rounded-lg border-2 border-retro-dark bg-retro-dark">
-<RemoteImage src={assets.poster} alt="Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X" width={2000} height={2500} className="w-full h-auto object-cover" fallback="REPLY 199X • Đêm nhạc 22.11.2026 • On The Radio" />
+<RemoteImage src={assets.poster} alt="Poster chính thức Đêm nhạc Không gian âm nhạc hoài niệm Reply 199X" width={1280} height={1600} className="w-full h-auto object-cover" fallback="REPLY 199X • Đêm nhạc 22.11.2026 • On The Radio" />
 </div>
 <div className="mt-2 text-center font-space text-xs text-retro-paper/90 font-semibold tracking-wider">
  ON THE RADIO • 76 THÁI PHIÊN, ĐÀ NẴNG 

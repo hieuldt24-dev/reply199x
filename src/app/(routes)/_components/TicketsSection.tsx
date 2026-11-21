@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { TicketSalesClosed } from "./TicketSalesClosed";
 
-const voucherImage = "/images/1794567834681_48355094629491256_48355094629491256_d855c0c2ea10cd6a6d411ae92785f5d2.jpg";
+const voucherImage = "/images/reply-199x-voucher.webp";
 
 export function TicketsSection() {
   return (

@@ -13,7 +13,7 @@ export function TicketStub({ quantity, merch }: TicketStubProps) {
         <span>KHÔNG GIAN ÂM NHẠC HOÀI NIỆM</span>
       </div>
       <RemoteImage
-        src="/images/1794567834681_48355094629491256_48355094629491256_d855c0c2ea10cd6a6d411ae92785f5d2.jpg"
+        src="/images/reply-199x-voucher.webp"
         alt="Poster REPLY 199X · Không gian âm nhạc hoài niệm · 22.11.2026"
         width={2478}
         height={1770}

@@ -89,7 +89,7 @@ export function TimelineSection() {
             </article>
           </div>
           <div className="reply-timeline__poster reply-timeline__poster--right" aria-hidden="true">
-            <Image src={assets.poster} alt="" width={2000} height={2500} sizes="(min-width: 1400px) 190px, 0px" />
+            <Image src={assets.poster} alt="" width={1280} height={1600} sizes="(min-width: 1400px) 190px, 0px" />
           </div>
         </div>
       </div>

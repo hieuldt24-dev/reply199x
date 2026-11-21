@@ -6,5 +6,4 @@ export const NAV_LINKS = [
   { id: "timeline", label: "Lịch trình" },
   { id: "su-kien", label: "Sự kiện" },
   { id: "merch", label: "Kỷ vật" },
-  { id: "lien-he", label: "Liên hệ" },
 ] as const;
