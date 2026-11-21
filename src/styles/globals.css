@@ -987,3 +987,312 @@ body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:
 @media(prefers-reduced-motion:reduce) {
  .event-header__caret { transition:none; }
 }
+
+/* ==========================================================================
+   Bold poster pass (21-11-26): sunlit jade hero, alternating paper surfaces,
+   vermilion "stamp" buttons, ink-bordered cards. Colors and surfaces only:
+   no layout, spacing or markup changes (outlines/inset shadows stand in for borders).
+   ========================================================================== */
+:root { --stamp-ink:var(--color-retro-ink); --tri-stripe:linear-gradient(90deg,var(--color-retro-red) 0 33.4%,var(--color-retro-gold) 33.4% 66.7%,var(--color-retro-teal) 66.7%); }
+
+/* Hero: jade room lit by warm mustard window light, faint sun rays and print grain. */
+.reply-site>.reply-hero {
+ background:
+  radial-gradient(ellipse 44% 44% at 50% 60%,color-mix(in srgb,var(--color-retro-mustard) 70%,transparent) 0%,color-mix(in srgb,var(--color-retro-mustard) 28%,transparent) 46%,transparent 74%),
+  radial-gradient(ellipse 55% 60% at 0% 0%,color-mix(in srgb,var(--color-retro-gold-light) 26%,transparent),transparent 62%),
+  radial-gradient(ellipse 50% 55% at 100% 100%,color-mix(in srgb,var(--color-retro-red) 30%,transparent),transparent 66%),
+  linear-gradient(180deg,#0D3129 0%,var(--color-retro-jade) 48%,#103A31 100%);
+}
+.reply-hero::before { inset:0; width:auto; height:auto; top:0; right:0; border:0; border-radius:0; box-shadow:none;
+ background:repeating-conic-gradient(from 0deg at 50% 60%,color-mix(in srgb,var(--color-retro-gold-light) 14%,transparent) 0deg 5deg,transparent 5deg 13deg);
+ -webkit-mask-image:radial-gradient(ellipse 62% 70% at 50% 60%,#000 18%,transparent 78%); mask-image:radial-gradient(ellipse 62% 70% at 50% 60%,#000 18%,transparent 78%); }
+.reply-hero::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.16; mix-blend-mode:overlay;
+ background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.reply-hero__center { position:relative; z-index:1; }
+.reply-hero h1>span:first-child { color:var(--color-retro-paper-card); text-shadow:3px 3px 0 var(--color-retro-red),6px 6px 0 var(--color-retro-ink); }
+.reply-hero h1>span:last-child { color:var(--color-retro-gold); text-shadow:3px 3px 0 var(--color-retro-red-deep),5px 5px 0 var(--color-retro-ink); }
+.reply-hero--centered .reply-hero__copy>.reply-hero__quote { color:var(--color-retro-paper-card); text-shadow:1px 1px 0 var(--color-retro-ink),0 0 14px color-mix(in srgb,var(--color-retro-ink) 55%,transparent); }
+@media(max-width:639px) {
+ .reply-hero h1>span:first-child { text-shadow:2px 2px 0 var(--color-retro-red),4px 4px 0 var(--color-retro-ink); }
+ .reply-hero h1>span:last-child { text-shadow:2px 2px 0 var(--color-retro-red-deep),4px 4px 0 var(--color-retro-ink); }
+}
+
+/* Closed sales label: clearly inactive, readable, no fill. Outline (inset) keeps the box size unchanged. */
+.reply-site .ticket-closed,.reply-site .ticket-closed:hover { background:transparent; color:#EFE6CC; border-color:transparent; box-shadow:none; transform:none; outline:2px dashed color-mix(in srgb,var(--color-retro-paper) 72%,transparent); outline-offset:-2px; cursor:not-allowed; text-shadow:none; }
+.reply-site .reply-hero .ticket-closed { background:color-mix(in srgb,var(--color-retro-ink) 38%,transparent); }
+.reply-site .reply-ticket .ticket-closed,.reply-site .reply-ticket .ticket-closed:hover { color:var(--color-retro-ink-muted); outline-color:color-mix(in srgb,var(--color-retro-ink) 55%,transparent); }
+
+/* Navbar: deep jade with the poster's tri-color rule. */
+.event-header { background:linear-gradient(180deg,var(--color-retro-forest),#113730); }
+.event-header__stripe { background:var(--tri-stripe); }
+.event-header__cta { border-color:var(--color-retro-gold); box-shadow:3px 3px 0 var(--color-retro-gold); transition:background-color .18s,transform .15s,box-shadow .15s; }
+.event-header__cta:hover { background:var(--color-retro-red-deep); transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--color-retro-gold); }
+.event-header__cta:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--color-retro-gold); }
+
+/* Section surfaces: cream paper / light mustard paper / deep jade, alternating. */
+.reply-site>.reply-about,.reply-site>.reply-events,.reply-site>.reply-process {
+ background-color:var(--color-retro-paper);
+ background-image:radial-gradient(color-mix(in srgb,var(--color-retro-ink) 10%,transparent) .8px,transparent 1.1px),linear-gradient(180deg,color-mix(in srgb,var(--color-retro-paper-card) 80%,transparent),transparent 45%);
+ background-size:15px 15px,100% 100%;
+}
+.reply-site>.radio-section {
+ background:
+  radial-gradient(ellipse 60% 70% at 15% 0%,color-mix(in srgb,var(--color-retro-paper-card) 60%,transparent),transparent 60%),
+  repeating-linear-gradient(0deg,color-mix(in srgb,var(--color-retro-ink) 3.5%,transparent) 0 1px,transparent 1px 6px),
+  var(--color-retro-mustard-paper);
+ border-block-color:var(--color-retro-ink);
+}
+.radio-section { --radio-bg:var(--color-retro-mustard-paper); --radio-ink:#3D3A2C; }
+.reply-site>.radio-section .radio-eyebrow { color:var(--color-retro-red-deep); }
+.radio-section .radio-eyebrow__dot { background:var(--color-retro-red-deep); }
+.reply-site>.radio-section .radio-title { color:var(--color-retro-dark); text-shadow:2px 2px 0 var(--color-retro-paper-card),4px 4px 0 color-mix(in srgb,var(--color-retro-red) 55%,transparent); }
+.radio-section .radio-cabinet { border-color:var(--color-retro-ink); box-shadow:0 12px 0 var(--color-retro-ink),0 26px 34px color-mix(in srgb,var(--color-retro-ink) 30%,transparent); }
+.radio-section .radio-now { border-color:var(--color-retro-ink); }
+
+.reply-site>.reply-timeline {
+ background:
+  radial-gradient(color-mix(in srgb,var(--color-retro-gold) 16%,transparent) 1px,transparent 1.2px) 0 0/18px 18px,
+  radial-gradient(ellipse 70% 50% at 50% 0%,color-mix(in srgb,var(--color-retro-teal) 45%,transparent),transparent 70%),
+  linear-gradient(180deg,var(--color-retro-jade),#113A31);
+}
+.reply-site .reply-timeline .reply-section-heading h2 { color:var(--color-retro-paper-card); text-shadow:3px 3px 0 var(--color-retro-red-deep); }
+.reply-stop__date { text-shadow:3px 3px 0 var(--color-retro-red-deep); }
+.reply-stop__activities { border:1px dashed color-mix(in srgb,var(--color-retro-gold) 55%,transparent); background:color-mix(in srgb,var(--color-retro-forest) 55%,transparent); }
+.reply-stop--live .reply-stop__badge { box-shadow:2px 2px 0 var(--color-retro-red); }
+
+.reply-site>.reply-merch {
+ color:var(--color-retro-ink);
+ background:
+  repeating-conic-gradient(from 0deg at 50% -10%,color-mix(in srgb,var(--color-retro-paper-card) 16%,transparent) 0deg 4deg,transparent 4deg 10deg),
+  radial-gradient(ellipse 60% 60% at 50% 0%,color-mix(in srgb,var(--color-retro-gold-light) 70%,transparent),transparent 70%),
+  var(--color-retro-mustard-deep);
+}
+.reply-merch-intro-row .reply-eyebrow { color:var(--color-retro-red-deep); }
+.reply-merch-intro-row>p { color:#3D3A2C; }
+
+/* Headings: deep jade ink with a printed gold offset on light paper. */
+.reply-site .reply-section-heading h2,.reply-site .reply-about__intro h2,.reply-site .reply-merch-intro-row h2,.reply-site .reply-process h2 { color:var(--color-retro-dark); text-shadow:2px 2px 0 var(--color-retro-gold); }
+.reply-site .reply-merch-intro-row h2 { text-shadow:2px 2px 0 var(--color-retro-paper-card); }
+.reply-section-heading>div:first-child,.reply-process .bg-amber-100 { text-decoration:underline 2px var(--color-retro-gold); text-underline-offset:6px; }
+.reply-merch-intro-row .reply-eyebrow { text-decoration:underline 2px var(--color-retro-red-deep); text-underline-offset:6px; }
+.reply-timeline .reply-section-heading>div:first-child { text-decoration-color:var(--color-retro-red); }
+.reply-track>div:first-child,.reply-step>div:first-child>div:first-child>span:last-child { text-shadow:2px 2px 0 var(--color-retro-gold); }
+
+/* Primary actions: vermilion with ink outline and an offset "stamp" shadow. */
+.reply-ticket__contact:not(.ticket-closed),.reply-letter form>button {
+ background:var(--color-retro-red); color:var(--color-retro-paper-card); box-shadow:inset 0 0 0 2px var(--stamp-ink),4px 4px 0 var(--stamp-ink); transition:transform .15s,box-shadow .15s,background-color .15s; }
+.reply-merch-card__cta,.radio-section .radio-cta:not(.radio-cta--disabled) {
+ background:var(--color-retro-red); border-color:var(--stamp-ink); color:var(--color-retro-paper-card); box-shadow:4px 4px 0 var(--stamp-ink); transition:transform .15s,box-shadow .15s,background-color .15s; }
+.reply-merch-card__cta--secondary { background:var(--color-retro-mustard); color:var(--color-retro-ink); }
+.reply-ticket__contact:not(.ticket-closed):hover,.reply-letter form>button:hover { background:var(--color-retro-red-deep); transform:translate(-2px,-2px); box-shadow:inset 0 0 0 2px var(--stamp-ink),6px 6px 0 var(--stamp-ink); }
+.reply-merch-card__cta:hover,.radio-section .radio-cta:not(.radio-cta--disabled):hover { background:var(--color-retro-red-deep); border-color:var(--stamp-ink); color:var(--color-retro-paper-card); transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--stamp-ink); }
+.reply-merch-card__cta--secondary:hover { background:var(--color-retro-gold-light); color:var(--color-retro-ink); }
+.reply-ticket__contact:not(.ticket-closed):active,.reply-letter form>button:active { transform:translate(2px,2px); box-shadow:inset 0 0 0 2px var(--stamp-ink),1px 1px 0 var(--stamp-ink); }
+.reply-merch-card__cta:active,.radio-section .radio-cta:not(.radio-cta--disabled):active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--stamp-ink); }
+.reply-site .reply-merch .reply-merch-card__cta:focus-visible { outline-color:var(--color-retro-ink); }
+
+/* Cards: cream paper, ink border, offset shadow, red/gold labels. */
+.reply-merch-card { border-color:var(--stamp-ink); box-shadow:inset 0 0 0 1px var(--stamp-ink),7px 7px 0 var(--stamp-ink); }
+.reply-merch-card--featured { border-top-color:var(--color-retro-red); }
+.reply-merch-card__image { border-color:color-mix(in srgb,var(--color-retro-ink) 30%,transparent); background:var(--color-retro-paper); }
+.reply-merch-card__label>span { background:var(--color-retro-jade); color:var(--color-retro-paper-card); box-shadow:2px 2px 0 var(--color-retro-gold); }
+.reply-merch-card--featured .reply-merch-card__label>span { background:var(--color-retro-red); color:var(--color-retro-paper-card); }
+.reply-merch-card__price strong { color:var(--color-retro-red-deep); }
+.reply-ticket--compact { border-color:var(--stamp-ink); background:var(--color-retro-paper-card); box-shadow:inset 0 0 0 1px var(--stamp-ink),8px 8px 0 var(--stamp-ink); }
+.reply-ticket__info { background:var(--tri-stripe) top/100% 6px no-repeat; }
+.reply-ticket__header span:last-child { color:var(--color-retro-red-deep); }
+.reply-poster { box-shadow:inset 0 0 0 1px var(--stamp-ink),8px 8px 0 var(--color-retro-jade); }
+.reply-poster::before { background:color-mix(in srgb,var(--color-retro-mustard) 75%,transparent); }
+.reply-event-details>div:nth-child(2)>div>div:first-child { border-color:var(--stamp-ink); background:var(--color-retro-mustard-paper); box-shadow:2px 2px 0 var(--stamp-ink); }
+.reply-event-details>div:last-child { border-left-color:var(--color-retro-red); background:var(--color-retro-mustard-paper); }
+.reply-step>div:last-child { background:var(--color-retro-mustard-paper); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--color-retro-ink) 45%,transparent),4px 4px 0 var(--stamp-ink); }
+.reply-steps,.reply-step { border-color:color-mix(in srgb,var(--color-retro-ink) 35%,transparent); }
+
+/* Footer: deep jade, tri-color top rule, soft teal glow. */
+.reply-footer { background:var(--tri-stripe) top/100% 5px no-repeat,radial-gradient(ellipse 70% 60% at 50% 0%,color-mix(in srgb,var(--color-retro-teal) 30%,transparent),transparent 70%),var(--color-retro-forest); }
+
+@media(prefers-reduced-motion:reduce) {
+ .reply-ticket__contact,.reply-letter form>button,.reply-merch-card__cta,.radio-section .radio-cta,.event-header__cta { transform:none!important; }
+}
+
+/* UX polish pass (21-11-26): consistent hover/focus/active, gentle lifts, clearer form fields.
+   Transitions are removed by the global prefers-reduced-motion rule above. */
+.event-header__link { background-image:linear-gradient(var(--color-retro-gold),var(--color-retro-gold)); background-repeat:no-repeat; background-position:50% calc(100% - 7px); background-size:0 2px; transition:color .18s,background-color .18s,background-size .22s ease; }
+.event-header__link:hover { background-color:color-mix(in srgb,var(--color-retro-teal) 18%,transparent); background-image:linear-gradient(var(--color-retro-gold-light),var(--color-retro-gold-light)); background-repeat:no-repeat; background-position:50% calc(100% - 7px); background-size:calc(100% - 24px) 2px; }
+.event-header__link[aria-current="location"] { background-color:color-mix(in srgb,var(--color-retro-gold) 7%,transparent); background-image:linear-gradient(var(--color-retro-gold),var(--color-retro-gold)); background-repeat:no-repeat; background-position:50% calc(100% - 7px); background-size:calc(100% - 24px) 2px; box-shadow:none; }
+.event-header__submenu .event-header__link,.event-header__mobile .event-header__link { background-image:none; }
+.event-header__mobile .event-header__link[aria-current="location"] { box-shadow:inset 3px 0 var(--color-retro-gold); }
+
+.reply-text-link { text-decoration-thickness:1px; transition:color .18s,text-decoration-color .18s,text-underline-offset .18s; }
+.reply-text-link:hover { text-decoration-thickness:2px; text-underline-offset:7px; }
+
+/* Cards: subtle lift on pointer devices only. */
+@media(hover:hover) {
+ .reply-merch-card { transition:transform .2s ease,box-shadow .2s ease; }
+ .reply-merch-card:hover { transform:translate(-2px,-2px); box-shadow:inset 0 0 0 1px var(--stamp-ink),9px 9px 0 var(--stamp-ink); }
+ .reply-ticket--compact { transition:transform .2s ease,box-shadow .2s ease; }
+ .reply-ticket--compact:hover { transform:translate(-2px,-2px); box-shadow:inset 0 0 0 1px var(--stamp-ink),10px 10px 0 var(--stamp-ink); }
+ .reply-merch-card__image img { transition:transform .35s ease; }
+ .reply-merch-card:hover .reply-merch-card__image img { transform:scale(1.03); }
+}
+.reply-site .reply-merch-card:focus-within { box-shadow:inset 0 0 0 1px var(--stamp-ink),9px 9px 0 var(--stamp-ink); }
+
+/* Footer links: same press feel, visible focus. */
+.reply-footer a { transition:background-color .18s,color .18s,transform .15s; }
+.reply-footer a:hover { transform:translateY(-1px); }
+.reply-footer a:active { transform:translateY(1px); }
+.reply-footer a:focus-visible { outline:3px solid var(--color-retro-gold); outline-offset:3px; }
+
+/* Form fields (contact letter + login dialog): ink border, warm placeholder, gold focus ring. */
+.reply-letter :is(input,textarea),.login-dialog__credentials input { border-color:color-mix(in srgb,var(--color-retro-ink) 38%,transparent); background:var(--color-retro-paper-card); color:var(--color-retro-ink); transition:border-color .18s,box-shadow .18s; }
+.reply-letter :is(input,textarea)::placeholder,.login-dialog__credentials input::placeholder { color:#6E6A58; opacity:1; }
+.reply-letter :is(input,textarea):hover,.login-dialog__credentials input:hover { border-color:color-mix(in srgb,var(--color-retro-ink) 65%,transparent); }
+.reply-letter :is(input,textarea):focus-visible,.login-dialog__credentials input:focus-visible { border-color:var(--color-retro-dark); outline:2px solid var(--color-retro-dark); outline-offset:1px; box-shadow:0 0 0 5px color-mix(in srgb,var(--color-retro-gold) 45%,transparent); }
+.reply-letter :is(input,textarea)[aria-invalid="true"] { border-color:var(--color-retro-red); }
+
+/* Login + dialog primary buttons share the stamp press. */
+.login-dialog__google,.login-dialog__submit { transition:background-color .18s,transform .15s,box-shadow .15s; }
+.login-dialog__google:hover,.login-dialog__submit:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--color-retro-ink); }
+.login-dialog__google:active,.login-dialog__submit:active { transform:translate(1px,1px); box-shadow:none; }
+.ticket-request-dialog__primary:active:not(:disabled) { transform:translateY(2px); box-shadow:0 1px 0 var(--tod-red-dark); }
+
+/* Hierarchy: a touch more weight and tighter color on secondary headings and meta. */
+.reply-track h3,.reply-step h3 { color:var(--color-retro-dark); }
+.reply-track>div:last-child>span,.reply-ticket__details dt { color:#55503F; letter-spacing:.12em; }
+.reply-stop__copy { color:color-mix(in srgb,var(--color-retro-paper-card) 88%,transparent); }
+
+/* ==========================================================================
+   Pass 2 (21-11-26): header separation, layout bug fixes, rhythm and type
+   consistency, dialogs in the poster palette, CSS-only scroll reveal.
+   Hero layout/copy untouched. All motion is removed by the global
+   prefers-reduced-motion rule (animation/transition:none!important).
+   ========================================================================== */
+:root {
+ --ink-jade:#0A211C;
+ --paper-grain:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='.09'/%3E%3C/svg%3E");
+}
+
+/* Header: deeper ink-jade with print grain, ink edge + gold hairline that cut it off from the hero. */
+.event-header {
+ background:var(--paper-grain),linear-gradient(180deg,#0C2620 0%,var(--ink-jade) 100%);
+ border-bottom:1px solid var(--color-retro-ink);
+ box-shadow:0 2px 0 color-mix(in srgb,var(--color-retro-gold) 70%,transparent),0 10px 22px color-mix(in srgb,var(--color-retro-ink) 28%,transparent);
+}
+.event-header__stripe { height:3px; background:linear-gradient(90deg,var(--color-retro-red) 0 33.3%,var(--color-retro-mustard) 33.3% 66.6%,var(--color-retro-teal) 66.6%); box-shadow:0 1px 0 var(--color-retro-ink); }
+.event-header__link { color:#E9E0C6; }
+.event-header__link:hover { color:var(--color-retro-gold-light); background-color:color-mix(in srgb,var(--color-retro-gold) 9%,transparent); }
+.event-header__link[aria-current="location"],.event-header__group-toggle[aria-expanded="true"] { color:var(--color-retro-gold); }
+.event-header__cta { border:2px solid var(--color-retro-ink); background:var(--color-retro-red); color:var(--color-retro-paper-card); box-shadow:3px 3px 0 var(--color-retro-mustard); }
+.event-header__cta:hover { border-color:var(--color-retro-ink); background:var(--color-retro-red-deep); box-shadow:4px 4px 0 var(--color-retro-gold-light); }
+.event-header__cta:active { box-shadow:1px 1px 0 var(--color-retro-mustard); }
+.event-header__toggle { border:1px solid color-mix(in srgb,var(--color-retro-gold) 55%,transparent); background:color-mix(in srgb,var(--color-retro-gold) 8%,transparent); color:var(--color-retro-gold-light); }
+.event-header__toggle:hover,.event-header__toggle[aria-expanded="true"] { border-color:var(--color-retro-gold); background:color-mix(in srgb,var(--color-retro-gold) 16%,transparent); }
+/* Dropdown + mobile panel: same ink-jade paper, tri-color top edge, ink offset shadow. */
+.event-header__submenu,.event-header__mobile {
+ border:1px solid color-mix(in srgb,var(--color-retro-gold) 40%,transparent); border-top:0; border-radius:4px 4px 10px 10px;
+ background:var(--tri-stripe) top/100% 4px no-repeat,var(--paper-grain),linear-gradient(180deg,#0F2E27,var(--ink-jade));
+ padding-top:10px;
+ box-shadow:6px 6px 0 var(--color-retro-ink),0 18px 36px color-mix(in srgb,var(--color-retro-ink) 40%,transparent);
+}
+.event-header__submenu .event-header__link:hover,.event-header__mobile .event-header__link:hover { background-color:color-mix(in srgb,var(--color-retro-gold) 12%,transparent); color:var(--color-retro-gold-light); }
+.event-header__mobile>.event-header__link+.event-header__link,.event-header__mobile>.event-header__group { border-top:1px dashed color-mix(in srgb,var(--color-retro-paper) 14%,transparent); }
+.event-header__mobile .event-header__group-toggle[aria-expanded="true"] { background-color:color-mix(in srgb,var(--color-retro-gold) 10%,transparent); }
+.event-header__sublist { margin:2px 0 6px 16px; padding-left:8px; border-left:2px solid color-mix(in srgb,var(--color-retro-red) 70%,transparent); }
+/* Scrolled state (CSS only): shadow deepens once the page leaves the top. */
+@supports (animation-timeline:scroll()) {
+ @media(prefers-reduced-motion:no-preference) {
+  .event-header { animation:header-lift linear both; animation-timeline:scroll(root); animation-range:0 160px; }
+  @keyframes header-lift {
+   from { box-shadow:0 2px 0 color-mix(in srgb,var(--color-retro-gold) 70%,transparent),0 10px 22px color-mix(in srgb,var(--color-retro-ink) 28%,transparent); }
+   to { box-shadow:0 2px 0 color-mix(in srgb,var(--color-retro-gold) 85%,transparent),0 14px 30px color-mix(in srgb,var(--color-retro-ink) 50%,transparent); }
+  }
+ }
+}
+
+/* Merch: the intro paragraph had flex-basis:400px inside a column flex (a 400px-tall gap on mobile). */
+.reply-merch .reply-merch-intro-row { margin-bottom:40px; }
+@media(max-width:1023px) {
+ .reply-merch-intro-row>div,.reply-merch-intro-row>p { flex-basis:auto; }
+ .reply-merch .reply-merch-intro-row { margin-bottom:28px; }
+}
+.reply-site>.reply-merch { box-shadow:inset 0 1px 0 var(--color-retro-ink),inset 0 -1px 0 var(--color-retro-ink); }
+
+/* Radio: speaker grille dots were forest-on-forest (invisible); give it a lit brass mesh. */
+.radio-section .radio-grille {
+ background:
+  radial-gradient(circle,color-mix(in srgb,var(--color-retro-gold) 42%,transparent) 2px,transparent 2.6px) 0 0/11px 11px,
+  radial-gradient(ellipse 70% 60% at 30% 25%,color-mix(in srgb,var(--color-retro-teal) 38%,transparent),transparent 70%),
+  var(--radio-deep);
+ box-shadow:inset 0 2px 8px color-mix(in srgb,var(--color-retro-ink) 55%,transparent);
+}
+
+/* Timeline: align the heading with the stops column when the side posters show. */
+@media(min-width:1400px) {
+ .reply-timeline .reply-section-heading { margin-left:calc(190px + clamp(24px,3vw,48px)); }
+}
+
+/* Events: one body face (Nunito) for all copy; Be Vietnam Pro read as a stray font. */
+.reply-site .reply-body-copy { font:500 16px/1.8 "Reply Nunito",var(--font-vietnam); color:var(--color-retro-ink-muted); max-width:620px; }
+.reply-ticket__event p,.reply-ticket__perk { font-family:"Reply Nunito",var(--font-vietnam); }
+.reply-ticket__perk { color:var(--color-retro-dark); font-weight:700; }
+.reply-ticket__perforation::before,.reply-ticket__perforation::after { background:var(--color-retro-paper); border-color:var(--color-retro-ink); }
+.reply-event-details>div:nth-child(2)>div:last-child { border-bottom:0; }
+
+/* Process: step number sits with its title; notes read as stamped tags, not faint italics. */
+.reply-step>div:first-child>div:first-child { justify-content:flex-end; padding-top:2px; } /* column-reverse: flex-end = top */
+.reply-step>div:last-child { font:700 13px/1.5 "Reply Nunito",var(--font-vietnam); font-style:normal; color:var(--color-retro-dark); letter-spacing:.01em; }
+.reply-step h3 { line-height:1.25; }
+
+/* Section heading support copy: one muted tone. */
+.reply-section-heading p { color:var(--color-retro-ink-muted); }
+.reply-timeline .reply-section-heading p { color:color-mix(in srgb,var(--color-retro-paper-card) 85%,transparent); }
+
+/* CSS-only scroll reveal. Uses the individual translate property so hover transforms and rotations stay intact. */
+@supports (animation-timeline:view()) {
+ @media(prefers-reduced-motion:no-preference) {
+  .reply-track,.reply-stop,.reply-merch-card,.reply-step,.reply-ticket--compact,.reply-event-details,.radio-section .radio-cabinet {
+   /* fill-mode none: outside the entry range (and in full-page captures, print, no-scroll tools) the card is simply visible. */
+   animation:reply-reveal linear none; animation-timeline:view(); animation-range:entry 0% entry 70%;
+  }
+  @keyframes reply-reveal { from { opacity:.001; translate:0 28px; } to { opacity:1; translate:0 0; } }
+ }
+}
+
+/* Login dialog: dimmed room behind, tri-color edge, ink frame; the credential submit is the primary stamp. */
+.login-dialog { border:2px solid var(--color-retro-ink); border-radius:10px; background:var(--tri-stripe) top/100% 5px no-repeat,var(--color-retro-paper); box-shadow:8px 8px 0 var(--color-retro-ink),0 24px 60px color-mix(in srgb,var(--color-retro-ink) 40%,transparent); }
+.login-dialog::backdrop { background:color-mix(in srgb,var(--color-retro-forest) 72%,transparent); backdrop-filter:blur(3px); }
+.login-dialog__close { border-color:color-mix(in srgb,var(--color-retro-ink) 35%,transparent); transition:background-color .18s,color .18s; }
+.login-dialog__close:hover { background:var(--color-retro-dark); color:var(--color-retro-paper-card); }
+.login-dialog__submit { border-color:var(--color-retro-ink); background:var(--color-retro-red); color:var(--color-retro-paper-card); box-shadow:3px 3px 0 var(--color-retro-ink); }
+.login-dialog__submit:hover { background:var(--color-retro-red-deep); box-shadow:4px 4px 0 var(--color-retro-ink); }
+.login-dialog__google { border-color:var(--color-retro-ink) !important; }
+@media(prefers-reduced-motion:no-preference) {
+ .login-dialog[open],.form-popup[open] { animation:ticket-dialog-enter .22s ease-out both; }
+}
+
+/* Check in Google Form popup: same frame as the other dialogs. */
+.form-popup { border:2px solid var(--color-retro-ink); border-radius:10px; box-shadow:8px 8px 0 var(--color-retro-ink),0 24px 60px color-mix(in srgb,var(--color-retro-ink) 45%,transparent); }
+.form-popup::backdrop { backdrop-filter:blur(3px); }
+.form-popup__bar { padding-top:15px; background:var(--tri-stripe) top/100% 5px no-repeat,var(--color-retro-paper); border-bottom-color:var(--color-retro-ink); }
+.form-popup .form-popup__title { font-weight:900; color:var(--color-retro-dark); }
+.form-popup__close { border-color:color-mix(in srgb,var(--color-retro-ink) 35%,transparent); transition:background-color .18s,color .18s; }
+.form-popup__close:hover { background:var(--color-retro-dark); color:var(--color-retro-paper-card); }
+.form-popup__fallback { background:var(--color-retro-paper); border-top-color:var(--color-retro-ink); }
+.form-popup__fallback a { color:var(--color-retro-red-deep); font-weight:800; }
+@media(max-width:639px) { .form-popup { border:0; border-radius:0; box-shadow:none; } }
+
+/* /payment/return: its bg-retro-cream token does not exist and .reply-site>section stripped the card border. */
+.reply-site.px-5>section.max-w-2xl {
+ padding:clamp(28px,5vw,48px); border:2px solid var(--color-retro-ink); border-radius:8px;
+ background:var(--tri-stripe) top/100% 6px no-repeat,var(--color-retro-paper-card); color:var(--color-retro-dark);
+ box-shadow:8px 8px 0 var(--color-retro-ink);
+}
+.reply-site.px-5>section.max-w-2xl h1 { font:400 clamp(32px,6vw,44px)/1.2 "Reply Lobster",var(--font-vietnam); color:var(--color-retro-dark); text-shadow:2px 2px 0 var(--color-retro-gold); }
+.reply-site.px-5>section.max-w-2xl :is([role="status"],.bg-white\/70) { background:var(--color-retro-mustard-paper); border-left:4px solid var(--color-retro-red); border-radius:2px; }
+.reply-site.px-5>section.max-w-2xl a { color:var(--color-retro-red-deep); font-weight:800; text-underline-offset:4px; }
+
+/* Small phones (<=390px): keep header actions and step rows from crowding. */
+@media(max-width:390px) {
+ .event-header__cta { padding-inline:12px; }
+ .reply-step>div:first-child { grid-template-columns:52px 1fr; gap:14px; }
+}
