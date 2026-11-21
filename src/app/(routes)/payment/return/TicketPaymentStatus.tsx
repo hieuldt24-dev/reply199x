@@ -109,8 +109,8 @@ export function TicketPaymentStatus({ orderId }: { orderId: string }) {
     <div className="mt-6 rounded-lg bg-white/70 p-5" role="status" aria-live="polite">
       <p className="font-semibold">{statusMessages[view.status] ?? "Đơn đang được kiểm tra."}</p>
       <p className="mt-2 text-sm">Tổng đơn: {view.totalVnd.toLocaleString("vi-VN")}đ</p>
-      <p className="mt-1 text-xs text-retro-dark/65">Hạn thanh toán: {new Date(view.paymentExpiresAt).toLocaleString("vi-VN")}</p>
-      {!terminalStatuses.has(view.status) && <p className="mt-3 text-xs text-retro-dark/65">Đang tự kiểm tra trạng thái mỗi vài giây.</p>}
+      <p className="mt-1 text-xs text-retro-dark/80">Hạn thanh toán: {new Date(view.paymentExpiresAt).toLocaleString("vi-VN")}</p>
+      {!terminalStatuses.has(view.status) && <p className="mt-3 text-xs text-retro-dark/80">Đang tự kiểm tra trạng thái mỗi vài giây.</p>}
       {view.status === "paid" && <p className="mt-4 text-xs">Trang sự kiện sẽ mở sau 3 giây.</p>}
     </div>
   );

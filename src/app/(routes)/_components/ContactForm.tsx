@@ -68,7 +68,7 @@ export function ContactForm() {
             <label htmlFor="letter-message" className="block font-space text-xs text-retro-dark font-bold uppercase mb-1">Dòng tâm tình / Kỷ vật muốn gửi gắm:</label>
             <textarea id="letter-message" name="message" className={`${fieldClass} resize-y`} placeholder="Viết vài dòng về ký ức hoặc ca khúc bạn mong được lắng nghe..." required rows={4} maxLength={5000} />
           </div>
-          <button className="inline-flex items-center justify-center gap-2 bg-retro-red hover:bg-[#b81700] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-transform active:translate-y-0.5 mt-1 min-h-11" type="submit">
+          <button className="inline-flex items-center justify-center gap-2 bg-retro-red hover:bg-[#9C2918] text-retro-paper font-space text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg border-2 border-retro-dark shadow-retro-solid transition-transform active:translate-y-0.5 mt-1 min-h-11" type="submit">
             <span aria-hidden="true" className="retro-icon text-sm text-retro-gold">✉</span>
             Xem trước thư ký ức
           </button>
