@@ -1,11 +1,22 @@
 import { TicketPaymentStatus } from "./TicketPaymentStatus";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function PaymentReturnPage({
   searchParams,
 }: {
   searchParams: Promise<{ orderId?: string }>;
 }) {
+  let signedIn = false;
+  try {
+    const { data, error } = await (await createClient()).auth.getUser();
+    signedIn = !error && Boolean(data.user);
+  } catch {
+    signedIn = false;
+  }
+  if (!signedIn) redirect("/");
+
   const { orderId } = await searchParams;
   return (
     <main className="reply-site min-h-[60vh] px-5 py-16">

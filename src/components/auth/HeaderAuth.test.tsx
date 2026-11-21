@@ -29,15 +29,21 @@ describe("HeaderAuth", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("opens once for anonymous entry, stays dismissed through rerenders and allows manual reopen", () => {
+  it("does not auto-open for anonymous entry without an auth error and opens on button click", () => {
     const view = render(<HeaderAuth auth={{ status: "anonymous" }} />);
-    expect(screen.getByRole("dialog")).toHaveAttribute("open");
-    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
     expect(screen.queryByRole("dialog")).toBeNull();
     view.rerender(<HeaderAuth auth={{ status: "anonymous" }} />);
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Đăng nhập"  }));
     expect(screen.getByRole("dialog")).toHaveAttribute("open");
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("does not auto-open for an unknown auth_error value", () => {
+    navigation.error = "auth_error=constructor";
+    render(<HeaderAuth auth={{ status: "anonymous" }} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("does not prompt signed-in visitors or fetch an extra session", () => {
@@ -52,6 +58,7 @@ describe("HeaderAuth", () => {
     navigation.error = "auth_error=callback&campaign=retro";
     const replace = vi.spyOn(window.history, "replaceState");
     const view = render(<HeaderAuth auth={{ status: "anonymous" }} />);
+    expect(screen.getByRole("dialog")).toHaveAttribute("open");
     expect(screen.getByRole("alert")).toHaveTextContent("Phiên đăng nhập không hợp lệ hoặc đã hết hạn");
     expect(replace).toHaveBeenCalledWith(null, "", "/?campaign=retro");
     fireEvent.click(screen.getByRole("button", { name: "Đóng cửa sổ đăng nhập" }));
@@ -60,11 +67,9 @@ describe("HeaderAuth", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens a fresh prompt after a new full mounted entry", () => {
-    const first = render(<HeaderAuth auth={{ status: "anonymous" }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Đóng cửa sổ đăng nhập" }));
-    first.unmount();
+  it("focuses Google login when the dialog is opened manually", () => {
     render(<HeaderAuth auth={{ status: "anonymous" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập" }));
     expect(screen.getByRole("dialog")).toHaveAttribute("id", "header-login-dialog");
     expect(screen.getByRole("button", { name: "Tiếp tục với Google" })).toHaveFocus();
   });

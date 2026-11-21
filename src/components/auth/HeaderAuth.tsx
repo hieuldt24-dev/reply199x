@@ -12,17 +12,18 @@ const AUTH_ERRORS: Record<string, string> = {
 };
 
 export function HeaderAuth({ auth }: { auth: AuthView }) {
-  const [open, setOpen] = useState(auth.status === "anonymous");
+  const search = useSearchParams();
+  const errorCode = search.get("auth_error");
+  const [open, setOpen] = useState(() => auth.status === "anonymous"
+    && Boolean(errorCode && Object.hasOwn(AUTH_ERRORS, errorCode)));
   const [logoutPending, setLogoutPending] = useState(false);
   const [refreshPending, startRefresh] = useTransition();
   const lastRefresh = useRef<number | null>(null);
   const router = useRouter();
   const pathname = usePathname();
-  const search = useSearchParams();
-  const errorCode = search.get("auth_error");
-  const [errorMessage] = useState(errorCode ? AUTH_ERRORS[errorCode] : undefined);
+  const [errorMessage] = useState(errorCode && Object.hasOwn(AUTH_ERRORS, errorCode) ? AUTH_ERRORS[errorCode] : undefined);
   useEffect(() => {
-    if (errorCode && AUTH_ERRORS[errorCode]) {
+    if (errorCode && Object.hasOwn(AUTH_ERRORS, errorCode)) {
       const params = new URLSearchParams(search.toString());
       params.delete("auth_error");
       const query = params.toString();

@@ -1,7 +1,7 @@
 ﻿import Image from "next/image";
 import { brief } from "../_data/brief";
 import { assets } from "../_data/home";
-import { TicketRequestDialog } from "./TicketRequestDialog";
+import { TicketSalesClosed } from "./TicketSalesClosed";
 
 export function TimelineSection() {
   return (
@@ -83,9 +83,7 @@ export function TimelineSection() {
                 <p className="reply-stop__meta">KHUNG GIỜ: 15:00 - 19:00</p>
                 <div className="reply-stop__actions">
                   <a className="reply-text-link" href="#su-kien">Tìm hiểu sự kiện ↗</a>
-                  <TicketRequestDialog className="reply-stop__ticket inline-flex items-center gap-2 bg-retro-gold hover:bg-retro-gold-light text-retro-dark font-bold px-4 py-2 rounded">
-                    <span>Đặt phiếu nước ngay</span><span aria-hidden="true">✦</span>
-                  </TicketRequestDialog>
+                  <TicketSalesClosed className="reply-stop__ticket inline-flex items-center gap-2 bg-retro-gold hover:bg-retro-gold-light text-retro-dark font-bold px-4 py-2 rounded" />
                 </div>
               </footer>
             </article>

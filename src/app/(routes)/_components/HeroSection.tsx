@@ -1,6 +1,6 @@
 import { assets } from "../_data/home";
 import { RemoteImage } from "./RemoteImage";
-import { TicketRequestDialog } from "./TicketRequestDialog";
+import { TicketSalesClosed } from "./TicketSalesClosed";
 
 export function HeroSection() {
   return (
@@ -15,7 +15,7 @@ export function HeroSection() {
             <RemoteImage src={assets.logo} alt="Logo REPLY 199X" width={2500} height={2500} className="reply-hero__logo-image" fallback="REPLY 199X" />
           </div>
         </div>
-        <TicketRequestDialog className="reply-action reply-action--gold">Đặt phiếu nước ngay <span aria-hidden="true">↗</span></TicketRequestDialog>
+        <TicketSalesClosed className="reply-action reply-action--gold" />
       </div>
     </section>
   );

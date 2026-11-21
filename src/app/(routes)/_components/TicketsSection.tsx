@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { TicketRequestDialog } from "./TicketRequestDialog";
+import { TicketSalesClosed } from "./TicketSalesClosed";
 
 const voucherImage = "/images/1794567834681_48355094629491256_48355094629491256_d855c0c2ea10cd6a6d411ae92785f5d2.jpg";
 
@@ -37,7 +37,7 @@ export function TicketsSection() {
           <p className="reply-ticket__perk">Phiếu nước gồm 1 phần nước và 1 phần bánh xưa.</p>
 
           <div className="reply-ticket__actions">
-            <TicketRequestDialog className="reply-ticket__contact">Liên hệ về phiếu nước</TicketRequestDialog>
+            <TicketSalesClosed className="reply-ticket__contact" />
           </div>
         </div>
 
